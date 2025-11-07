@@ -32,5 +32,6 @@ data class ValdiTweaks(
          * on large views when the app goes to background. This is to workaround a crash that occurs
          * on some devices.
          */
-        val enableHardwareLayerWorkaround: Boolean = false
+         val enableHardwareLayerWorkaround: Boolean = false,
+         val downsampleLargeBlur: Boolean = false
 )
