@@ -1,0 +1,61 @@
+[package]
+name = "omnitak-mobile"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[lib]
+name = "omnitak_mobile"
+crate-type = ["staticlib", "cdylib"]  # Static for iOS, dynamic for Android
+
+[dependencies]
+# Internal crates
+omnitak-core = { path = "../omnitak-core" }
+omnitak-cot = { path = "../omnitak-cot" }
+omnitak-client = { path = "../omnitak-client" }
+omnitak-cert = { path = "../omnitak-cert" }
+
+# Async runtime
+tokio = { workspace = true }
+tokio-util = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# TLS
+rustls = { workspace = true }
+rustls-pemfile = { workspace = true }
+tokio-rustls = { workspace = true }
+
+# Error handling
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+
+# Concurrency
+dashmap = { workspace = true }
+parking_lot = { workspace = true }
+
+# Time
+chrono = { workspace = true }
+
+# UUID
+uuid = { workspace = true }
+
+# FFI utilities
+libc = "0.2"
+lazy_static = "1.4"
+
+[profile.release]
+opt-level = "z"  # Optimize for size
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"
+
+[profile.release.package."*"]
+opt-level = 3
