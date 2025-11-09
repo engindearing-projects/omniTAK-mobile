@@ -57,42 +57,72 @@ export class NavigationDrawer extends Component<
     }
 
     <view style={styles.overlay} onClick={this.handleOverlayClick.bind(this)}>
-      {/* Drawer panel */}
-      <view style={styles.drawer} onClick={this.handleDrawerClick.bind(this)}>
-        {/* Header with user info */}
+      {/* Drawer panel with slide-in animation */}
+      <view
+        style={isOpen ? styles.drawerOpen : styles.drawer}
+        onClick={this.handleDrawerClick.bind(this)}
+      >
+        {/* Header with user info - ATAK Style */}
         <view style={styles.header}>
-          <label
-            value="iTAK"
-            font={systemFont(24, 'bold')}
-            color="#FFFC00"
-          />
-          <label
-            value={userCallsign || 'ALPHA-1'}
-            font={systemFont(14)}
-            color="#FFFFFF"
-            marginTop={4}
-          />
-          <label
-            value={userName || 'User'}
-            font={systemFont(12)}
-            color="#CCCCCC"
-            marginTop={2}
-          />
-
-          {/* Connection status */}
-          <view style={styles.connectionStatus}>
-            <view
-              width={8}
-              height={8}
-              borderRadius={4}
-              backgroundColor={this.getConnectionColor(connectionStatus)}
-              marginRight={6}
-            />
+          {/* iTAK Logo with underline */}
+          <view style={styles.logoContainer}>
             <label
-              value={this.getConnectionText(connectionStatus)}
-              font={systemFont(11)}
-              color="#CCCCCC"
+              value="iTAK"
+              font={systemFont(24, 'bold')}
+              color="#FFFC00"
             />
+            <view style={styles.logoUnderline} />
+          </view>
+
+          {/* User Info */}
+          <view style={styles.userInfo}>
+            <label
+              value="👤"
+              font={systemFont(14)}
+              marginRight={8}
+            />
+            <view>
+              <label
+                value={userCallsign || 'ALPHA-1'}
+                font={systemFont(14, 'bold')}
+                color="#FFFFFF"
+              />
+              <label
+                value={userName || 'User'}
+                font={systemFont(11)}
+                color="#CCCCCC"
+                marginTop={2}
+              />
+            </view>
+          </view>
+
+          {/* Connection status with LED indicator */}
+          <view style={styles.connectionStatus}>
+            <view style={styles.connectionLed}>
+              <view
+                width={10}
+                height={10}
+                borderRadius={5}
+                backgroundColor={this.getConnectionColor(connectionStatus)}
+                shadowColor={this.getConnectionColor(connectionStatus)}
+                shadowOffset={{ width: 0, height: 0 }}
+                shadowOpacity={0.8}
+                shadowRadius={4}
+              />
+            </view>
+            <view style={styles.connectionText}>
+              <label
+                value="STATUS"
+                font={systemFont(8, 'bold')}
+                color="#999999"
+              />
+              <label
+                value={this.getConnectionText(connectionStatus)}
+                font={systemFont(11, 'bold')}
+                color={this.getConnectionColor(connectionStatus)}
+                marginTop={2}
+              />
+            </view>
           </view>
         </view>
 
@@ -207,34 +237,90 @@ const styles = {
     bottom: 0,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     zIndex: 1000,
+    animation: 'fadeIn 0.3s ease-in-out',
   }),
 
   drawer: new Style<View>({
     position: 'absolute',
     top: 0,
-    left: 0,
+    left: -280, // Start off-screen
     bottom: 0,
     width: 280,
     backgroundColor: '#1E1E1E',
     flexDirection: 'column',
     shadowColor: '#000000',
     shadowOffset: { width: 2, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
+    borderRightWidth: 1,
+    borderRightColor: '#FFFC00',
+    transition: 'left 0.3s ease-in-out',
+  }),
+
+  drawerOpen: new Style<View>({
+    position: 'absolute',
+    top: 0,
+    left: 0, // Slide in to visible position
+    bottom: 0,
+    width: 280,
+    backgroundColor: '#1E1E1E',
+    flexDirection: 'column',
+    shadowColor: '#000000',
+    shadowOffset: { width: 4, height: 0 },
+    shadowOpacity: 0.7,
+    shadowRadius: 16,
+    borderRightWidth: 2,
+    borderRightColor: '#FFFC00',
+    transition: 'left 0.3s ease-in-out',
   }),
 
   header: new Style<View>({
     padding: 20,
     paddingTop: 60, // Account for status bar
     backgroundColor: '#2A2A2A',
-    borderBottomWidth: 1,
-    borderBottomColor: '#3A3A3A',
+    borderBottomWidth: 2,
+    borderBottomColor: '#FFFC00',
+  }),
+
+  logoContainer: new Style<View>({
+    marginBottom: 16,
+  }),
+
+  logoUnderline: new Style<View>({
+    width: 60,
+    height: 3,
+    backgroundColor: '#FFFC00',
+    marginTop: 4,
+    borderRadius: 2,
+  }),
+
+  userInfo: new Style<View>({
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    padding: 12,
+    backgroundColor: 'rgba(255, 252, 0, 0.1)',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 252, 0, 0.3)',
   }),
 
   connectionStatus: new Style<View>({
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 12,
+    padding: 12,
+    backgroundColor: '#1E1E1E',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#3A3A3A',
+  }),
+
+  connectionLed: new Style<View>({
+    marginRight: 12,
+  }),
+
+  connectionText: new Style<View>({
+    flex: 1,
   }),
 
   menuItems: new Style<View>({

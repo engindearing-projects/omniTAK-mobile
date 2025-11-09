@@ -329,15 +329,61 @@ The new menu system integrates with existing iTAK services:
 - [ ] Draw tool implementation
 - [ ] Search functionality
 
+## Enhanced ATAK-Style Features (v1.1.0)
+
+### Improved Visual Elements
+
+1. **Hamburger Menu Icon**: Authentic ATAK-style 3-bar hamburger menu
+   - Clean horizontal bars (24px × 3px each)
+   - Proper spacing and alignment
+   - Consistent across iOS and Android/Valdi platforms
+
+2. **LED-Style Connection Indicators**: Professional tactical status displays
+   - Glowing LED indicators with shadow effects
+   - Color-coded status (Green: Connected, Red: Disconnected, Orange: Connecting)
+   - Pulsing animation for active connections
+   - Text labels alongside indicators ("CONN"/"DISC")
+
+3. **Enhanced Navigation Drawer**: Full ATAK-style slide-in menu
+   - Smooth 300ms slide-in animation
+   - Semi-transparent overlay backdrop
+   - Yellow accent border (tactical yellow #FFFC00)
+   - Professional header with user info card
+   - Connection status LED display
+   - Organized menu sections with dividers
+
+4. **Top Toolbar Alignment**: Matches ATAK's exact layout
+   - Left: Hamburger menu button
+   - Center: iTAK title with LED status indicator
+   - Right: Server name and overflow menu
+   - Dark background with transparency (#1E1E1E @ 95%)
+
+### Platform-Specific Implementations
+
+#### iOS (SwiftUI)
+- **NavigationDrawer.swift**: Native SwiftUI drawer component
+- LED indicators with native shadow effects
+- Smooth iOS-style animations
+- Support for Safe Area insets
+- Full integration with existing MapViewController
+
+#### Android/Valdi (TypeScript)
+- **EnhancedMapScreen.tsx**: Enhanced toolbar with LED indicators
+- **NavigationDrawer.tsx**: Slide-in drawer with animations
+- CSS-based transitions and animations
+- Cross-platform Valdi component architecture
+
 ## Differences from ATAK
 
 While closely mirroring ATAK, iTAK includes iOS-optimized enhancements:
 
 1. **Map Rendering**: Uses MapLibre GL Native for superior iOS performance
 2. **Touch Gestures**: iOS-native gesture handling
-3. **UI Animations**: Smooth iOS-style transitions
+3. **UI Animations**: Smooth iOS-style transitions with LED pulsing effects
 4. **Platform Integration**: Apple Maps integration (optional)
 5. **Design Polish**: iOS Human Interface Guidelines compliance
+6. **LED Indicators**: Professional glowing LED-style status indicators
+7. **Enhanced Drawer**: Slide-in navigation with yellow accent border
 
 ## Future Enhancements
 
@@ -366,5 +412,22 @@ Implementation based on ATAK research and iTAK architecture.
 ---
 
 **Last Updated**: 2025-11-09
-**Version**: 1.0.0
-**Status**: Feature Complete (UI), Backend Integration Pending
+**Version**: 1.1.0
+**Status**: Feature Complete (UI with Enhanced ATAK Alignment), Backend Integration Pending
+
+## Changelog
+
+### v1.1.0 (2025-11-09)
+- Added authentic ATAK-style 3-bar hamburger menu icon
+- Implemented LED-style connection indicators with glow effects
+- Added slide-in animation for navigation drawer
+- Enhanced toolbar layout to match ATAK exactly
+- Added pulsing animation for connection status LED
+- Created iOS NavigationDrawer component in SwiftUI
+- Updated both iOS and Android/Valdi implementations
+- Improved visual consistency across platforms
+
+### v1.0.0 (2025-11-09)
+- Initial ATAK-style menu system implementation
+- Basic navigation drawer and toolbar
+- Core functionality complete

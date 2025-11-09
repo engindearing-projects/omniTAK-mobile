@@ -107,32 +107,42 @@ export class EnhancedMapScreen extends Component<
         onMarkerTap={this.handleMarkerTap.bind(this)}
       />
 
-      {/* Top Toolbar */}
+      {/* Top Toolbar - ATAK Style */}
       <view style={styles.topToolbar}>
+        {/* Hamburger Menu Button - ATAK 3-bar style */}
         <view
           style={styles.menuButton}
           onClick={this.handleOpenMenu.bind(this)}
         >
-          <label value="☰" font={systemFont(24)} color="#FFFFFF" />
+          <view style={styles.hamburgerIcon}>
+            <view style={styles.hamburgerBar} />
+            <view style={styles.hamburgerBar} />
+            <view style={styles.hamburgerBar} />
+          </view>
         </view>
 
+        {/* Center Title with LED Status Indicator */}
         <view style={styles.toolbarCenter}>
           <label
             value="iTAK"
             font={systemFont(18, 'bold')}
             color="#FFFC00"
           />
+          {/* LED-style connection indicator */}
           <view style={styles.statusIndicator}>
             <view
-              width={6}
-              height={6}
-              borderRadius={3}
-              backgroundColor={isConnected ? '#4CAF50' : '#FF5252'}
-              marginLeft={8}
+              style={isConnected ? styles.ledConnected : styles.ledDisconnected}
+            />
+            <label
+              value={isConnected ? 'CONN' : 'DISC'}
+              font={systemFont(9, 'bold')}
+              color={isConnected ? '#4CAF50' : '#FF5252'}
+              marginLeft={6}
             />
           </view>
         </view>
 
+        {/* Overflow Menu Button */}
         <view
           style={styles.overflowButton}
           onClick={this.handleOverflowMenu.bind(this)}
@@ -604,6 +614,22 @@ const styles = {
     cursor: 'pointer',
   }),
 
+  // ATAK-style hamburger icon (3 horizontal bars)
+  hamburgerIcon: new Style<View>({
+    width: 24,
+    height: 18,
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  }),
+
+  hamburgerBar: new Style<View>({
+    width: 24,
+    height: 3,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 2,
+  }),
+
   toolbarCenter: new Style<View>({
     flex: 1,
     flexDirection: 'row',
@@ -614,6 +640,32 @@ const styles = {
   statusIndicator: new Style<View>({
     flexDirection: 'row',
     alignItems: 'center',
+    marginLeft: 8,
+  }),
+
+  // LED-style connection indicators with glow effect
+  ledConnected: new Style<View>({
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#4CAF50',
+    shadowColor: '#4CAF50',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    // Pulsing animation effect
+    animation: 'pulse 2s infinite',
+  }),
+
+  ledDisconnected: new Style<View>({
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FF5252',
+    shadowColor: '#FF5252',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 3,
   }),
 
   overflowButton: new Style<View>({

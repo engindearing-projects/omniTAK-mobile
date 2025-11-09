@@ -17,6 +17,8 @@ struct ATAKMapView: View {
     @State private var showLayersPanel = false
     @State private var showDrawingPanel = false
     @State private var showDrawingList = false
+    @State private var showNavigationDrawer = false
+    @State private var currentScreen = "map"
     @State private var mapType: MKMapType = .satellite
     @State private var showTraffic = false
     @State private var trackingMode: MapUserTrackingMode = .follow
@@ -95,7 +97,12 @@ struct ATAKMapView: View {
                     messagesSent: takService.messagesSent,
                     gpsAccuracy: locationManager.accuracy,
                     serverName: ServerManager.shared.activeServer?.name,
-                    onServerTap: { showServerConfig = true }
+                    onServerTap: { showServerConfig = true },
+                    onMenuTap: {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            showNavigationDrawer.toggle()
+                        }
+                    }
                 )
                 .background(Color.black.opacity(0.7))
                 .cornerRadius(8)
@@ -180,6 +187,21 @@ struct ATAKMapView: View {
                     .transition(.move(edge: .trailing))
                 }
             }
+
+            // Navigation Drawer Overlay - ATAK Style
+            NavigationDrawer(
+                isOpen: $showNavigationDrawer,
+                currentScreen: $currentScreen,
+                userName: "Operator",
+                userCallsign: "ALPHA-1",
+                connectionStatus: takService.isConnected ? "CONNECTED" : "DISCONNECTED",
+                onNavigate: { screen in
+                    currentScreen = screen
+                    print("🧭 Navigate to: \(screen)")
+                    // TODO: Implement screen navigation
+                }
+            )
+            .zIndex(1001) // Above all other UI elements
         }
         .sheet(isPresented: $showServerConfig) {
             ServerConfigView(takService: takService)
@@ -337,20 +359,60 @@ struct ATAKStatusBar: View {
     let gpsAccuracy: Double
     let serverName: String?
     let onServerTap: () -> Void
+    let onMenuTap: () -> Void
 
     var body: some View {
         HStack(spacing: 12) {
-            // Connection Status with Server Name
-            Button(action: onServerTap) {
-                HStack(spacing: 4) {
+            // Hamburger Menu Button - ATAK Style
+            Button(action: onMenuTap) {
+                VStack(spacing: 4) {
+                    Rectangle()
+                        .fill(Color.white)
+                        .frame(width: 24, height: 3)
+                        .cornerRadius(2)
+                    Rectangle()
+                        .fill(Color.white)
+                        .frame(width: 24, height: 3)
+                        .cornerRadius(2)
+                    Rectangle()
+                        .fill(Color.white)
+                        .frame(width: 24, height: 3)
+                        .cornerRadius(2)
+                }
+                .frame(width: 48, height: 48)
+            }
+
+            // iTAK Title with LED Status Indicator
+            HStack(spacing: 8) {
+                Text("iTAK")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(Color(red: 1.0, green: 0.988, blue: 0.0)) // #FFFC00
+
+                HStack(spacing: 6) {
+                    // LED-style connection indicator with glow
                     Circle()
                         .fill(isConnected ? Color.green : Color.red)
                         .frame(width: 8, height: 8)
-                    Text(serverName ?? (isConnected ? "TAK" : "DISC"))
-                        .font(.system(size: 11, weight: .bold))
+                        .shadow(color: isConnected ? .green : .red, radius: 4)
+
+                    Text(isConnected ? "CONN" : "DISC")
+                        .font(.system(size: 9, weight: .bold))
                         .foregroundColor(isConnected ? .green : .red)
+                }
+            }
+
+            Spacer()
+
+            // Server Name Button
+            Button(action: onServerTap) {
+                HStack(spacing: 4) {
+                    Image(systemName: "server.rack")
+                        .font(.system(size: 10))
+                    Text(serverName ?? "TAK")
+                        .font(.system(size: 11, weight: .bold))
                         .lineLimit(1)
                 }
+                .foregroundColor(isConnected ? .green : .gray)
             }
 
             // Messages
