@@ -161,7 +161,7 @@ valdi_module(
         "tsconfig.json",
     ],
     android_output_target = "release",
-    ios_module_name = "OmniTAKMobile",
+    ios_module_name = "SCCOmniTAKMobile",
     ios_output_target = "release",
     module_yaml = "module.yaml",
     res = glob([

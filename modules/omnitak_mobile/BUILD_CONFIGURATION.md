@@ -205,7 +205,7 @@ valdi_module(
     srcs = glob(["src/**/*.ts", "src/**/*.tsx"]) + ["tsconfig.json"],
 
     # Platform configurations
-    ios_module_name = "OmniTAKMobile",
+    ios_module_name = "SCCOmniTAKMobile",
     ios_output_target = "release",
     android_output_target = "release",
 
@@ -240,8 +240,8 @@ valdi_module(
 - `omnitak_mobile_kt` - Android Kotlin library
 - `omnitak_mobile_objc` - iOS Objective-C library
 - `omnitak_mobile_swift` - iOS Swift library
-- `OmniTAKMobile` - iOS module alias
-- `OmniTAKMobileTypes` - iOS API types
+- `SCCOmniTAKMobile` - iOS module alias
+- `SCCOmniTAKMobileTypes` - iOS API types
 
 ## Build Commands
 
