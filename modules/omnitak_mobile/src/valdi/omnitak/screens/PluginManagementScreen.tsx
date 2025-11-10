@@ -205,47 +205,51 @@ export class PluginManagementScreen extends Component<
 
       {/* Action buttons */}
       <view style={styles.pluginActions}>
-        {plugin.installed ? (
-          <>
-            {plugin.enabled ? (
-              <view
-                style={styles.actionButton}
-                onClick={() => this.handleDisable(plugin.id)}
-              >
-                <label
-                  value="Disable"
-                  font={systemFont(12, 'bold')}
-                  color="#FF9800"
-                />
-              </view>
-            ) : (
-              <view
-                style={styles.actionButton}
-                onClick={() => this.handleEnable(plugin.id)}
-              >
-                <label
-                  value="Enable"
-                  font={systemFont(12, 'bold')}
-                  color="#4CAF50"
-                />
-              </view>
-            )}
+        {plugin.installed && plugin.enabled && (
+          <view
+            style={styles.actionButton}
+            onClick={() => this.handleDisable(plugin.id)}
+          >
+            <label
+              value="Disable"
+              font={systemFont(12, 'bold')}
+              color="#FF9800"
+            />
+          </view>
+        )}
 
-            <view
-              style={styles.iconButton}
-              onClick={() => this.handleSettings(plugin.id)}
-            >
-              <label value="⚙️" font={systemFont(16)} />
-            </view>
+        {plugin.installed && !plugin.enabled && (
+          <view
+            style={styles.actionButton}
+            onClick={() => this.handleEnable(plugin.id)}
+          >
+            <label
+              value="Enable"
+              font={systemFont(12, 'bold')}
+              color="#4CAF50"
+            />
+          </view>
+        )}
 
-            <view
-              style={styles.iconButton}
-              onClick={() => this.handleUninstall(plugin.id)}
-            >
-              <label value="🗑️" font={systemFont(16)} />
-            </view>
-          </>
-        ) : (
+        {plugin.installed && (
+          <view
+            style={styles.iconButton}
+            onClick={() => this.handleSettings(plugin.id)}
+          >
+            <label value="⚙️" font={systemFont(16)} />
+          </view>
+        )}
+
+        {plugin.installed && (
+          <view
+            style={styles.iconButton}
+            onClick={() => this.handleUninstall(plugin.id)}
+          >
+            <label value="🗑️" font={systemFont(16)} />
+          </view>
+        )}
+
+        {!plugin.installed && (
           <view
             style={styles.actionButtonPrimary}
             onClick={() => this.handleInstall(plugin.id)}
