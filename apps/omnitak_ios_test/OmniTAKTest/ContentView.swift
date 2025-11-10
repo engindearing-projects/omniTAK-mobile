@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var takService = TAKService()
-    @State private var serverHost = "204.48.30.216"
+    @State private var serverHost = "127.0.0.1"
     @State private var serverPort = "8087"
     @State private var useTLS = false
     @State private var showingAlert = false

@@ -1,6 +1,106 @@
 import Foundation
 import Combine
 import CoreLocation
+import Network
+
+// MARK: - Direct Network Sender (bypasses incomplete Rust FFI)
+
+enum ConnectionProtocol {
+    case tcp
+    case udp
+    case tls
+}
+
+/// Direct network sender for CoT messages
+/// Supports TCP, UDP, and TLS protocols
+class DirectTCPSender {
+    private var connection: NWConnection?
+    private let queue = DispatchQueue(label: "com.omnitak.network")
+    private var currentProtocol: ConnectionProtocol = .tcp
+
+    var isConnected: Bool {
+        return connection?.state == .ready
+    }
+
+    func connect(host: String, port: UInt16, protocolType: String = "tcp", useTLS: Bool = false, completion: @escaping (Bool) -> Void) {
+        let endpoint = NWEndpoint.hostPort(
+            host: NWEndpoint.Host(host),
+            port: NWEndpoint.Port(rawValue: port)!
+        )
+
+        // Determine protocol and parameters
+        let parameters: NWParameters
+
+        if useTLS || protocolType.lowercased() == "tls" {
+            // TLS over TCP
+            currentProtocol = .tls
+            parameters = NWParameters(tls: NWProtocolTLS.Options(), tcp: NWProtocolTCP.Options())
+            print("🔒 Using TLS/SSL")
+        } else if protocolType.lowercased() == "udp" {
+            // UDP
+            currentProtocol = .udp
+            parameters = NWParameters.udp
+            print("📡 Using UDP")
+        } else {
+            // TCP (default)
+            currentProtocol = .tcp
+            parameters = NWParameters.tcp
+            print("🔌 Using TCP")
+        }
+
+        connection = NWConnection(to: endpoint, using: parameters)
+
+        connection?.stateUpdateHandler = { state in
+            switch state {
+            case .ready:
+                print("✅ Direct\(self.currentProtocol): Connected to \(host):\(port)")
+                completion(true)
+            case .failed(let error):
+                print("❌ Direct\(self.currentProtocol): Connection failed: \(error)")
+                completion(false)
+            case .waiting(let error):
+                print("⏳ Direct\(self.currentProtocol): Waiting to connect: \(error)")
+            default:
+                break
+            }
+        }
+
+        connection?.start(queue: queue)
+    }
+
+    func send(xml: String) -> Bool {
+        guard let connection = connection, connection.state == .ready else {
+            print("❌ DirectNetwork: Not connected")
+            return false
+        }
+
+        // TAK servers expect messages terminated with newline
+        let message = xml + "\n"
+
+        guard let data = message.data(using: .utf8) else {
+            print("❌ DirectNetwork: Failed to encode XML")
+            return false
+        }
+
+        connection.send(content: data, completion: .contentProcessed { error in
+            if let error = error {
+                print("❌ DirectNetwork: Send failed: \(error)")
+            } else {
+                print("📤 DirectNetwork: Sent \(data.count) bytes")
+            }
+        })
+
+        return true
+    }
+
+    func disconnect() {
+        connection?.cancel()
+        connection = nil
+        print("🔌 DirectNetwork: Disconnected")
+    }
+}
+
+// MARK: - CoT Event Models
 
 // CoT Event Model
 struct CoTEvent {
@@ -42,6 +142,7 @@ class TAKService: ObservableObject {
     @Published var enhancedMarkers: [String: EnhancedCoTMarker] = [:]  // UID -> Marker map
 
     private var connectionHandle: UInt64 = 0
+    private var directTCP: DirectTCPSender?  // Direct TCP sender (bypasses incomplete Rust FFI)
     var onCoTReceived: ((CoTEvent) -> Void)?
     var onMarkerUpdated: ((EnhancedCoTMarker) -> Void)?
     var onChatMessageReceived: ((ChatMessage) -> Void)?
@@ -56,6 +157,9 @@ class TAKService: ObservableObject {
         if result != 0 {
             print("❌ Failed to initialize omnitak library")
         }
+
+        // Initialize direct TCP sender
+        directTCP = DirectTCPSender()
     }
 
     deinit {
@@ -64,82 +168,94 @@ class TAKService: ObservableObject {
     }
 
     func connect(host: String, port: UInt16, protocolType: String, useTLS: Bool) {
-        // Convert protocol string to enum
-        var protocolCode: Int32
-        switch protocolType.lowercased() {
-        case "tcp":
-            protocolCode = 0 // OMNITAK_PROTOCOL_TCP
-        case "udp":
-            protocolCode = 1 // OMNITAK_PROTOCOL_UDP
-        case "tls":
-            protocolCode = 2 // OMNITAK_PROTOCOL_TLS
-        case "websocket", "ws":
-            protocolCode = 3 // OMNITAK_PROTOCOL_WEBSOCKET
-        default:
-            protocolCode = 0 // Default to TCP
-        }
+        print("🔌 TAKService.connect() called with host=\(host), port=\(port), protocol=\(protocolType), tls=\(useTLS)")
 
-        // Convert to C strings
-        let hostCStr = host.cString(using: .utf8)!
+        // Use DirectTCPSender for actual network communication
+        connectionStatus = "Connecting..."
+        directTCP?.connect(host: host, port: port, protocolType: protocolType, useTLS: useTLS) { [weak self] success in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
 
-        // Call FFI connect function
-        let result = omnitak_connect(
-            hostCStr,
-            port,
-            protocolCode,
-            useTLS ? 1 : 0,
-            nil,  // cert_pem
-            nil,  // key_pem
-            nil   // ca_pem
-        )
+                if success {
+                    self.isConnected = true
+                    self.connectionStatus = "Connected"
+                    self.lastError = ""
+                    print("✅ DirectTCP Connected to TAK server: \(host):\(port)")
 
-        if result > 0 {
-            connectionHandle = result
-            isConnected = true
-            connectionStatus = "Connected"
-            lastError = ""
+                    // Also initialize Rust FFI (for potential future use)
+                    var protocolCode: Int32
+                    switch protocolType.lowercased() {
+                    case "tcp":
+                        protocolCode = 0
+                    case "udp":
+                        protocolCode = 1
+                    case "tls":
+                        protocolCode = 2
+                    case "websocket", "ws":
+                        protocolCode = 3
+                    default:
+                        protocolCode = 0
+                    }
 
-            // Register callback for receiving messages
-            registerCallback()
+                    let hostCStr = host.cString(using: .utf8)!
+                    let result = omnitak_connect(
+                        hostCStr,
+                        port,
+                        protocolCode,
+                        useTLS ? 1 : 0,
+                        nil, nil, nil
+                    )
 
-            print("✅ Connected to TAK server: \(host):\(port) (connection ID: \(result))")
-        } else {
-            connectionStatus = "Connection Failed"
-            lastError = "Failed to connect to \(host):\(port)"
-            print("❌ Connection failed")
+                    if result > 0 {
+                        self.connectionHandle = result
+                        self.registerCallback()
+                        print("📡 Rust FFI also initialized (connection ID: \(result))")
+                    }
+                } else {
+                    self.connectionStatus = "Connection Failed"
+                    self.lastError = "Failed to connect to \(host):\(port)"
+                    print("❌ Connection failed")
+                }
+            }
         }
     }
 
     func disconnect() {
-        guard connectionHandle > 0 else { return }
+        // Disconnect DirectTCP
+        directTCP?.disconnect()
 
-        // Unregister callback
-        omnitak_unregister_callback(connectionHandle)
+        // Also disconnect Rust FFI
+        if connectionHandle > 0 {
+            omnitak_unregister_callback(connectionHandle)
+            omnitak_disconnect(connectionHandle)
+            connectionHandle = 0
+        }
 
-        // Disconnect
-        omnitak_disconnect(connectionHandle)
-        connectionHandle = 0
         isConnected = false
         connectionStatus = "Disconnected"
-
         print("🔌 Disconnected from TAK server")
     }
 
     func sendCoT(xml: String) -> Bool {
-        guard connectionHandle > 0 else {
+        guard isConnected, let directTCP = directTCP else {
             print("❌ Not connected")
             return false
         }
 
-        let xmlCStr = xml.cString(using: .utf8)!
-        let result = omnitak_send_cot(connectionHandle, xmlCStr)
-
-        if result == 0 {  // OMNITAK_SUCCESS
+        // Use DirectTCPSender for actual sending
+        if directTCP.send(xml: xml) {
             messagesSent += 1
-            print("📤 Sent CoT message")
+            print("📤 Sent CoT message via DirectTCP")
+
+            // Also send via Rust FFI for testing (even though it's a stub)
+            if connectionHandle > 0 {
+                let xmlCStr = xml.cString(using: .utf8)!
+                _ = omnitak_send_cot(connectionHandle, xmlCStr)
+            }
+
             return true
         } else {
-            print("❌ Failed to send CoT message (error: \(result))")
+            print("❌ Failed to send CoT message")
             return false
         }
     }
