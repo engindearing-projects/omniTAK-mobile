@@ -1,0 +1,23 @@
+[package]
+name = "omnitak-client"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+omnitak-core = { workspace = true }
+omnitak-cot = { workspace = true }
+omnitak-cert = { workspace = true }
+
+tokio = { workspace = true }
+tokio-util = { workspace = true }
+tokio-rustls = { workspace = true }
+rustls = { workspace = true }
+
+bytes = { workspace = true }
+tracing = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+
+parking_lot = { workspace = true }

@@ -1,0 +1,13 @@
+[package]
+name = "omnitak-cert"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+rustls = { workspace = true }
+rustls-pemfile = { workspace = true }
+webpki-roots = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
