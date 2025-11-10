@@ -1073,13 +1073,10 @@ def _setup_native_target(name, deps, additional_native_deps, compiled_module_tar
 
     valdi_module_native(
         name = ios_native_lib_name,
-        # TODO(simon): Make native compilation configurable on a per platform basis
-        # Disable on iOS for now to unblock.
-        srcs = [],
-        # srcs = source_set_select(
-        #     debug = [":ios.debug.c"],
-        #     release = [":ios.release.c"],
-        # ),
+        srcs = source_set_select(
+            debug = [":ios.debug.c"],
+            release = [":ios.release.c"],
+        ),
         deps = native_deps + additional_native_deps,
     )
 
