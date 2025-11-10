@@ -1,0 +1,62 @@
+[workspace]
+members = [
+    "omnitak-core",
+    "omnitak-cot",
+    "omnitak-client",
+    "omnitak-cert",
+    "omnitak-mobile",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["OmniTAK Contributors"]
+license = "MIT OR Apache-2.0"
+
+[workspace.dependencies]
+# Internal crates
+omnitak-core = { path = "./omnitak-core" }
+omnitak-cot = { path = "./omnitak-cot" }
+omnitak-client = { path = "./omnitak-client" }
+omnitak-cert = { path = "./omnitak-cert" }
+
+# Async runtime
+tokio = { version = "1.35", features = ["full"] }
+tokio-util = { version = "0.7", features = ["codec"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+quick-xml = { version = "0.31", features = ["serialize"] }
+
+# TLS
+rustls = { version = "0.21", features = ["dangerous_configuration"] }
+rustls-pemfile = "1.0"
+tokio-rustls = "0.24"
+webpki-roots = "0.25"
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Concurrency
+dashmap = "5.5"
+parking_lot = "0.12"
+
+# Time
+chrono = { version = "0.4", features = ["serde"] }
+
+# UUID
+uuid = { version = "1.6", features = ["v4", "serde"] }
+
+# Networking
+bytes = "1.5"
+
+# Encoding
+base64 = "0.21"
+hex = "0.4"
