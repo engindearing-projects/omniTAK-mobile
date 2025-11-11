@@ -178,6 +178,7 @@
 			buildPhases = (
 				A11111111111111111111111000000C1 /* Sources */,
 				A1111111111111111111111100000061 /* Frameworks */,
+				1F9A3628D069480FBD8749A3 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -220,6 +221,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		1F9A3628D069480FBD8749A3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				230A5E49E77C45D194BB82F0 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		A11111111111111111111111000000C1 /* Sources */ = {
