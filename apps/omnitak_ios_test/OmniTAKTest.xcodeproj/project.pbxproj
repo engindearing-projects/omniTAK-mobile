@@ -45,6 +45,7 @@
 
 		3025C35F05D6415A9F0287E7 /* ATAKToolsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 809324E1A2EE4993BDAB1366 /* ATAKToolsView.swift */; };
 		82E4995A4250443895E9EB26 /* ATAKLoadingScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD845711A3254AF8A58ED2B9 /* ATAKLoadingScreen.swift */; };
+		230A5E49E77C45D194BB82F0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D3F9166C79C04A21BA2FDAA5 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -91,6 +92,7 @@
 
 		809324E1A2EE4993BDAB1366 /* ATAKToolsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ATAKToolsView.swift; sourceTree = "<group>"; };
 		FD845711A3254AF8A58ED2B9 /* ATAKLoadingScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ATAKLoadingScreen.swift; sourceTree = "<group>"; };
+		D3F9166C79C04A21BA2FDAA5 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -152,6 +154,7 @@
 				3FF376425AEE40719940DF80 /* NavigationDrawer.swift */,
 				BFB3CBE2B1304F47B80493AB /* MultiServerFederation.swift */,
 				A1111111111111111111111100000051 /* Info.plist */,
+				D3F9166C79C04A21BA2FDAA5 /* Assets.xcassets */,
 			
 				809324E1A2EE4993BDAB1366 /* ATAKToolsView.swift */,
 				FD845711A3254AF8A58ED2B9 /* ATAKLoadingScreen.swift */,);
