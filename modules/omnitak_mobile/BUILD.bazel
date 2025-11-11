@@ -190,6 +190,7 @@ valdi_module(
     ios_module_name = "SCCOmniTAKMobile",
     ios_output_target = "release",
     module_yaml = "module.yaml",
+    single_file_codegen = False,  # Fix: Generate multiple files for complex module
     res = glob([
         "res/**/*.jpeg",
         "res/**/*.jpg",

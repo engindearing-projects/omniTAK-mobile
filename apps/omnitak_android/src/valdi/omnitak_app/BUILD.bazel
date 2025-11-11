@@ -8,6 +8,7 @@ valdi_module(
     ]) + [
         "tsconfig.json",
     ],
+    module_yaml = "module.yaml",
     android_class_path = "com.engindearing.omnitak.app",
     android_output_target = "release",
     visibility = ["//visibility:public"],

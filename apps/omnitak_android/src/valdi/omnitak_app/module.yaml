@@ -1,0 +1,8 @@
+output_target: release
+
+dependencies:
+  - valdi_core
+  - valdi_tsx
+  - "//modules/omnitak_mobile:omnitak_mobile"
+
+compilation_mode: js
