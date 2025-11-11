@@ -10,6 +10,14 @@ struct NavigationDrawer: View {
     let connectionStatus: String
     let onNavigate: (String) -> Void
 
+    // Detect orientation
+    @Environment(\.verticalSizeClass) var verticalSizeClass
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
+
+    var isLandscape: Bool {
+        horizontalSizeClass == .regular || verticalSizeClass == .compact
+    }
+
     var body: some View {
         ZStack {
             // Overlay background
@@ -25,6 +33,11 @@ struct NavigationDrawer: View {
 
                 // Drawer panel with slide-in animation
                 HStack(spacing: 0) {
+                    // In landscape, add spacer first to push drawer to right
+                    if isLandscape {
+                        Spacer()
+                    }
+
                     VStack(spacing: 0) {
                         // Header with user info - ATAK Style
                         DrawerHeader(
@@ -95,18 +108,21 @@ struct NavigationDrawer: View {
                         // Footer
                         DrawerFooter()
                     }
-                    .frame(width: 280)
+                    .frame(width: 240)
                     .background(Color(hex: "#1E1E1E"))
                     .overlay(
                         Rectangle()
                             .frame(width: 2)
                             .foregroundColor(Color(hex: "#FFFC00"))
                             .shadow(color: Color(hex: "#FFFC00").opacity(0.5), radius: 4),
-                        alignment: .trailing
+                        alignment: isLandscape ? .leading : .trailing
                     )
-                    .transition(.move(edge: .leading))
+                    .transition(.move(edge: isLandscape ? .trailing : .leading))
 
-                    Spacer()
+                    // In portrait, add spacer after to push drawer to left
+                    if !isLandscape {
+                        Spacer()
+                    }
                 }
             }
         }

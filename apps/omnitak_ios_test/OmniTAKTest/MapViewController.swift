@@ -115,7 +115,7 @@ struct ATAKMapView: View {
 
                 Spacer()
 
-                // Bottom Toolbar (ATAK-style)
+                // Bottom Toolbar (ATAK-style) - Minimal floating buttons
                 ATAKBottomToolbar(
                     mapType: $mapType,
                     showLayersPanel: $showLayersPanel,
@@ -126,8 +126,6 @@ struct ATAKMapView: View {
                     onZoomIn: zoomIn,
                     onZoomOut: zoomOut
                 )
-                .background(Color.black.opacity(0.7))
-                .cornerRadius(12)
                 .padding(.horizontal, 8)
                 .padding(.bottom, 20)
             }
@@ -211,7 +209,7 @@ struct ATAKMapView: View {
             )
             .zIndex(1001) // Above all other UI elements
 
-            // GPS Status Indicator - Top Right
+            // GPS Status Indicator - Top Right (compact icon only)
             VStack {
                 HStack {
                     Spacer()
@@ -220,14 +218,14 @@ struct ATAKMapView: View {
                         isAvailable: locationManager.location != nil,
                         showError: false
                     )
-                    .padding([.trailing], 16)
-                    .padding([.top], 50)
+                    .padding([.trailing], 12)
+                    .padding([.top], 60)
                 }
                 Spacer()
             }
             .zIndex(1002)
 
-            // Callsign Display - Bottom Right
+            // Callsign Display - Bottom Right (above toolbar)
             if let location = locationManager.location {
                 VStack {
                     Spacer()
@@ -240,7 +238,8 @@ struct ATAKMapView: View {
                             speed: formatSpeed(location.speed),
                             accuracy: "+/- \(Int(location.horizontalAccuracy))m"
                         )
-                        .padding()
+                        .padding(.trailing, 16)
+                        .padding(.bottom, 120) // Lifted above toolbar buttons
                     }
                 }
                 .zIndex(1003)
@@ -476,25 +475,6 @@ struct ATAKStatusBar: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            // Hamburger Menu Button - ATAK Style
-            Button(action: onMenuTap) {
-                VStack(spacing: 4) {
-                    Rectangle()
-                        .fill(Color.white)
-                        .frame(width: 24, height: 3)
-                        .cornerRadius(2)
-                    Rectangle()
-                        .fill(Color.white)
-                        .frame(width: 24, height: 3)
-                        .cornerRadius(2)
-                    Rectangle()
-                        .fill(Color.white)
-                        .frame(width: 24, height: 3)
-                        .cornerRadius(2)
-                }
-                .frame(width: 48, height: 48)
-            }
-
             // YA-TAK Title with LED Status Indicator
             HStack(spacing: 8) {
                 Text("YA-TAK")
@@ -560,6 +540,25 @@ struct ATAKStatusBar: View {
             Text(Date().formatted(date: .omitted, time: .shortened))
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundColor(.white)
+
+            // Hamburger Menu Button - ATAK Style (moved to right side)
+            Button(action: onMenuTap) {
+                VStack(spacing: 4) {
+                    Rectangle()
+                        .fill(Color.white)
+                        .frame(width: 24, height: 3)
+                        .cornerRadius(2)
+                    Rectangle()
+                        .fill(Color.white)
+                        .frame(width: 24, height: 3)
+                        .cornerRadius(2)
+                    Rectangle()
+                        .fill(Color.white)
+                        .frame(width: 24, height: 3)
+                        .cornerRadius(2)
+                }
+                .frame(width: 48, height: 48)
+            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
@@ -655,8 +654,9 @@ struct MapToolButton: View {
             }
             .foregroundColor(.white)
             .frame(width: compact ? 36 : 56, height: compact ? 36 : 56)
-            .background(isPressed ? Color.cyan.opacity(0.5) : Color.black.opacity(0.3))
+            .background(isPressed ? Color.cyan.opacity(0.5) : Color.black.opacity(0.6))
             .cornerRadius(8)
+            .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
             .scaleEffect(isPressed ? 0.95 : 1.0)
         }
         .buttonStyle(.plain)

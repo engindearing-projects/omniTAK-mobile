@@ -137,35 +137,21 @@ struct GPSStatusIndicator: View {
     }
 
     var body: some View {
-        HStack(spacing: 8) {
-            // GPS Icon with status color
-            ZStack {
-                Circle()
-                    .fill(statusColor.opacity(0.2))
-                    .frame(width: 32, height: 32)
+        // Compact GPS Icon - just the icon with color indicator
+        ZStack {
+            Circle()
+                .fill(Color.black.opacity(0.7))
+                .frame(width: 36, height: 36)
 
-                Image(systemName: isAvailable ? "location.fill" : "location.slash.fill")
-                    .font(.system(size: 16))
-                    .foregroundColor(statusColor)
-            }
+            Circle()
+                .fill(statusColor.opacity(0.3))
+                .frame(width: 36, height: 36)
 
-            // Status Text
-            VStack(alignment: .leading, spacing: 2) {
-                Text(statusText)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.white)
-
-                if let acc = accuracy, isAvailable {
-                    Text("±\(Int(acc))m")
-                        .font(.system(size: 10))
-                        .foregroundColor(.gray)
-                }
-            }
+            Image(systemName: isAvailable ? "location.fill" : "location.slash.fill")
+                .font(.system(size: 14))
+                .foregroundColor(statusColor)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(Color.black.opacity(0.7))
-        .cornerRadius(20)
+        .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
     }
 }
 
