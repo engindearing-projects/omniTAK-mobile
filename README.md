@@ -82,14 +82,18 @@ See [Plugin Development](#plugin-development) section below for details.
 ```
 omni-BASE/
 ├── apps/
-│   ├── omnitak_ios_test/        # Native iOS app
-│   │   ├── OmniTAKTest/
-│   │   │   ├── OmniTAKTestApp.swift      # App entry point
-│   │   │   ├── MapViewController.swift   # Main ATAK interface (800+ lines)
+│   ├── omnitak/                 # Native iOS app (OmniTAKMobile)
+│   │   ├── OmniTAKMobile/
+│   │   │   ├── OmniTAKMobileApp.swift    # App entry point
+│   │   │   ├── MapViewController.swift   # Main ATAK interface
 │   │   │   ├── TAKService.swift          # TAK server integration
-│   │   │   ├── ServerManager.swift       # Multi-server management
-│   │   │   └── Info.plist                # Location permissions
-│   │   └── OmniTAKMobile.xcframework     # Rust FFI bindings
+│   │   │   ├── DrawingTools*.swift       # Tactical drawing system
+│   │   │   ├── ChatManager.swift         # Team chat
+│   │   │   ├── RadialMenu*.swift         # Context menus
+│   │   │   └── Info.plist                # Permissions & config
+│   │   ├── OmniTAKMobile.xcodeproj       # Xcode project
+│   │   ├── screenshots/                  # App screenshots
+│   │   └── README.md                     # Detailed build guide
 │   └── omnitak_android/         # Valdi Android app
 │       ├── BUILD.bazel                   # Bazel build configuration
 │       ├── src/valdi/omnitak_app/        # TypeScript entry point
@@ -133,67 +137,92 @@ omni-BASE/
 
 ## Quick Start
 
-### Setting Up Taky Server (Required)
+### 🚀 Get OmniTAKMobile Running in 5 Minutes
 
-Before running the app, you need a TAK server. We recommend using **Taky** for local development:
+**Want to run OmniTAK on your iPhone or simulator? Follow these simple steps.**
+
+#### Option 1: iOS Simulator (Easiest - No iPhone Needed)
 
 ```bash
-# Install Taky
-pip install taky
+# 1. Clone the repository
+git clone https://github.com/engindearing-projects/omni-BASE.git
+cd omni-BASE/apps/omnitak
 
-# Start Taky server in debug mode
-taky -l debug
+# 2. Open in Xcode
+open OmniTAKMobile.xcodeproj
+
+# 3. Select any iPhone simulator from the device dropdown
+# 4. Press ⌘+R (or click the Play button)
+# Done! App launches in ~2-5 minutes on first build
 ```
 
-The Taky server will start on `127.0.0.1:8087` (default TCP port). The app is pre-configured to connect to this server automatically.
+**That's it!** No code signing, no Apple ID required for simulator.
 
-**Note:** Keep the Taky server running while using the app. Press Ctrl+C to stop the server.
+#### Option 2: Physical iPhone/iPad
 
-### iOS Prerequisites
+```bash
+# 1. Clone the repository
+git clone https://github.com/engindearing-projects/omni-BASE.git
+cd omni-BASE/apps/omnitak
 
-- Xcode 15.0+
-- iOS 15.0+ deployment target
-- Rust toolchain (for building core library)
-- macOS with Apple Silicon or Intel
-- **Taky server** running locally (see above)
+# 2. Open in Xcode
+open OmniTAKMobile.xcodeproj
 
-### Android Prerequisites
+# 3. Configure signing (one-time):
+#    - Select OmniTAKMobile target → Signing & Capabilities
+#    - Check "Automatically manage signing"
+#    - Select your Apple ID as Team
+#    - Change Bundle ID to: com.yourname.omnitak (must be unique)
 
+# 4. Connect iPhone via USB and select it in device dropdown
+# 5. Press ⌘+R to build and install
+# 6. On iPhone: Settings → General → VPN & Device Management
+#    → Trust your Apple ID → Trust
+# Done!
+```
+
+#### 📖 Detailed Instructions
+
+For complete step-by-step instructions with screenshots and troubleshooting:
+
+**[👉 See apps/omnitak/README.md](apps/omnitak/README.md)**
+
+The detailed README includes:
+- ✅ Absolute beginner's guide (never built iOS app before? Start here!)
+- ✅ Prerequisites with validation commands
+- ✅ Visual success/failure indicators
+- ✅ 20+ troubleshooting scenarios with solutions
+- ✅ Screenshots of the app
+- ✅ Expected output at every step
+
+### Setting Up TAK Server (Optional)
+
+OmniTAK works offline for testing, but to connect to real TAK servers:
+
+```bash
+# Install Taky (local TAK server)
+pip install taky
+
+# Start Taky server
+taky -l debug
+# Server runs on 127.0.0.1:8087
+```
+
+Configure in app: **Menu (≡)** → **Servers** → **Add Server**
+
+### System Requirements
+
+**iOS:**
+- macOS 12.0+ (Monterey or later)
+- Xcode 15.0+ ([Free from App Store](https://apps.apple.com/us/app/xcode/id497799835))
+- iOS 15.0+ device or simulator
+- Apple ID (free account works)
+
+**Android:**
 - Bazel 7.2.1+
 - Android SDK API 34+
 - Android NDK r21+
-- Rust toolchain with Android targets
 - Node.js 18+
-- **Taky server** running locally (see above)
-
-### iOS Installation
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/engindearing-projects/omni-BASE.git
-   cd omni-BASE
-   ```
-
-2. **Build the Rust core library:**
-   ```bash
-   cd modules/omnitak_mobile
-   ./build_ios.sh
-   ```
-
-3. **Open the iOS project:**
-   ```bash
-   cd ../../apps/omnitak_ios_test
-   open OmniTAKTest.xcodeproj
-   ```
-
-4. **Configure signing:**
-   - Select the OmniTAKTest target
-   - Go to "Signing & Capabilities"
-   - Select your Team
-
-5. **Build and run:**
-   - Select iPhone simulator or device
-   - Press Cmd+R to build and run
 
 ### Android Installation
 
@@ -410,28 +439,47 @@ The server will start on `127.0.0.1:8087` and the app will automatically connect
 ### Building from Source
 
 ```bash
-# Build Rust library for iOS
-cd modules/omnitak_mobile
-./build_ios.sh
-
 # Build iOS app with Xcode CLI
-cd ../../apps/omnitak_ios_test
-xcodebuild -project OmniTAKTest.xcodeproj \
-           -scheme OmniTAKTest \
+cd apps/omnitak
+xcodebuild -scheme OmniTAKMobile \
            -configuration Debug \
+           -sdk iphonesimulator \
            -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
            build
+
+# Or simply open in Xcode
+open OmniTAKMobile.xcodeproj
+# Then press ⌘+R to build and run
 ```
 
-### Running Tests
+### Running on Simulator
 
 ```bash
-# Install on simulator
-xcrun simctl install "iPhone 16 Pro" \
-  "$(find ~/Library/Developer/Xcode/DerivedData/OmniTAKTest-*/Build/Products/Debug-iphonesimulator/OmniTAKTest.app | head -1)"
+# Method 1: Use Xcode (Recommended)
+# Just press ⌘+R in Xcode
 
-# Launch app
-xcrun simctl launch "iPhone 16 Pro" com.engindearing.omnitak.test
+# Method 2: Command line
+cd apps/omnitak
+xcodebuild -scheme OmniTAKMobile \
+           -configuration Debug \
+           -sdk iphonesimulator \
+           -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+           build run
+```
+
+### Troubleshooting
+
+**Build errors?** See the comprehensive troubleshooting guide:
+- [apps/omnitak/README.md#troubleshooting](apps/omnitak/README.md#troubleshooting)
+
+**Common fixes:**
+```bash
+# Clean build folder
+# In Xcode: Product → Clean Build Folder (Shift + ⌘ + K)
+
+# Or via command line:
+cd apps/omnitak
+xcodebuild clean -scheme OmniTAKMobile
 ```
 
 ## Roadmap
