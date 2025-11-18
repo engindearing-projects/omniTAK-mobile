@@ -4,6 +4,8 @@
 
 The Omni TAK plugin system allows third-party developers to extend the application's functionality while maintaining security and code signing consistency with the main application. Plugins are built, signed, and distributed through a secure GitLab CI/CD pipeline.
 
+**Plugin Implementation**: OmniTAK plugins are implemented as **native iOS frameworks** using Swift or Objective-C. They are dynamically loaded at runtime and interact with the app through a defined Swift API. The plugin system does NOT use WASM (WebAssembly) or cross-platform technologies at this time.
+
 ## Architecture Goals
 
 1. **Security First**: All plugins are validated, sandboxed, and signed with the same developer keys as the main app
@@ -35,16 +37,10 @@ omnitak-plugin-template/
 │   │   └── PluginMain.swift   # Plugin entry point
 │   ├── Resources/             # Assets, strings, etc.
 │   └── Info.plist             # iOS plugin info
-├── shared/                     # Shared Rust code (optional)
-│   ├── Cargo.toml
-│   └── src/
-│       └── lib.rs
-├── typescript/                 # Valdi UI components (optional)
-│   ├── package.json
-│   └── src/
-│       └── PluginUI.tsx
 └── README.md
 ```
+
+Note: Plugins are currently implemented as **native iOS frameworks** using Swift/Objective-C. The plugin system does NOT use WASM or WebAssembly.
 
 ### Plugin Manifest (plugin.json)
 
@@ -145,32 +141,30 @@ public protocol UIProvider {
 }
 ```
 
-### TypeScript API (Valdi)
+### TypeScript API (Valdi) - PLANNED (Phase 3)
+
+Future support for Valdi UI components is planned but not yet implemented:
 
 ```typescript
-// Plugin UI definition using Valdi
+// PLANNED: Plugin UI definition using Valdi (not yet available)
 export interface OmniTAKPluginUI {
   manifest: PluginManifest;
-
-  // Create UI components
   createPanel?(): VNode;
   createToolbarButton?(): VNode;
   createMapLayer?(): MapLayer;
-
-  // Lifecycle hooks
   onActivate?(): Promise<void>;
   onDeactivate?(): Promise<void>;
-
-  // Event handlers
   onCoTMessage?(message: CoTMessage): void;
   onMapEvent?(event: MapEvent): void;
 }
 ```
 
-### Rust FFI API (Optional for performance-critical code)
+### Rust FFI API - PLANNED (Phase 3)
+
+Future support for Rust-based plugins is planned but not yet implemented:
 
 ```rust
-// Rust plugin interface for native performance
+// PLANNED: Rust plugin interface (not yet available)
 #[repr(C)]
 pub struct PluginFFI {
     pub initialize: extern "C" fn(*mut PluginContext) -> i32,
@@ -178,6 +172,8 @@ pub struct PluginFFI {
     pub cleanup: extern "C" fn() -> i32,
 }
 ```
+
+**Current Status**: Only Swift/Objective-C plugins are supported. TypeScript and Rust support are planned for Phase 3.
 
 ## GitLab CI/CD Pipeline
 
@@ -307,8 +303,6 @@ cd my-plugin
 
 - Edit `plugin.json` with plugin details
 - Implement plugin code in `ios/Sources/PluginMain.swift`
-- Add UI components in `typescript/src/` if needed
-- Add Rust code in `shared/src/` if needed
 
 ### 3. Test Locally
 
@@ -349,14 +343,18 @@ git push origin v1.0.0
 
 ## Implementation Phases
 
-### Phase 1: iOS Foundation (Current)
+### Phase 1: iOS Foundation (Current - In Progress)
 
-- [ ] Create plugin template repository
-- [ ] Implement Swift plugin API
-- [ ] Build plugin loader and validator
-- [ ] Set up GitLab CI/CD template
-- [ ] Configure code signing in CI/CD
-- [ ] Create example plugin
+- [x] Create plugin template repository
+- [x] Implement Swift plugin API (OmniTAKPlugin protocol)
+- [x] Build plugin loader and validator (basic implementation)
+- [x] Set up GitLab CI/CD template
+- [x] Create example plugin template
+- [ ] Complete CoT integration with OmniTAK CoT system
+- [ ] Complete Map integration with MapLibre
+- [ ] Complete Location integration
+- [ ] Implement full signature verification
+- [ ] Configure code signing in CI/CD (production)
 
 ### Phase 2: Plugin Registry
 
@@ -365,21 +363,24 @@ git push origin v1.0.0
 - [ ] Create plugin browser UI
 - [ ] Implement plugin installation
 - [ ] Add plugin management settings
-
-### Phase 3: Advanced Features
-
-- [ ] Valdi TypeScript UI support
-- [ ] Rust FFI plugin support
 - [ ] Plugin update mechanism
+
+### Phase 3: Advanced Features (Planned)
+
+- [ ] Valdi TypeScript UI support for plugins
+- [ ] Rust FFI plugin support
 - [ ] Plugin marketplace UI
 - [ ] Plugin analytics and monitoring
+- [ ] Enhanced permission system
 
-### Phase 4: Android Support
+### Phase 4: Android Support (Future)
 
 - [ ] Port plugin API to Android
 - [ ] Create Android build pipeline
 - [ ] Add Android code signing
 - [ ] Cross-platform plugin support
+
+**Note**: Currently, only native iOS framework plugins (Swift/Objective-C) are supported. WASM, TypeScript, and Rust plugin support are not yet implemented.
 
 ## Security Considerations
 
