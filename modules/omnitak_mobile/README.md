@@ -84,7 +84,7 @@ omnitak_mobile/
 **Option 1: Xcode (Recommended for Development)**
 
 ```bash
-cd /Users/iesouskurios/Downloads/omni-BASE/apps/omnitak_ios_test
+cd apps/omnitak_ios_test
 
 # Build and run on simulator
 xcodebuild -scheme OmniTAKTest -destination 'platform=iOS Simulator,name=iPhone 16 Pro'
@@ -96,8 +96,6 @@ open OmniTAKTest.xcodeproj
 **Option 2: Bazel (Future - when Valdi integration is complete)**
 
 ```bash
-cd /Users/iesouskurios/Downloads/omni-BASE
-
 # Build for iOS
 bazel build //modules/omnitak_mobile:omnitak_mobile --ios_output_target=release
 
@@ -146,7 +144,7 @@ To create an iOS build that can be installed on physical devices for testing:
 
 1. Archive the app in Xcode:
    ```bash
-   cd /Users/iesouskurios/Downloads/omni-BASE/apps/omnitak_ios_test
+   cd apps/omnitak_ios_test
    xcodebuild -scheme OmniTAKTest -archivePath ./build/OmniTAK.xcarchive archive
    ```
 
@@ -223,7 +221,7 @@ ios-deploy --bundle ./build/Development/OmniTAKTest.app
 Android builds can be distributed more easily:
 
 ```bash
-cd /Users/iesouskurios/Downloads/omnitak-android-gradle
+cd apps/omnitak_android
 
 # Build debug APK (can be installed on any device)
 ./gradlew assembleDebug

@@ -52,7 +52,7 @@ export ANDROID_NDK_HOME=$HOME/Library/Android/sdk/ndk/25.1.8937393
 Navigate to the OmniTAK Rust project:
 
 ```bash
-cd /Users/iesouskurios/Downloads/omni-TAK/crates/omnitak-mobile
+cd $OMNI_TAK_PATH/crates/omnitak-mobile
 ```
 
 Build for all iOS architectures:
@@ -78,7 +78,7 @@ Build output locations:
 An XCFramework bundles multiple architecture variants:
 
 ```bash
-cd /Users/iesouskurios/Downloads/omni-TAK
+cd $OMNI_TAK_PATH
 
 # Create XCFramework
 xcodebuild -create-xcframework \
@@ -93,11 +93,11 @@ xcodebuild -create-xcframework \
 ```bash
 # Copy XCFramework
 cp -R target/OmniTAKMobile.xcframework \
-  /Users/iesouskurios/Downloads/omni-BASE/modules/omnitak_mobile/ios/native/
+  $PROJECT_ROOT/modules/omnitak_mobile/ios/native/
 
 # Copy header (should already be there)
 cp crates/omnitak-mobile/omnitak_mobile.h \
-  /Users/iesouskurios/Downloads/omni-BASE/modules/omnitak_mobile/ios/native/
+  $PROJECT_ROOT/modules/omnitak_mobile/ios/native/
 ```
 
 ### Step 4: Verify iOS Build
@@ -105,7 +105,7 @@ cp crates/omnitak-mobile/omnitak_mobile.h \
 Check that files are in place:
 
 ```bash
-ls -la /Users/iesouskurios/Downloads/omni-BASE/modules/omnitak_mobile/ios/native/
+ls -la $PROJECT_ROOT/modules/omnitak_mobile/ios/native/
 
 # Should see:
 # OmniTAKMobile.xcframework/
@@ -121,28 +121,28 @@ Create or update `~/.cargo/config.toml`:
 
 ```toml
 [target.aarch64-linux-android]
-ar = "/Users/iesouskurios/Library/Android/sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/darwin-x86_64/bin/llvm-ar"
-linker = "/Users/iesouskurios/Library/Android/sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android30-clang"
+ar = "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/darwin-x86_64/bin/llvm-ar"
+linker = "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android30-clang"
 
 [target.armv7-linux-androideabi]
-ar = "/Users/iesouskurios/Library/Android/sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/darwin-x86_64/bin/llvm-ar"
-linker = "/Users/iesouskurios/Library/Android/sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/darwin-x86_64/bin/armv7a-linux-androideabi30-clang"
+ar = "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/darwin-x86_64/bin/llvm-ar"
+linker = "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/darwin-x86_64/bin/armv7a-linux-androideabi30-clang"
 
 [target.x86_64-linux-android]
-ar = "/Users/iesouskurios/Library/Android/sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/darwin-x86_64/bin/llvm-ar"
-linker = "/Users/iesouskurios/Library/Android/sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/darwin-x86_64/bin/x86_64-linux-android30-clang"
+ar = "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/darwin-x86_64/bin/llvm-ar"
+linker = "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/darwin-x86_64/bin/x86_64-linux-android30-clang"
 
 [target.i686-linux-android]
-ar = "/Users/iesouskurios/Library/Android/sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/darwin-x86_64/bin/llvm-ar"
-linker = "/Users/iesouskurios/Library/Android/sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/darwin-x86_64/bin/i686-linux-android30-clang"
+ar = "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/darwin-x86_64/bin/llvm-ar"
+linker = "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/darwin-x86_64/bin/i686-linux-android30-clang"
 ```
 
-**Note:** Adjust paths based on your NDK version and location.
+**Note:** Replace `darwin-x86_64` with your platform (e.g., `linux-x86_64` on Linux) and adjust NDK version as needed.
 
 ### Step 2: Build Rust Library
 
 ```bash
-cd /Users/iesouskurios/Downloads/omni-TAK/crates/omnitak-mobile
+cd $OMNI_TAK_PATH/crates/omnitak-mobile
 
 # arm64-v8a (64-bit ARM)
 cargo build --release --target aarch64-linux-android
@@ -160,32 +160,32 @@ cargo build --release --target i686-linux-android
 ### Step 3: Copy Libraries to Android Module
 
 ```bash
-cd /Users/iesouskurios/Downloads/omni-TAK
+cd $OMNI_TAK_PATH
 
 # Create lib directories
-mkdir -p ../omni-BASE/modules/omnitak_mobile/android/native/lib/{arm64-v8a,armeabi-v7a,x86_64,x86}
+mkdir -p $PROJECT_ROOT/modules/omnitak_mobile/android/native/lib/{arm64-v8a,armeabi-v7a,x86_64,x86}
 
 # Copy arm64-v8a
 cp target/aarch64-linux-android/release/libomnitak_mobile.a \
-   ../omni-BASE/modules/omnitak_mobile/android/native/lib/arm64-v8a/
+   $PROJECT_ROOT/modules/omnitak_mobile/android/native/lib/arm64-v8a/
 
 # Copy armeabi-v7a
 cp target/armv7-linux-androideabi/release/libomnitak_mobile.a \
-   ../omni-BASE/modules/omnitak_mobile/android/native/lib/armeabi-v7a/
+   $PROJECT_ROOT/modules/omnitak_mobile/android/native/lib/armeabi-v7a/
 
 # Copy x86_64
 cp target/x86_64-linux-android/release/libomnitak_mobile.a \
-   ../omni-BASE/modules/omnitak_mobile/android/native/lib/x86_64/
+   $PROJECT_ROOT/modules/omnitak_mobile/android/native/lib/x86_64/
 
 # Copy x86
 cp target/i686-linux-android/release/libomnitak_mobile.a \
-   ../omni-BASE/modules/omnitak_mobile/android/native/lib/x86/
+   $PROJECT_ROOT/modules/omnitak_mobile/android/native/lib/x86/
 ```
 
 ### Step 4: Verify Android Build
 
 ```bash
-ls -la /Users/iesouskurios/Downloads/omni-BASE/modules/omnitak_mobile/android/native/
+ls -la $PROJECT_ROOT/modules/omnitak_mobile/android/native/
 
 # Should see:
 # lib/

@@ -2,16 +2,18 @@
 
 Welcome. We're thrilled you want to contribute. This guide will walk you through making your first contribution, even if you've never done it before.
 
-##  Quick Start: I Just Want to Fix a Typo.
+## Quick Start: I Just Want to Fix a Typo
+
 If you just want to fix a typo or make a small change:
 
-1. **Click the "Edit" button** on GitHub (looks like a pencil )
+1. **Click the "Edit" button** on GitHub (looks like a pencil)
 2. **Make your change** in the browser
 3. **Scroll down and click "Propose changes"**
 4. **Click "Create pull request"**
 
 Done. We'll review it and merge it. Easy.
-##  Making Your First Real Contribution
+
+## Making Your First Real Contribution
 
 ### Step 1: Get a Copy of the Code
 
@@ -73,11 +75,11 @@ git push
 ### Step 5: Wait for Review
 
 We'll review your pull request within a few days and either:
--  Merge it (yay!)
--  Ask questions or request small changes
--  Explain if we can't merge it (rare!)
+- Merge it (yay!)
+- Ask questions or request small changes
+- Explain if we can't merge it (rare!)
 
-##  What Can You Contribute?
+## What Can You Contribute?
 
 ### Super Easy (No Coding Required!)
 
@@ -108,7 +110,7 @@ We'll review your pull request within a few days and either:
 - **Add Android support**
 - **Create complex plugins**
 
-##  Plugin Contributions
+## Plugin Contributions
 
 Want to create a plugin? It's easy.
 ### Quick Plugin Contribution
@@ -140,7 +142,7 @@ git push
 
 See [Plugin Development Guide](docs/PLUGIN_DEVELOPMENT_GUIDE.md) for details.
 
-##  Before You Submit
+## Before You Submit
 
 Please check:
 
@@ -150,7 +152,8 @@ Please check:
 - [ ] **Did you update documentation?** (if you added features)
 
 Don't worry if you're not perfect - we'll help you improve it.
-##  Reporting Bugs
+
+## Reporting Bugs
 
 Found a bug? Help us fix it.
 1. **Go to Issues** on GitHub
@@ -183,7 +186,7 @@ Environment:
 Screenshot: [attached]
 ```
 
-##  Suggesting Features
+## Suggesting Features
 
 Have an idea? We'd love to hear it.
 1. **Go to Issues** on GitHub
@@ -219,7 +222,7 @@ This would be useful for:
 
 Happy to help test this if implemented.```
 
-##  Documentation Contributions
+## Documentation Contributions
 
 Documentation is code too. Help us make our docs better:
 
@@ -230,31 +233,31 @@ Documentation is code too. Help us make our docs better:
 ### Making Docs Better
 
 Good documentation:
--  Uses simple language
--  Has examples
--  Has screenshots (for UI things)
--  Explains *why*, not just *how*
--  Assumes the reader is smart but new
+- Uses simple language
+- Has examples
+- Has screenshots (for UI things)
+- Explains *why*, not just *how*
+- Assumes the reader is smart but new
 
 Bad documentation:
--  Uses lots of jargon
--  Says "it's obvious" or "simply do X"
--  Skips steps
--  Has no examples
--  Is condescending
+- Uses lots of jargon
+- Says "it's obvious" or "simply do X"
+- Skips steps
+- Has no examples
+- Is condescending
 
-##  Code of Conduct
+## Code of Conduct
 
 Be nice. Specifically:
 
--  **Be respectful** - Everyone's learning
--  **Be patient** - Reviews take time
--  **Be constructive** - Suggest improvements, don't just criticize
--  **Be welcoming** - Help newcomers
--  **No harassment** - Treat everyone with respect
--  **No spam** - Keep it relevant
+- **Be respectful** - Everyone's learning
+- **Be patient** - Reviews take time
+- **Be constructive** - Suggest improvements, don't just criticize
+- **Be welcoming** - Help newcomers
+- **No harassment** - Treat everyone with respect
+- **No spam** - Keep it relevant
 
-##  Learning Resources
+## Learning Resources
 
 New to contributing? Check these out:
 
@@ -272,7 +275,7 @@ New to contributing? Check these out:
 - [TAK.gov](https://tak.gov/) - Official TAK resources
 - [CoT Protocol](https://tak.gov/docs) - Cursor-on-Target docs
 
-##  Getting Help
+## Getting Help
 
 Stuck? We're here to help.
 - **Issues** - Ask questions in GitHub Issues
@@ -281,24 +284,25 @@ Stuck? We're here to help.
 
 Questions are welcome. Don't be shy.
 
-##  Recognition
+## Recognition
 
 All contributors are added to:
 - GitHub's contributor list (automatic)
 - Special thanks in release notes (for significant contributions)
 
 Your name will live forever in the git history.
-##  License
+
+## License
 
 By contributing, you agree that your contributions will be licensed under the same license as the project (MIT License).
 
 This means:
--  Your code will be free and open source
--  Anyone can use it
--  You keep credit for your contribution
--  You're not liable if something breaks
+- Your code will be free and open source
+- Anyone can use it
+- You keep credit for your contribution
+- You're not liable if something breaks
 
-##  Advanced: Setting Up Development Environment
+## Advanced: Setting Up Development Environment
 
 For serious contributors who want to make bigger changes:
 
@@ -349,7 +353,7 @@ cargo fmt
 npm run format
 ```
 
-##  Contribution Workflow
+## Contribution Workflow
 
 The complete flow for bigger contributions:
 
@@ -372,9 +376,10 @@ The complete flow for bigger contributions:
    ↓
 9. Address review feedback (if any)
    ↓
-10. Merged.```
+10. Merged.
+```
 
-##  Types of Contributions We Love
+## Types of Contributions We Love
 
 | Type | Difficulty | Impact | Examples |
 |------|-----------|--------|----------|
@@ -386,7 +391,8 @@ The complete flow for bigger contributions:
 | **Features** | ⭐⭐⭐ Hard |  Huge | Add new capabilities |
 | **Architecture** | ⭐⭐⭐ Hard |  Very High | Refactor, optimize |
 
-##  Thank You.
+## Thank You
+
 Every contribution, no matter how small, makes a difference. Whether you're fixing a typo or adding a major feature, we appreciate you taking the time to make OmniTAK better.
 
 Welcome to the team.

@@ -6,9 +6,9 @@ This implementation is **READY TO USE**. All files have been created and TAKServ
 
 ---
 
-## Files Created 
+## Files Created
 
-All files are located in: `/Users/iesouskurios/Downloads/omni-BASE/apps/omnitak_ios_test/OmniTAKTest/`
+All files are located in: `apps/omnitak_ios_test/OmniTAKTest/`
 
 ### Core Chat Files (7 files)
 1. **ChatModels.swift**  - Data models (ChatMessage, Conversation, ChatParticipant, etc.)

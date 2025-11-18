@@ -27,13 +27,13 @@ ERROR: .../modules/omnitak_mobile/BUILD.bazel:23:10: no such target '//modules/o
 
 **Solution 1**: Build the XCFramework
 ```bash
-cd /Users/iesouskurios/Downloads/omni-TAK/crates/omnitak-mobile
+cd $OMNI_TAK_PATH/crates/omnitak-mobile
 ./build_ios.sh
 ```
 
 **Solution 2**: Verify the XCFramework exists
 ```bash
-ls -la /Users/iesouskurios/Downloads/omni-BASE/modules/omnitak_mobile/ios/native/OmniTAKMobile.xcframework/
+ls -la $PROJECT_ROOT/modules/omnitak_mobile/ios/native/OmniTAKMobile.xcframework/
 ```
 
 **Solution 3**: Check the path in BUILD.bazel
@@ -267,12 +267,12 @@ cc_library(
 
 Or build Rust library separately and link:
 ```bash
-cd /Users/iesouskurios/Downloads/omni-TAK/crates/omnitak-mobile
+cd $OMNI_TAK_PATH/crates/omnitak-mobile
 ./build_android.sh
 
 # Copy .so files to jniLibs
 cp target/aarch64-linux-android/release/libomnitak_mobile.so \
-   /Users/iesouskurios/Downloads/omni-BASE/modules/omnitak_mobile/android/jniLibs/arm64-v8a/
+   $PROJECT_ROOT/modules/omnitak_mobile/android/jniLibs/arm64-v8a/
 ```
 
 ---

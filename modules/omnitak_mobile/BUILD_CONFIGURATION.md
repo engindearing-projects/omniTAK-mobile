@@ -679,5 +679,5 @@ modules/omnitak_mobile/
 
 For build issues specific to:
 - **Valdi framework**: Check internal Valdi documentation
-- **OmniTAK Mobile**: See `/Users/iesouskurios/Downloads/omni-BASE/modules/omnitak_mobile/README.md`
-- **Rust FFI**: See `/Users/iesouskurios/Downloads/omni-TAK/crates/omnitak-mobile/README.md`
+- **OmniTAK Mobile**: See `modules/omnitak_mobile/README.md`
+- **Rust FFI**: See the omni-TAK repository

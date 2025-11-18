@@ -58,7 +58,7 @@ This guide provides complete instructions for integrating the Advanced CoT Filte
 
 ### Step 1: Add Filter System to MapViewController.swift
 
-Open `/Users/iesouskurios/Downloads/omni-BASE/apps/omnitak_ios_test/OmniTAKTest/MapViewController.swift`
+Open `apps/omnitak_ios_test/OmniTAKTest/MapViewController.swift`
 
 #### 1.1 Add StateObjects (after line 8)
 

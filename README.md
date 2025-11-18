@@ -8,9 +8,9 @@
 
 **OmniTAK Mobile is a cross-platform TAK (Team Awareness Kit) client built with Rust and native mobile frameworks.** It provides full ATAK-compatible tactical map functionality with multi-server management, real-time CoT (Cursor on Target) messaging, and a modern native UI.
 
-## Latest Update: iOS App Store Release (Nov 17, 2025)
+## Latest Update
 
-**OmniTAK Mobile is now available on the App Store.**
+**OmniTAK Mobile is now available on the App Store for iOS.**
 
 - Full ATAK-style UI with tactical theme
 - Multi-server management with TLS support
@@ -21,17 +21,16 @@
 - Waypoint navigation and routing
 - Portrait and landscape orientation support
 
-Download from the App Store or see [screenshots below](#screenshots).
 ## Features
 
-###  Tactical Map Interface
+### Tactical Map Interface
 - **ATAK-style UI** - Professional tactical map interface mirroring ATAK's design
 - **MapKit Integration** - Native iOS mapping with satellite, hybrid, and standard views
 - **Real-time CoT Markers** - Live position updates with color-coded unit types (friendly/hostile/unknown)
 - **GPS Tracking** - Real-time location with accuracy indicators
 - **Interactive Controls** - Zoom, pan, layer switching, and GPS centering
 
-###  Multi-Server Management
+### Multi-Server Management
 - **Server Configuration** - Add, edit, and delete multiple TAK servers
 - **Persistent Storage** - Server configurations saved locally with UserDefaults
 - **One-Tap Switching** - Quickly switch between configured servers
@@ -39,20 +38,20 @@ Download from the App Store or see [screenshots below](#screenshots).
 - **Protocol Support** - TCP/UDP with optional TLS encryption
 - **Active Server Display** - Current server name shown in status bar
 
-###  CoT Messaging
+### CoT Messaging
 - **XML Parser** - Parse and display CoT messages from TAK servers
 - **Broadcast Position** - Send self-position updates with full metadata
 - **Event Tracking** - Monitor sent and received message counts
 - **Type Filtering** - Filter units by affiliation (friendly, hostile, unknown)
 
-###  Drawing Tools
+### Drawing Tools
 - **Circles** - Draw circular areas of interest on the map
 - **Polygons** - Create multi-point polygon shapes
 - **Drawing Management** - View, edit, and clear all drawings
 - **Persistent Storage** - Drawings saved and restored across sessions
 - **Color Coding** - Orange and green tactical colors for visibility
 
-###  User Interface
+### User Interface
 - **OmniTAK Branding** - Professional tactical theme with yellow accent (#FFFC00)
 - **Navigation Drawer** - ATAK-style slide-in menu with user profile
 - **Responsive Design** - Works in portrait and landscape orientations
@@ -62,7 +61,7 @@ Download from the App Store or see [screenshots below](#screenshots).
 - **Haptic Feedback** - Tactile response for all button interactions
 - **Dark Mode Ready** - Semi-transparent overlays optimized for tactical use
 
-###  Plugin System (NEW!)
+### Plugin System
 - **Secure Plugin Architecture** - Extensible plugin system with permission-based API access
 - **Two Development Modes** - Local development (your own signing) or official distribution (OmniTAK signing)
 - **GitLab CI/CD Integration** - Automated build, test, sign, and publish pipeline
@@ -136,8 +135,6 @@ omniTAK-mobile/
 
 ## Quick Start
 
-###  Get OmniTAKMobile Running in 5 Minutes
-
 **Want to run OmniTAK on your iPhone or simulator? Follow these simple steps.**
 
 #### Option 1: iOS Simulator (Easiest - No iPhone Needed)
@@ -179,7 +176,7 @@ open OmniTAKMobile.xcodeproj
 #    → Trust your Apple ID → Trust
 # Done.```
 
-####  Detailed Instructions
+#### Detailed Instructions
 
 For complete step-by-step instructions with screenshots and troubleshooting:
 
@@ -266,13 +263,13 @@ For detailed Android build instructions, see [apps/omnitak_android/README.md](ap
 
 ### Two Development Modes
 
-####  Local Development (Your Own Signing)
+#### Local Development (Your Own Signing)
 - Use your own Apple Developer account (free or paid)
 - Build and test on your own iPhone/iPad
 - Perfect for learning and experimentation
 - No approval needed
 
-####  Official Distribution (OmniTAK Signing)
+#### Official Distribution (OmniTAK Signing)
 - Submit plugins for official distribution
 - Signed with OmniTAK's certificate via GitLab CI/CD
 - Published to official plugin registry

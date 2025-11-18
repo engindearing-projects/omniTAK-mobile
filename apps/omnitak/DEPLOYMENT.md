@@ -17,7 +17,7 @@
 ### Step 2: Select Device in Xcode
 ```bash
 # Open the project
-cd /Users/iesouskurios/Downloads/omni-BASE/apps/omnitak_ios_test
+cd apps/omnitak_ios_test
 open OmniTAKTest.xcodeproj
 
 # In Xcode:

@@ -665,7 +665,7 @@ onCotReceived((xml) => {
 ## Resources
 
 - [Valdi Documentation](https://snap.com/valdi)
-- [OmniTAK Rust Crate](/Users/iesouskurios/Downloads/omni-TAK/crates/omnitak-mobile)
+- [OmniTAK Rust Crate](https://github.com/engindearing-projects/omni-TAK)
 - [TAK Protocol Specification](https://tak.gov)
 - [CoT XML Schema](https://tak.gov/cot)
 
