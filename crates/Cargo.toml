@@ -5,6 +5,7 @@ members = [
     "omnitak-client",
     "omnitak-cert",
     "omnitak-mobile",
+    "omnitak-server",
 ]
 resolver = "2"
 
