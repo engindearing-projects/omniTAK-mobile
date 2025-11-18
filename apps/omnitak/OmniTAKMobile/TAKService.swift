@@ -35,7 +35,7 @@ class DirectTCPSender {
         return connection?.state == .ready
     }
 
-    func connect(host: String, port: UInt16, protocolType: String = "tcp", useTLS: Bool = false, certificateName: String? = nil, certificatePassword: String? = nil, completion: @escaping (Bool) -> Void) {
+    func connect(host: String, port: UInt16, protocolType: String = "tcp", useTLS: Bool = false, certificateName: String? = nil, certificatePassword: String? = nil, allowLegacyTLS: Bool = false, completion: @escaping (Bool) -> Void) {
         // Create endpoint with explicit IPv4 if possible
         let nwHost: NWEndpoint.Host
         if let ipv4 = IPv4Address(host) {
@@ -67,7 +67,30 @@ class DirectTCPSender {
             let secOptions = tlsOptions.securityProtocolOptions
 
             // Support TLS 1.2 and 1.3 (TAK servers may use either)
-            sec_protocol_options_set_min_tls_protocol_version(secOptions, .TLSv12)
+            // For extremely old servers, allow TLS 1.0/1.1 (security risk - opt-in only)
+            if allowLegacyTLS {
+                #if DEBUG
+                print("⚠️  WARNING: Allowing legacy TLS 1.0+ (security risk)")
+                #endif
+                sec_protocol_options_set_min_tls_protocol_version(secOptions, .TLSv10)
+            } else {
+                // TLS 1.2 is minimum for secure legacy TAK server compatibility
+                sec_protocol_options_set_min_tls_protocol_version(secOptions, .TLSv12)
+            }
+
+            // Set max to TLS 1.3 for modern servers
+            sec_protocol_options_set_max_tls_protocol_version(secOptions, .TLSv13)
+
+            // Add legacy cipher suites for older TAK servers
+            // These are commonly needed for TAK servers running older OpenSSL versions
+            sec_protocol_options_append_tls_ciphersuite(secOptions, tls_ciphersuite_t(rawValue: UInt16(TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384))!)
+            sec_protocol_options_append_tls_ciphersuite(secOptions, tls_ciphersuite_t(rawValue: UInt16(TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256))!)
+            sec_protocol_options_append_tls_ciphersuite(secOptions, tls_ciphersuite_t(rawValue: UInt16(TLS_RSA_WITH_AES_256_GCM_SHA384))!)
+            sec_protocol_options_append_tls_ciphersuite(secOptions, tls_ciphersuite_t(rawValue: UInt16(TLS_RSA_WITH_AES_128_GCM_SHA256))!)
+
+            // For very old TAK servers (use with caution)
+            sec_protocol_options_append_tls_ciphersuite(secOptions, tls_ciphersuite_t(rawValue: UInt16(TLS_RSA_WITH_AES_256_CBC_SHA))!)
+            sec_protocol_options_append_tls_ciphersuite(secOptions, tls_ciphersuite_t(rawValue: UInt16(TLS_RSA_WITH_AES_128_CBC_SHA))!)
 
             // Disable server certificate verification for self-signed certs
             // TAK servers typically use self-signed certificates
@@ -78,6 +101,25 @@ class DirectTCPSender {
                 #endif
                 complete(true)
             }, .main)
+
+            // Log TLS negotiation details for debugging
+            #if DEBUG
+            sec_protocol_options_set_tls_negotiation_monitor(secOptions, .main) { (metadata) in
+                let version = sec_protocol_metadata_get_negotiated_tls_protocol_version(metadata)
+                let ciphersuite = sec_protocol_metadata_get_negotiated_tls_ciphersuite(metadata)
+
+                let versionString: String
+                switch version {
+                case .TLSv10: versionString = "TLS 1.0"
+                case .TLSv11: versionString = "TLS 1.1"
+                case .TLSv12: versionString = "TLS 1.2"
+                case .TLSv13: versionString = "TLS 1.3"
+                default: versionString = "Unknown"
+                }
+
+                print("🔐 TLS Negotiated: \(versionString), Cipher: 0x\(String(format: "%04X", ciphersuite.rawValue))")
+            }
+            #endif
 
             // Configure client certificate if provided
             if let certName = certificateName, !certName.isEmpty {
@@ -110,7 +152,11 @@ class DirectTCPSender {
             }
 
             #if DEBUG
-            print("🔒 Using TLS/SSL (TLS 1.2+, accepting self-signed certs)")
+            if allowLegacyTLS {
+                print("🔒 Using TLS/SSL (TLS 1.0-1.3, legacy mode, legacy cipher suites, accepting self-signed certs)")
+            } else {
+                print("🔒 Using TLS/SSL (TLS 1.2-1.3, legacy cipher suites enabled, accepting self-signed certs)")
+            }
             #endif
         } else if protocolType.lowercased() == "udp" {
             // UDP
