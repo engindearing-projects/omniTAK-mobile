@@ -365,9 +365,9 @@ export class UserListComponent extends Component {
 ## Platform Support
 
 The `valdi_http` module works on:
-- ✅ iOS
-- ✅ Android
-- ✅ Web (via polyfill)
+-  iOS
+-  Android
+-  Web (via polyfill)
 
 Network requests are always performed asynchronously and will not block the JavaScript thread.
 

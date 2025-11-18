@@ -88,7 +88,7 @@ This solution will ensure that `Child` will re-render only when necessary, makin
 
 > **See also:** [Component Events](./core-events.md) for more on handling touch events and callbacks.
 
-**❌ BAD - Don't do this:**
+** BAD - Don't do this:**
 
 ```tsx
 class MyComponent extends Component {
@@ -101,7 +101,7 @@ class MyComponent extends Component {
 ```
 This code sets the `onTap` attribute to an inline lambda. The issue with that code is that whenever the Component renders, a callback function will be created for the `onTap` every time. Functions in TypeScript cannot be compared by value, they are just compared by reference. As such, the framework cannot know if the function has actually changed or not, unless the reference stays the same. This means that for every render, the diff algorithm will detect a change for the `onTap` attribute which triggers an update of the tap handler to the backing view element. The solution is to store the callback as a lambda on the component itself, and pass down the created lambda:
 
-**✅ GOOD - Do this instead:**
+** GOOD - Do this instead:**
 
 ```tsx
 class MyComponent extends Component {

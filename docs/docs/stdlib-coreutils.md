@@ -160,7 +160,7 @@ Compute MD5 hashes of strings.
 ```typescript
 import { md5 } from 'coreutils/src/md5';
 
-const hash = md5('Hello, World!');
+const hash = md5('Hello, World.');
 console.log(hash); // "65a8e27d8879283831b664bd8b7f0ad4"
 ```
 
@@ -217,7 +217,7 @@ import { UnicodeString } from 'coreutils/src/unicode/UnicodeString';
 import { TextEncoder, TextDecoder } from 'coreutils/src/unicode/TextCoding';
 
 // Unicode string manipulation
-const str = new UnicodeString('Hello 👋 World');
+const str = new UnicodeString('Hello  World');
 console.log(str.length); // Character count including emoji
 
 // Text encoding/decoding

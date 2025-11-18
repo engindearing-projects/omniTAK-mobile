@@ -69,10 +69,10 @@ valdi hotreload
 Choose the `//apps/helloworld:hello_world_hotreload` target.
 
 ```
-❯ valdi hotreload
-✔ Running Bazel command: bazel query "attr(\"tags\", \"valdi_application\", //...)"
+ valdi hotreload
+ Running Bazel command: bazel query "attr(\"tags\", \"valdi_application\", //...)"
 ? Please choose a target to hot reload: (Use arrow keys)
-❯ 1. //apps/helloworld:hello_world_hotreload 
+ 1. //apps/helloworld:hello_world_hotreload 
   2. //apps/navigation_example:navigation_example_app_hotreload 
   3. //apps/valdi_gpt:valdi_gpt_hotreload 
 ```

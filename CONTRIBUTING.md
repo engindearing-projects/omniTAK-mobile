@@ -1,19 +1,17 @@
 # Contributing to OmniTAK
 
-Welcome! We're thrilled you want to contribute. This guide will walk you through making your first contribution, even if you've never done it before.
+Welcome. We're thrilled you want to contribute. This guide will walk you through making your first contribution, even if you've never done it before.
 
-## 🎯 Quick Start: I Just Want to Fix a Typo!
-
+##  Quick Start: I Just Want to Fix a Typo.
 If you just want to fix a typo or make a small change:
 
-1. **Click the "Edit" button** on GitHub (looks like a pencil ✏️)
+1. **Click the "Edit" button** on GitHub (looks like a pencil )
 2. **Make your change** in the browser
 3. **Scroll down and click "Propose changes"**
 4. **Click "Create pull request"**
 
-Done! We'll review it and merge it. Easy!
-
-## 🚀 Making Your First Real Contribution
+Done. We'll review it and merge it. Easy.
+##  Making Your First Real Contribution
 
 ### Step 1: Get a Copy of the Code
 
@@ -39,8 +37,7 @@ Find the file you want to change and edit it with any text editor:
 - **Notepad** (Windows)
 - **VS Code** (recommended, free download)
 
-Save your changes!
-
+Save your changes.
 ### Step 3: Test Your Changes (Optional but Nice)
 
 If you changed code:
@@ -49,8 +46,7 @@ If you changed code:
 ./scripts/build_ios.sh simulator debug
 ```
 
-If you just changed documentation (like README.md), you're good to go!
-
+If you just changed documentation (like README.md), you're good to go.
 ### Step 4: Submit Your Changes
 
 **Option A: Using GitHub Desktop**
@@ -77,11 +73,11 @@ git push
 ### Step 5: Wait for Review
 
 We'll review your pull request within a few days and either:
-- ✅ Merge it (yay!)
-- 💬 Ask questions or request small changes
-- ❌ Explain if we can't merge it (rare!)
+-  Merge it (yay!)
+-  Ask questions or request small changes
+-  Explain if we can't merge it (rare!)
 
-## 📝 What Can You Contribute?
+##  What Can You Contribute?
 
 ### Super Easy (No Coding Required!)
 
@@ -112,10 +108,9 @@ We'll review your pull request within a few days and either:
 - **Add Android support**
 - **Create complex plugins**
 
-## 🔌 Plugin Contributions
+##  Plugin Contributions
 
-Want to create a plugin? It's easy!
-
+Want to create a plugin? It's easy.
 ### Quick Plugin Contribution
 
 ```bash
@@ -135,8 +130,7 @@ nano ios/Sources/PluginMain.swift
 # 5. Build it
 ./scripts/build_plugin_ios.sh simulator debug
 
-# 6. Test it works!
-# ... integrate into OmniTAK and test ...
+# 6. Test it works.# ... integrate into OmniTAK and test ...
 
 # 7. Submit it (same as above - commit and push)
 git add .
@@ -146,7 +140,7 @@ git push
 
 See [Plugin Development Guide](docs/PLUGIN_DEVELOPMENT_GUIDE.md) for details.
 
-## ✅ Before You Submit
+##  Before You Submit
 
 Please check:
 
@@ -155,12 +149,10 @@ Please check:
 - [ ] **Is your code formatted nicely?** (readable, has comments)
 - [ ] **Did you update documentation?** (if you added features)
 
-Don't worry if you're not perfect - we'll help you improve it!
+Don't worry if you're not perfect - we'll help you improve it.
+##  Reporting Bugs
 
-## 🐛 Reporting Bugs
-
-Found a bug? Help us fix it!
-
+Found a bug? Help us fix it.
 1. **Go to Issues** on GitHub
 2. **Click "New Issue"**
 3. **Tell us:**
@@ -191,10 +183,9 @@ Environment:
 Screenshot: [attached]
 ```
 
-## 💡 Suggesting Features
+##  Suggesting Features
 
-Have an idea? We'd love to hear it!
-
+Have an idea? We'd love to hear it.
 1. **Go to Issues** on GitHub
 2. **Click "New Issue"**
 3. **Select "Feature Request"** (if available)
@@ -226,46 +217,44 @@ This would be useful for:
 - Battery saving
 - Eye strain reduction
 
-Happy to help test this if implemented!
-```
+Happy to help test this if implemented.```
 
-## 📚 Documentation Contributions
+##  Documentation Contributions
 
-Documentation is code too! Help us make our docs better:
+Documentation is code too. Help us make our docs better:
 
 - **README.md** - Main project description
 - **docs/PLUGIN_*.md** - Plugin system docs
 - **plugin-template/README.md** - Plugin template docs
-- **CONTRIBUTING.md** - This file!
-
+- **CONTRIBUTING.md** - This file.
 ### Making Docs Better
 
 Good documentation:
-- ✅ Uses simple language
-- ✅ Has examples
-- ✅ Has screenshots (for UI things)
-- ✅ Explains *why*, not just *how*
-- ✅ Assumes the reader is smart but new
+-  Uses simple language
+-  Has examples
+-  Has screenshots (for UI things)
+-  Explains *why*, not just *how*
+-  Assumes the reader is smart but new
 
 Bad documentation:
-- ❌ Uses lots of jargon
-- ❌ Says "it's obvious" or "simply do X"
-- ❌ Skips steps
-- ❌ Has no examples
-- ❌ Is condescending
+-  Uses lots of jargon
+-  Says "it's obvious" or "simply do X"
+-  Skips steps
+-  Has no examples
+-  Is condescending
 
-## 🤝 Code of Conduct
+##  Code of Conduct
 
-Be nice! Specifically:
+Be nice. Specifically:
 
-- ✅ **Be respectful** - Everyone's learning
-- ✅ **Be patient** - Reviews take time
-- ✅ **Be constructive** - Suggest improvements, don't just criticize
-- ✅ **Be welcoming** - Help newcomers
-- ❌ **No harassment** - Treat everyone with respect
-- ❌ **No spam** - Keep it relevant
+-  **Be respectful** - Everyone's learning
+-  **Be patient** - Reviews take time
+-  **Be constructive** - Suggest improvements, don't just criticize
+-  **Be welcoming** - Help newcomers
+-  **No harassment** - Treat everyone with respect
+-  **No spam** - Keep it relevant
 
-## 🎓 Learning Resources
+##  Learning Resources
 
 New to contributing? Check these out:
 
@@ -283,35 +272,33 @@ New to contributing? Check these out:
 - [TAK.gov](https://tak.gov/) - Official TAK resources
 - [CoT Protocol](https://tak.gov/docs) - Cursor-on-Target docs
 
-## 💬 Getting Help
+##  Getting Help
 
-Stuck? We're here to help!
-
+Stuck? We're here to help.
 - **Issues** - Ask questions in GitHub Issues
 - **Discord** - Join our Discord (link in README)
 - **Email** - Email us at support@omnitak.io
 
-Questions are welcome! Don't be shy.
+Questions are welcome. Don't be shy.
 
-## 🏆 Recognition
+##  Recognition
 
 All contributors are added to:
 - GitHub's contributor list (automatic)
 - Special thanks in release notes (for significant contributions)
 
-Your name will live forever in the git history! 🎉
-
-## 📜 License
+Your name will live forever in the git history.
+##  License
 
 By contributing, you agree that your contributions will be licensed under the same license as the project (MIT License).
 
 This means:
-- ✅ Your code will be free and open source
-- ✅ Anyone can use it
-- ✅ You keep credit for your contribution
-- ✅ You're not liable if something breaks
+-  Your code will be free and open source
+-  Anyone can use it
+-  You keep credit for your contribution
+-  You're not liable if something breaks
 
-## 🚀 Advanced: Setting Up Development Environment
+##  Advanced: Setting Up Development Environment
 
 For serious contributors who want to make bigger changes:
 
@@ -362,7 +349,7 @@ cargo fmt
 npm run format
 ```
 
-## 🔄 Contribution Workflow
+##  Contribution Workflow
 
 The complete flow for bigger contributions:
 
@@ -385,29 +372,25 @@ The complete flow for bigger contributions:
    ↓
 9. Address review feedback (if any)
    ↓
-10. Merged! 🎉
-```
+10. Merged.```
 
-## 📊 Types of Contributions We Love
+##  Types of Contributions We Love
 
 | Type | Difficulty | Impact | Examples |
 |------|-----------|--------|----------|
-| **Documentation** | ⭐ Easy | 🔥 High | Fix typos, add examples, improve clarity |
-| **Bug Reports** | ⭐ Easy | 🔥🔥 Very High | Find and report issues |
-| **Bug Fixes** | ⭐⭐ Medium | 🔥🔥 Very High | Fix reported issues |
-| **Tests** | ⭐⭐ Medium | 🔥🔥 Very High | Add unit/integration tests |
-| **Plugins** | ⭐⭐ Medium | 🔥 High | Extend functionality |
-| **Features** | ⭐⭐⭐ Hard | 🔥🔥🔥 Huge | Add new capabilities |
-| **Architecture** | ⭐⭐⭐ Hard | 🔥🔥 Very High | Refactor, optimize |
+| **Documentation** | ⭐ Easy |  High | Fix typos, add examples, improve clarity |
+| **Bug Reports** | ⭐ Easy |  Very High | Find and report issues |
+| **Bug Fixes** | ⭐⭐ Medium |  Very High | Fix reported issues |
+| **Tests** | ⭐⭐ Medium |  Very High | Add unit/integration tests |
+| **Plugins** | ⭐⭐ Medium |  High | Extend functionality |
+| **Features** | ⭐⭐⭐ Hard |  Huge | Add new capabilities |
+| **Architecture** | ⭐⭐⭐ Hard |  Very High | Refactor, optimize |
 
-## 🎉 Thank You!
-
+##  Thank You.
 Every contribution, no matter how small, makes a difference. Whether you're fixing a typo or adding a major feature, we appreciate you taking the time to make OmniTAK better.
 
-Welcome to the team! 🚀
-
+Welcome to the team.
 ---
 
-**Questions?** Open an issue and ask - we're happy to help!
-
-**Ready to contribute?** Pick an issue labeled `good first issue` to get started!
+**Questions?** Open an issue and ask - we're happy to help.
+**Ready to contribute?** Pick an issue labeled `good first issue` to get started.

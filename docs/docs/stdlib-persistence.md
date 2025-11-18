@@ -415,9 +415,9 @@ export class SettingsComponent extends Component {
 ## Platform Support
 
 The `persistence` module works on:
-- ✅ iOS (uses file system storage)
-- ✅ Android (uses file system storage)
-- ⚠️ Web (requires polyfill or alternative implementation)
+-  iOS (uses file system storage)
+-  Android (uses file system storage)
+-  Web (requires polyfill or alternative implementation)
 
 ## See Also
 

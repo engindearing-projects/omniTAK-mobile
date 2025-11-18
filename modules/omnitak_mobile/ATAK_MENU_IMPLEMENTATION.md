@@ -69,16 +69,16 @@ All files are located in `/home/user/omni-BASE/modules/omnitak_mobile/src/valdi/
 - **Info Bar**: Marker count, last update time, measure distance
 - **North Arrow/Compass**: Rotates to show north, toggles north-up mode
 - **Right Side Controls**:
-  - Orientation toggle (📱/🖥️)
+  - Orientation toggle (/)
   - Zoom in (+)
   - Zoom out (−)
-  - Lock to self (🔒/🔓)
+  - Lock to self (/)
   - Center on self (◎)
 - **Bottom Action Buttons**:
-  - Measure tool (📏) - **FULLY FUNCTIONAL**
-  - Add marker (📍)
-  - Draw (✏️)
-  - Search (🔍)
+  - Measure tool () - **FULLY FUNCTIONAL**
+  - Add marker ()
+  - Draw ()
+  - Search ()
 
 **Measure Tool Implementation:**
 - Click "Measure" button to activate
@@ -150,7 +150,7 @@ All files are located in `/home/user/omni-BASE/modules/omnitak_mobile/src/valdi/
 - Enable/Disable toggle for installed plugins
 - Install/Uninstall actions
 - Plugin settings access
-- Category icons (🗺️ mapping, 🛠️ tools, 📡 communication, 📊 sensors)
+- Category icons ( mapping,  tools,  communication,  sensors)
 - Active status badges
 
 **Default Plugins:**
@@ -204,7 +204,7 @@ Following ATAK's tactical color scheme:
 
 ## Button Functionality Status
 
-### ✅ Fully Functional
+###  Fully Functional
 
 1. **Measure Tool** - Distance measurement with point plotting
    - Activates measurement mode
@@ -235,29 +235,29 @@ Following ATAK's tactical color scheme:
    - Adds marker at current map center
    - Assigns unique ID and timestamp
 
-### 🚧 Partially Implemented
+###  Partially Implemented
 
 8. **Navigation Drawer** - All menu items functional
-   - ✅ Map navigation
-   - ✅ Settings navigation
-   - ✅ Server management navigation
-   - ✅ Plugin management navigation
-   - ⚠️ Tools (placeholder screen)
-   - ⚠️ About (placeholder screen)
+   -  Map navigation
+   -  Settings navigation
+   -  Server management navigation
+   -  Plugin management navigation
+   -  Tools (placeholder screen)
+   -  About (placeholder screen)
 
 9. **Server Management** - Core features working
-   - ✅ List servers
-   - ✅ Add server dialog
-   - ✅ Connection status display
-   - ⚠️ Actual TAK server connection (requires backend integration)
+   -  List servers
+   -  Add server dialog
+   -  Connection status display
+   -  Actual TAK server connection (requires backend integration)
 
 10. **Plugin System** - UI complete
-    - ✅ List plugins
-    - ✅ Install/uninstall UI
-    - ✅ Enable/disable UI
-    - ⚠️ Actual plugin loading (requires plugin architecture)
+    -  List plugins
+    -  Install/uninstall UI
+    -  Enable/disable UI
+    -  Actual plugin loading (requires plugin architecture)
 
-### 📝 Planned (Placeholders)
+###  Planned (Placeholders)
 
 11. **Draw Tool** - Sketching on map
 12. **Search** - Search for locations/markers

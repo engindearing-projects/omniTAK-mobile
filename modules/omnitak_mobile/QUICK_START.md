@@ -19,15 +19,15 @@ models/
 services/
 ├── CotParser.ts                - CoT XML parsing (existing)
 ├── TakService.ts              - TAK network service (existing)
-├── MarkerManager.ts           - Marker lifecycle (509 lines) ✨ NEW
-├── SymbolRenderer.ts          - Symbol rendering (514 lines) ✨ NEW
-└── MapLibreIntegration.ts     - Map integration (635 lines) ✨ NEW
+├── MarkerManager.ts           - Marker lifecycle (509 lines)  NEW
+├── SymbolRenderer.ts          - Symbol rendering (514 lines)  NEW
+└── MapLibreIntegration.ts     - Map integration (635 lines)  NEW
 ```
 
 ### Screens
 ```
 screens/
-└── MapScreen.tsx              - Main map UI (updated) ✨ UPDATED
+└── MapScreen.tsx              - Main map UI (updated)  UPDATED
 ```
 
 ## Quick Import Reference
@@ -85,8 +85,7 @@ const unsubscribe = markerManager.on(MarkerEvent.Created, (payload) => {
   console.log('New marker:', payload.marker.callsign);
 });
 
-// Don't forget to unsubscribe!
-unsubscribe();
+// Don't forget to unsubscribe.unsubscribe();
 ```
 
 ### 3. Get Marker Statistics
@@ -173,8 +172,7 @@ const integration = new MapLibreIntegration(
   }
 );
 
-// Markers will now automatically appear on the map!
-
+// Markers will now automatically appear on the map.
 // Cleanup when done
 integration.destroy();
 ```
@@ -384,4 +382,4 @@ console.log('SVG:', rendered.svg);
 - **SymbolRenderer.ts:** 514 lines
 - **MapLibreIntegration.ts:** 635 lines
 
-All code is type-safe, well-documented, and production-ready!
+All code is type-safe, well-documented, and production-ready.

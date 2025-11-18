@@ -227,19 +227,19 @@ Yoga supports three types of values for dimensions and edges:
 
 **Where Percentages Are Supported:**
 Percentage values are calculated relative to the parent element's corresponding dimension and are supported for:
-- ✅ **Size dimensions**: `width`, `height`, `minWidth`, `maxWidth`, `minHeight`, `maxHeight`
-- ✅ **Spacing**: `margin*`, `padding*` (all directional variants)
-- ✅ **Positioning**: `top`, `right`, `bottom`, `left`
-- ✅ **Flex basis**: `flexBasis`
+-  **Size dimensions**: `width`, `height`, `minWidth`, `maxWidth`, `minHeight`, `maxHeight`
+-  **Spacing**: `margin*`, `padding*` (all directional variants)
+-  **Positioning**: `top`, `right`, `bottom`, `left`
+-  **Flex basis**: `flexBasis`
 
 **Where Percentages Are NOT Supported:**
-- ❌ **Border properties**: `borderWidth`, `borderRadius` (points only)
-- ❌ **Flex factors**: `flexGrow`, `flexShrink` (dimensionless numbers)
-- ❌ **Aspect ratio**: `aspectRatio` (numeric ratio, not percentage)
-- ❌ **Transform properties**: `scaleX`, `scaleY`, `rotation`, `translationX`, `translationY` (specific units)
-- ❌ **Touch area**: `touchAreaExtension*` (points only)
-- ❌ **Opacity and colors**: Always specific formats
-- ❌ **Font sizes**: Use point values or scaling options in font string
+-  **Border properties**: `borderWidth`, `borderRadius` (points only)
+-  **Flex factors**: `flexGrow`, `flexShrink` (dimensionless numbers)
+-  **Aspect ratio**: `aspectRatio` (numeric ratio, not percentage)
+-  **Transform properties**: `scaleX`, `scaleY`, `rotation`, `translationX`, `translationY` (specific units)
+-  **Touch area**: `touchAreaExtension*` (points only)
+-  **Opacity and colors**: Always specific formats
+-  **Font sizes**: Use point values or scaling options in font string
 
 **Alignment Extensions:**
 Yoga extends the standard flexbox `alignContent` and `alignSelf` to support `space-between` and `space-around`, which are not in the CSS flexbox spec for these properties.
@@ -434,15 +434,15 @@ const layoutStyle = new Style<Layout>({
 ```
 
 **Available Attribute Groups:**
-- ✅ Size Attributes
-- ✅ Position Attributes
-- ✅ Spacing Attributes
-- ✅ Flexbox Layout Attributes
-- ✅ Visibility & Performance Attributes
-- ✅ Accessibility Attributes
-- ❌ Appearance Attributes (View only)
-- ❌ Gesture Attributes (View only)
-- ❌ Transform Attributes (View only)
+-  Size Attributes
+-  Position Attributes
+-  Spacing Attributes
+-  Flexbox Layout Attributes
+-  Visibility & Performance Attributes
+-  Accessibility Attributes
+-  Appearance Attributes (View only)
+-  Gesture Attributes (View only)
+-  Transform Attributes (View only)
 
 ---
 
@@ -480,12 +480,12 @@ const viewStyle = new Style<View>({
 ```
 
 **Available Attribute Groups:**
-- ✅ All Layout attributes
-- ✅ Appearance Attributes
-- ✅ Gesture Attributes
-- ✅ Transform Attributes
-- ✅ Mask Attributes
-- ✅ Platform-Specific Attributes
+-  All Layout attributes
+-  Appearance Attributes
+-  Gesture Attributes
+-  Transform Attributes
+-  Mask Attributes
+-  Platform-Specific Attributes
 
 ---
 
@@ -534,13 +534,13 @@ const scrollStyle = new Style<ScrollView>({
 ```
 
 **Available Attribute Groups:**
-- ✅ All View attributes
-- ✅ Scroll Behavior Attributes
-- ✅ Bounce/Overscroll Attributes
-- ✅ Touch/Gesture Behavior Attributes
-- ✅ Visual Indicators Attributes
-- ✅ Viewport Extensions Attributes
-- ❌ `flexDirection` (use `horizontal` instead)
+-  All View attributes
+-  Scroll Behavior Attributes
+-  Bounce/Overscroll Attributes
+-  Touch/Gesture Behavior Attributes
+-  Visual Indicators Attributes
+-  Viewport Extensions Attributes
+-  `flexDirection` (use `horizontal` instead)
 
 **Note:** Programmatic properties like `contentOffsetX`, `contentOffsetY`, `contentOffsetAnimated` cannot be used in styles.
 
@@ -577,13 +577,13 @@ const imageStyle = new Style<ImageView>({
 ```
 
 **Available Attribute Groups:**
-- ✅ All Layout attributes
-- ✅ All View attributes
-- ✅ Image Display Attributes
-- ✅ Content Transform Attributes
-- ❌ `src` (dynamic, use inline)
-- ❌ `filter` (complex object)
-- ❌ Callbacks (functions)
+-  All Layout attributes
+-  All View attributes
+-  Image Display Attributes
+-  Content Transform Attributes
+-  `src` (dynamic, use inline)
+-  `filter` (complex object)
+-  Callbacks (functions)
 
 ---
 
@@ -612,12 +612,12 @@ const videoStyle = new Style<VideoView>({
 ```
 
 **Available Attribute Groups:**
-- ✅ All Layout attributes
-- ✅ All View attributes
-- ✅ Volume and playback rate
-- ❌ `src` (dynamic, use inline)
-- ❌ `seekToTime` (dynamic control)
-- ❌ Callbacks (functions)
+-  All Layout attributes
+-  All View attributes
+-  Volume and playback rate
+-  `src` (dynamic, use inline)
+-  `seekToTime` (dynamic control)
+-  Callbacks (functions)
 
 ---
 
@@ -660,13 +660,13 @@ const labelStyle = new Style<Label>({
 ```
 
 **Available Attribute Groups:**
-- ✅ All Layout attributes
-- ✅ All View attributes
-- ✅ Text Styling Attributes
-- ✅ Text Layout Attributes
-- ✅ Auto-sizing Attributes
-- ❌ `value` (dynamic content, use inline)
-- ❌ Callbacks (functions)
+-  All Layout attributes
+-  All View attributes
+-  Text Styling Attributes
+-  Text Layout Attributes
+-  Auto-sizing Attributes
+-  `value` (dynamic content, use inline)
+-  Callbacks (functions)
 
 ---
 
@@ -712,15 +712,15 @@ const textFieldStyle = new Style<TextField>({
 ```
 
 **Available Attribute Groups:**
-- ✅ All Layout attributes
-- ✅ All View attributes
-- ✅ Text Styling Attributes
-- ✅ Keyboard Configuration Attributes
-- ✅ Text Editing Behavior Attributes
-- ❌ `value`, `placeholder` (dynamic, use inline)
-- ❌ `selection` (dynamic state)
-- ❌ `focused` (programmatic only)
-- ❌ Callbacks (functions)
+-  All Layout attributes
+-  All View attributes
+-  Text Styling Attributes
+-  Keyboard Configuration Attributes
+-  Text Editing Behavior Attributes
+-  `value`, `placeholder` (dynamic, use inline)
+-  `selection` (dynamic state)
+-  `focused` (programmatic only)
+-  Callbacks (functions)
 
 ---
 
@@ -752,13 +752,13 @@ const textViewStyle = new Style<TextView>({
 ```
 
 **Available Attribute Groups:**
-- ✅ All TextField attributes
-- ✅ Return Type Configuration
-- ✅ Text Gravity Attributes
-- ✅ Background Effect Attributes
-- ❌ `value`, `placeholder` (dynamic, use inline)
-- ❌ `focused` (programmatic only)
-- ❌ Callbacks (functions)
+-  All TextField attributes
+-  Return Type Configuration
+-  Text Gravity Attributes
+-  Background Effect Attributes
+-  `value`, `placeholder` (dynamic, use inline)
+-  `focused` (programmatic only)
+-  Callbacks (functions)
 
 ---
 
@@ -789,10 +789,10 @@ const blurStyle = new Style<BlurView>({
 ```
 
 **Available Attribute Groups:**
-- ✅ All Layout attributes
-- ✅ Limited View attributes (positioning, some appearance)
-- ✅ Blur Style Attribute
-- ❌ Most View appearance attributes (blur style controls appearance)
+-  All Layout attributes
+-  Limited View attributes (positioning, some appearance)
+-  Blur Style Attribute
+-  Most View appearance attributes (blur style controls appearance)
 
 ---
 
@@ -817,9 +817,9 @@ const spinnerStyle = new Style<SpinnerView>({
 ```
 
 **Available Attribute Groups:**
-- ✅ All Layout attributes
-- ✅ All View attributes
-- ✅ Spinner Color Attribute
+-  All Layout attributes
+-  All View attributes
+-  Spinner Color Attribute
 
 ---
 
@@ -852,11 +852,11 @@ const shapeStyle = new Style<ShapeView>({
 ```
 
 **Available Attribute Groups:**
-- ✅ All Layout attributes
-- ✅ All View attributes
-- ✅ Stroke Attributes
-- ✅ Fill Attributes
-- ❌ `path` (complex object, use inline)
+-  All Layout attributes
+-  All View attributes
+-  Stroke Attributes
+-  Fill Attributes
+-  `path` (complex object, use inline)
 
 ---
 
@@ -890,13 +890,13 @@ const animatedImageStyle = new Style<AnimatedImage>({
 ```
 
 **Available Attribute Groups:**
-- ✅ All Layout attributes
-- ✅ All View attributes
-- ✅ Animation Control Attributes
-- ✅ Display Configuration Attributes
-- ❌ `src` (dynamic, use inline)
-- ❌ `fontProvider` (complex object)
-- ❌ Callbacks (functions)
+-  All Layout attributes
+-  All View attributes
+-  Animation Control Attributes
+-  Display Configuration Attributes
+-  `src` (dynamic, use inline)
+-  `fontProvider` (complex object)
+-  Callbacks (functions)
 
 ---
 
@@ -955,13 +955,13 @@ const viewStyle = new Style<View>({
   width: 100,
 });
 
-// ✅ Works - View extends Layout
+//  Works - View extends Layout
 <view style={viewStyle} />
 
-// ✅ Works - can use on layout (but backgroundColor won't apply)
+//  Works - can use on layout (but backgroundColor won't apply)
 <layout style={viewStyle} />  
 
-// ❌ Type error - Label doesn't extend View directly
+//  Type error - Label doesn't extend View directly
 const labelStyle = new Style<Label>({ /* ... */ });
 <view style={labelStyle} />
 ```
@@ -999,7 +999,7 @@ const styles = {
 
 ## Performance Notes
 
-### ✅ DO: Create Styles at Initialization
+###  DO: Create Styles at Initialization
 
 ```typescript
 // At module or component class level
@@ -1023,7 +1023,7 @@ class MyComponent extends Component {
 }
 ```
 
-### ❌ DON'T: Create Styles During Render
+###  DON'T: Create Styles During Render
 
 ```typescript
 class MyComponent extends Component {
@@ -1043,7 +1043,7 @@ class MyComponent extends Component {
 }
 ```
 
-### ✅ DO: Use Inline Attributes for Dynamic Values
+###  DO: Use Inline Attributes for Dynamic Values
 
 ```typescript
 const staticStyle = new Style<View>({
@@ -1063,7 +1063,7 @@ class MyComponent extends Component {
 }
 ```
 
-### ✅ DO: Pre-create Variant Styles
+###  DO: Pre-create Variant Styles
 
 ```typescript
 const baseButton = new Style<View>({
@@ -1228,22 +1228,22 @@ const flexStyles = {
 ### Avoiding Common Percentage Mistakes
 
 ```typescript
-// ❌ WRONG - These don't support percentages
+//  WRONG - These don't support percentages
 const wrongStyles = new Style<View>({
-  borderRadius: '50%',     // ❌ borderRadius only accepts points
-  opacity: '50%',          // ❌ opacity is 0.0-1.0, not percentage
-  scaleX: '150%',          // ❌ scale is a number ratio, not percentage
-  rotation: '90%',         // ❌ rotation is in radians
-  aspectRatio: '16/9',     // ❌ aspectRatio is a number (16/9), not a string
+  borderRadius: '50%',     //  borderRadius only accepts points
+  opacity: '50%',          //  opacity is 0.0-1.0, not percentage
+  scaleX: '150%',          //  scale is a number ratio, not percentage
+  rotation: '90%',         //  rotation is in radians
+  aspectRatio: '16/9',     //  aspectRatio is a number (16/9), not a string
 });
 
-// ✅ CORRECT - Proper usage
+//  CORRECT - Proper usage
 const correctStyles = new Style<View>({
-  borderRadius: 8,         // ✅ Points only
-  opacity: 0.5,            // ✅ 0.0-1.0 scale
-  scaleX: 1.5,             // ✅ Numeric ratio (150% = 1.5)
-  rotation: Math.PI / 2,   // ✅ Radians (90° = π/2)
-  aspectRatio: 16/9,       // ✅ Numeric ratio
+  borderRadius: 8,         //  Points only
+  opacity: 0.5,            //  0.0-1.0 scale
+  scaleX: 1.5,             //  Numeric ratio (150% = 1.5)
+  rotation: Math.PI / 2,   //  Radians (90° = π/2)
+  aspectRatio: 16/9,       //  Numeric ratio
 });
 ```
 

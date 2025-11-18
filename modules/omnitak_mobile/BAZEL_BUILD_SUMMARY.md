@@ -470,13 +470,13 @@ If you encounter issues:
 
 The Bazel build configuration for OmniTAK Mobile is now complete and ready for use. The configuration:
 
-- ✅ Supports iOS (device + simulator)
-- ✅ Supports Android (ARM64 + x86_64)
-- ✅ Integrates native code (Swift, Objective-C, Kotlin, JNI)
-- ✅ Links Rust FFI libraries
-- ✅ Provides MapLibre integration hooks
-- ✅ Includes comprehensive documentation
-- ✅ Provides convenient build scripts
+-  Supports iOS (device + simulator)
+-  Supports Android (ARM64 + x86_64)
+-  Integrates native code (Swift, Objective-C, Kotlin, JNI)
+-  Links Rust FFI libraries
+-  Provides MapLibre integration hooks
+-  Includes comprehensive documentation
+-  Provides convenient build scripts
 
 ### Quick Validation
 

@@ -305,14 +305,14 @@ interface MyContext {
 
 ### Union Types
 
-**✅ SUPPORTED:** Union with null/undefined
+** SUPPORTED:** Union with null/undefined
 ```typescript
 property: string | null;
 property: string | undefined;
 property?: string;  // Equivalent to: string | undefined
 ```
 
-**❌ NOT SUPPORTED:** Other union types
+** NOT SUPPORTED:** Other union types
 ```typescript
 property: string | number;  // ERROR: Only null/undefined unions supported
 property: 'red' | 'blue' | 'green';  // ERROR: Use enum instead
@@ -328,21 +328,21 @@ enum Color {
 }
 
 interface Config {
-  color: Color;  // ✅ Works
+  color: Color;  //  Works
 }
 ```
 
 ### Map Type Limitations
 
-**⚠️ PARTIAL SUPPORT:**
+** PARTIAL SUPPORT:**
 ```typescript
-// ✅ SUPPORTED: Map with string keys and any values
+//  SUPPORTED: Map with string keys and any values
 metadata: Map<string, any>;
 
-// ❌ NOT FULLY SUPPORTED: Typed maps
+//  NOT FULLY SUPPORTED: Typed maps
 typedMap: Map<string, User>;  // Limited - treated as Map<string, any>
 
-// ❌ NOT SUPPORTED: Non-string keys
+//  NOT SUPPORTED: Non-string keys
 numberMap: Map<number, string>;  // Not supported
 ```
 
@@ -358,8 +358,8 @@ interface UserMap {
 
 Arrays can be nested to any depth:
 ```typescript
-matrix: number[][];  // ✅ 2D array
-cube: number[][][];  // ✅ 3D array
+matrix: number[][];  //  2D array
+cube: number[][][];  //  3D array
 ```
 
 ---
@@ -409,13 +409,13 @@ interface DataProcessor {
 Only objects with annotations can be marshalled:
 
 ```typescript
-// ✅ Can be passed - has @ExportModel
+//  Can be passed - has @ExportModel
 // @ExportModel
 interface User {
   name: string;
 }
 
-// ❌ Cannot be passed - plain object
+//  Cannot be passed - plain object
 interface Config {
   data: { key: string, value: number };  // ERROR
 }
@@ -438,7 +438,7 @@ interface KeyValue {
 }
 
 interface Config {
-  data: KeyValue;  // ✅ Works
+  data: KeyValue;  //  Works
 }
 ```
 
@@ -509,12 +509,11 @@ interface Processor {
 Each parameter is serialized/deserialized when crossing the boundary:
 
 ```typescript
-// ❌ BAD: Many small calls
+//  BAD: Many small calls
 for (let i = 0; i < 1000; i++) {
-  context.updateProgress(i);  // 1000 boundary crossings!
-}
+  context.updateProgress(i);  // 1000 boundary crossings.}
 
-// ✅ GOOD: Batch operations
+//  GOOD: Batch operations
 context.updateProgressBatch(progressArray);  // 1 boundary crossing
 ```
 
@@ -523,12 +522,12 @@ context.updateProgressBatch(progressArray);  // 1 boundary crossing
 Minimize chatty APIs:
 
 ```typescript
-// ❌ BAD: Callback for each item
+//  BAD: Callback for each item
 interface ItemProcessor {
   processItems(items: Item[], onEachItem: (item: Item) => void): void;
 }
 
-// ✅ GOOD: Single completion callback
+//  GOOD: Single completion callback
 interface ItemProcessor {
   processItems(items: Item[]): Promise<Item[]>;
 }
@@ -538,7 +537,7 @@ interface ItemProcessor {
 
 ## Best Practices
 
-### Do's ✅
+### Do's 
 
 1. **Keep interfaces simple** - Use primitive types when possible
 2. **Use `@ExportModel` for complex types** - Don't rely on `any`
@@ -548,7 +547,7 @@ interface ItemProcessor {
 6. **Use `Promise` for async operations** - More ergonomic than callbacks
 7. **Use `Uint8Array` for binary data** - More efficient than arrays
 
-### Don'ts ❌
+### Don'ts 
 
 1. **Don't use union types** (except with null/undefined)
 2. **Don't pass large objects frequently** - High serialization cost
@@ -562,7 +561,7 @@ interface ItemProcessor {
 **Async Operations:**
 ```typescript
 interface DataFetcher {
-  // ✅ PREFERRED: Promise-based
+  //  PREFERRED: Promise-based
   fetchData(): Promise<Data>;
 }
 ```

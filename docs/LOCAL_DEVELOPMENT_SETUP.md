@@ -49,8 +49,7 @@ You can develop and test on your own devices for FREE:
 1. Go to https://developer.apple.com
 2. Sign in with your Apple ID
 3. Agree to developer agreement
-4. You're ready!
-
+4. You're ready.
 **Limitations:**
 - 7-day certificate expiration (need to rebuild weekly)
 - Limited to 3 devices
@@ -199,8 +198,7 @@ grep '"id"' plugin.json
 # Check ios/BUILD.bazel
 grep 'bundle_id' ios/BUILD.bazel
 
-# They should match!
-```
+# They should match.```
 
 ## Installing on Your iPhone
 
@@ -222,8 +220,7 @@ For now, you need to integrate the plugin into the main OmniTAK app:
 2. Copy to OmniTAK app's plugin directory
 3. Build and install OmniTAK app with plugin included
 
-We're working on making this easier!
-
+We're working on making this easier.
 ## Local Development Workflow
 
 ### 1. Make Changes
@@ -247,8 +244,7 @@ Edit your plugin code in `ios/Sources/PluginMain.swift`
 ./scripts/validate_plugin.py
 
 # Should output:
-# ✅ Plugin validation successful!
-```
+#  Plugin validation successful.```
 
 ### 4. Run Tests
 
@@ -395,7 +391,7 @@ bazel clean
 
 ## Security Note
 
-🔒 **Your signing certificate is yours alone.** Never share your:
+ **Your signing certificate is yours alone.** Never share your:
 - Apple Developer certificate (.p12 file)
 - Certificate password
 - Provisioning profiles

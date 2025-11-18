@@ -13,7 +13,7 @@ import { Component } from 'valdi_core/src/Component';
 
 class HelloWorld extends Component {
   onRender() {
-    const message = 'Hello World! 👻';
+    const message = 'Hello World. ';
     <view backgroundColor='#FFFC00' padding={30}>
       <label color='black' value={message} />
     </view>;

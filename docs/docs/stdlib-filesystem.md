@@ -2,7 +2,7 @@
 
 The `file_system` module provides synchronous file system operations for Valdi applications.
 
-> **⚠️ Internal Use Only**: This module is primarily for internal Valdi infrastructure usage. For most application needs, consider using [Persistent Storage](./stdlib-persistence.md) instead, which provides a higher-level, safer API for data persistence.
+> ** Internal Use Only**: This module is primarily for internal Valdi infrastructure usage. For most application needs, consider using [Persistent Storage](./stdlib-persistence.md) instead, which provides a higher-level, safer API for data persistence.
 
 ## Overview
 
@@ -39,7 +39,7 @@ const buffer = fs.readFileSync('/path/to/file.dat') as ArrayBuffer;
 console.log(new Uint8Array(buffer));
 
 // Write a string to file
-fs.writeFileSync('/path/to/output.txt', 'Hello, World!');
+fs.writeFileSync('/path/to/output.txt', 'Hello, World.');
 
 // Write binary data to file
 const data = new Uint8Array([1, 2, 3, 4, 5]);
@@ -102,7 +102,7 @@ Synchronously writes data to a file, creating it if it doesn't exist or overwrit
 
 ```typescript
 // Write string
-fs.writeFileSync('output.txt', 'Hello, World!');
+fs.writeFileSync('output.txt', 'Hello, World.');
 
 // Write binary
 const imageData = new Uint8Array([...]); // image bytes
@@ -140,8 +140,7 @@ Synchronously removes a file or directory.
 
 **Returns:** `true` if successful, `false` otherwise
 
-**Warning:** Be careful with this operation - it's permanent!
-
+**Warning:** Be careful with this operation - it's permanent.
 ```typescript
 // Remove a file
 fs.removeSync('/path/to/file.txt');
@@ -240,25 +239,25 @@ function saveBuildArtifact(data: Uint8Array, filename: string) {
 
 ## Important Warnings
 
-### ⚠️ Synchronous Operations
+###  Synchronous Operations
 
 All operations in this module are **synchronous** and **will block** the JavaScript thread. This can cause UI freezes if used with large files or slow storage.
 
 ```typescript
-// ❌ BAD: Blocks UI thread
+//  BAD: Blocks UI thread
 const largeFile = fs.readFileSync('large_video.mp4') as ArrayBuffer;
 
-// ✅ BETTER: Use PersistentStore or async APIs for large data
+//  BETTER: Use PersistentStore or async APIs for large data
 ```
 
-### ⚠️ Platform Limitations
+###  Platform Limitations
 
 File system access may be restricted on iOS and Android:
 - iOS: Limited to app sandbox
 - Android: Limited to app private storage and external storage (with permissions)
 - Web: Not available (use IndexedDB or similar instead)
 
-### ⚠️ Security Considerations
+###  Security Considerations
 
 Direct file system access can be dangerous:
 - Be careful with user-provided paths (path traversal attacks)
@@ -309,22 +308,22 @@ function safeWriteFile(path: string, data: string): boolean {
 For most application needs, **use PersistentStore instead**:
 
 ```typescript
-// ❌ Using file_system for app data
+//  Using file_system for app data
 import { fs } from 'file_system/src/FileSystem';
 fs.writeFileSync('user_prefs.json', JSON.stringify(prefs));
 
-// ✅ Better: Use PersistentStore
+//  Better: Use PersistentStore
 import { PersistentStore } from 'persistence/src/PersistentStore';
 const store = new PersistentStore('user_prefs');
 await store.storeString('preferences', JSON.stringify(prefs));
 ```
 
 **Advantages of PersistentStore:**
-- ✅ Asynchronous (doesn't block UI)
-- ✅ Automatic encryption support
-- ✅ TTL and LRU caching
-- ✅ Batch writes for performance
-- ✅ Cross-platform (including web)
+-  Asynchronous (doesn't block UI)
+-  Automatic encryption support
+-  TTL and LRU caching
+-  Batch writes for performance
+-  Cross-platform (including web)
 
 ## See Also
 
@@ -334,9 +333,9 @@ await store.storeString('preferences', JSON.stringify(prefs));
 
 ## Platform Support
 
-- ✅ iOS (limited to app sandbox)
-- ✅ Android (limited to app storage)
-- ❌ Web (not available)
+-  iOS (limited to app sandbox)
+-  Android (limited to app storage)
+-  Web (not available)
 
 ## Testing
 

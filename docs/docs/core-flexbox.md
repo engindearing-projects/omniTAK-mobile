@@ -32,12 +32,11 @@ You can also practice on a real-time flexbox sandbox here:
 
 #### Example 1 Requirements
 
-- A row of elements ➜ `flexDirection=row`
-- Horizontally centered ➜ `justifyContent=center` (in row mode, main axis is horizontal)
-- Vertically aligned to the bottom ➜ `alignItems=flex-end` (in row mode, cross axis is vertical)
+- A row of elements  `flexDirection=row`
+- Horizontally centered  `justifyContent=center` (in row mode, main axis is horizontal)
+- Vertically aligned to the bottom  `alignItems=flex-end` (in row mode, cross axis is vertical)
 
-go! 🎉
-
+go.
 ```tsx
 export class HelloWorld extends Component {
   onRender() {
@@ -63,12 +62,11 @@ export class HelloWorld extends Component {
 
 #### Example 2 Requirements
 
-- A column of elements ➜ `flexDirection=column`
-- Vertically centered ➜ `justifyContent=center` (in column mode, main axis is vertical)
-- Horizontally aligned to the right ➜ `alignItems=flex-end` (in column mode, cross axis is horizontal)
+- A column of elements  `flexDirection=column`
+- Vertically centered  `justifyContent=center` (in column mode, main axis is vertical)
+- Horizontally aligned to the right  `alignItems=flex-end` (in column mode, cross axis is horizontal)
 
-go! 🎉
-
+go.
 ```tsx
 export class HelloWorld extends Component {
   onRender() {
@@ -94,8 +92,7 @@ export class HelloWorld extends Component {
 
 ## Things to keep in mind
 
-- `flexDirection` will impact every other flex attribute's behavior!
-- `justifyContent`/`alignItems` are equivalent, but apply to the main-axis/cross-axis
+- `flexDirection` will impact every other flex attribute's behavior.- `justifyContent`/`alignItems` are equivalent, but apply to the main-axis/cross-axis
 - `alignSelf` is equivalent to `alignItems`, but apply only on one child
 
 

@@ -6,45 +6,45 @@
 
 ---
 
-## ✅ Successfully Completed
+##  Successfully Completed
 
 ### 1. Environment Setup
-- ✅ Bazel 7.2.1 installed via Bazelisk
-- ✅ Xcode 16.4 verified
-- ✅ Android NDK 27.1.12297006 detected
-- ✅ npm dependencies installed (316 packages)
-- ✅ Rust iOS XCFramework built successfully (16.4 MB)
+-  Bazel 7.2.1 installed via Bazelisk
+-  Xcode 16.4 verified
+-  Android NDK 27.1.12297006 detected
+-  npm dependencies installed (316 packages)
+-  Rust iOS XCFramework built successfully (16.4 MB)
 
 ### 2. Build Configuration
-- ✅ Removed Bazel subpackage conflicts
-- ✅ XCFramework copied to correct location
-- ✅ All BUILD.bazel paths validated
-- ✅ MODULE.bazel configured with dependencies
-- ✅ WORKSPACE configured properly
+-  Removed Bazel subpackage conflicts
+-  XCFramework copied to correct location
+-  All BUILD.bazel paths validated
+-  MODULE.bazel configured with dependencies
+-  WORKSPACE configured properly
 
 ### 3. Source Code Compilation
-- ✅ All TypeScript sources compiled successfully
+-  All TypeScript sources compiled successfully
   - `src/index.ts`
   - `src/valdi/omnitak/App.tsx`
   - `src/valdi/omnitak/components/MapLibreView.tsx`
   - `src/valdi/omnitak/models/*`
   - `src/valdi/omnitak/screens/*`
   - `src/valdi/omnitak/services/*`
-- ✅ valdi_module properly instantiated
-- ✅ All native bridge code included in build graph
+-  valdi_module properly instantiated
+-  All native bridge code included in build graph
 
 ### 4. Native Library Compilation
-- ✅ Skia graphics library compiled (1,200+ files)
-- ✅ Valdi runtime compiled (300+ files)
-- ✅ SnapDrawing framework compiled (500+ files)
-- ✅ OpenSSL/BoringSSL compiled
-- ✅ Harfbuzz font rendering compiled
-- ✅ Image codecs compiled (JPEG, PNG, WebP)
-- ✅ 4,945 out of 4,952 targets built successfully
+-  Skia graphics library compiled (1,200+ files)
+-  Valdi runtime compiled (300+ files)
+-  SnapDrawing framework compiled (500+ files)
+-  OpenSSL/BoringSSL compiled
+-  Harfbuzz font rendering compiled
+-  Image codecs compiled (JPEG, PNG, WebP)
+-  4,945 out of 4,952 targets built successfully
 
 ---
 
-## ⚠️ Current Blocker
+##  Current Blocker
 
 ### Linker Error with resvg Library
 
@@ -62,7 +62,7 @@ clang: error: linker command failed with exit code 1
 
 ---
 
-## 🔧 Potential Solutions
+##  Potential Solutions
 
 ### Option 1: Use Intel (x86_64) Build
 Try forcing an x86_64 build which might have a working resvg library:
@@ -90,7 +90,7 @@ Check if there's a more recent or older commit of omni-BASE that has working ARM
 
 ---
 
-## 📊 Build Metrics
+##  Build Metrics
 
 | Metric | Value |
 |--------|-------|
@@ -104,38 +104,38 @@ Check if there's a more recent or older commit of omni-BASE that has working ARM
 
 ---
 
-## 🎯 What's Working
+##  What's Working
 
 ### TypeScript Application Layer
-- ✅ Main App component
-- ✅ MapScreen with CoT marker display
-- ✅ MapLibre custom-view integration
-- ✅ TakService FFI bridge interface
-- ✅ CotParser with MIL-STD-2525 support
-- ✅ MarkerManager with lifecycle management
-- ✅ SymbolRenderer with adaptive rendering
+-  Main App component
+-  MapScreen with CoT marker display
+-  MapLibre custom-view integration
+-  TakService FFI bridge interface
+-  CotParser with MIL-STD-2525 support
+-  MarkerManager with lifecycle management
+-  SymbolRenderer with adaptive rendering
 
 ### Native iOS Layer
-- ✅ Swift FFI bridge to Rust
-- ✅ Objective-C MapLibre wrapper
-- ✅ XCFramework with all architectures
-- ✅ Build targets configured in Bazel
+-  Swift FFI bridge to Rust
+-  Objective-C MapLibre wrapper
+-  XCFramework with all architectures
+-  Build targets configured in Bazel
 
 ### Native Android Layer
-- ✅ Kotlin FFI bridge
-- ✅ JNI C++ bridge
-- ✅ MapLibre wrapper
-- ✅ Build targets configured in Bazel
+-  Kotlin FFI bridge
+-  JNI C++ bridge
+-  MapLibre wrapper
+-  Build targets configured in Bazel
 
 ### Rust FFI Layer
-- ✅ Static libraries for iOS (5.4 MB device, 11 MB simulator)
-- ✅ All architectures built (arm64, arm64-sim, x86_64-sim)
-- ✅ C header file generated
-- ✅ FFI interface validated
+-  Static libraries for iOS (5.4 MB device, 11 MB simulator)
+-  All architectures built (arm64, arm64-sim, x86_64-sim)
+-  C header file generated
+-  FFI interface validated
 
 ---
 
-## 📁 Key Files
+##  Key Files
 
 ### Configuration
 - `/Users/iesouskurios/Downloads/omni-BASE/MODULE.bazel` - Maven deps configured
@@ -154,7 +154,7 @@ Check if there's a more recent or older commit of omni-BASE that has working ARM
 
 ---
 
-## 🚀 Next Steps
+##  Next Steps
 
 1. **Try Option 1** (x86_64 build) as quickest workaround
 2. **Investigate resvg library** in external dependencies
@@ -164,7 +164,7 @@ Check if there's a more recent or older commit of omni-BASE that has working ARM
 
 ---
 
-## 🎓 What We Learned
+##  What We Learned
 
 This build attempt validated that:
 1. The Valdi framework integration is sound
@@ -178,7 +178,7 @@ This build attempt validated that:
 
 ---
 
-## 📝 Build Command Reference
+##  Build Command Reference
 
 ```bash
 # Standard build (what we tried)

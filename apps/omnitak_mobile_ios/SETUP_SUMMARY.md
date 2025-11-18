@@ -8,21 +8,21 @@ Complete iOS build configuration has been created for OmniTAK Mobile. This docum
 
 ```
 /Users/iesouskurios/Downloads/omni-BASE/apps/omnitak_mobile_ios/
-├── BUILD.bazel                              ✅ Bazel build configuration
-├── README.md                                ✅ Project documentation
-├── IOS_BUILD_GUIDE.md                       ✅ Comprehensive build guide
-├── SETUP_SUMMARY.md                         ✅ This file
+├── BUILD.bazel                               Bazel build configuration
+├── README.md                                 Project documentation
+├── IOS_BUILD_GUIDE.md                        Comprehensive build guide
+├── SETUP_SUMMARY.md                          This file
 │
 ├── src/ios/
-│   ├── AppDelegate.swift                    ✅ App lifecycle
-│   └── ViewController.swift                 ✅ Main UI with demo
+│   ├── AppDelegate.swift                     App lifecycle
+│   └── ViewController.swift                  Main UI with demo
 │
 ├── app_assets/ios/
-│   ├── Info.plist                          ✅ App permissions
-│   └── LaunchScreen.storyboard             ✅ Launch screen
+│   ├── Info.plist                           App permissions
+│   └── LaunchScreen.storyboard              Launch screen
 │
 └── tests/ios/
-    └── OmniTAKTests.swift                  ✅ Unit tests
+    └── OmniTAKTests.swift                   Unit tests
 ```
 
 ### 2. Native Module Configuration
@@ -30,13 +30,13 @@ Complete iOS build configuration has been created for OmniTAK Mobile. This docum
 ```
 /Users/iesouskurios/Downloads/omni-BASE/modules/omnitak_mobile/ios/
 ├── native/
-│   ├── BUILD.bazel                         ✅ XCFramework linking
+│   ├── BUILD.bazel                          XCFramework linking
 │   ├── OmniTAKNativeBridge.swift          (existing)
 │   ├── omnitak_mobile.h                   (existing)
 │   └── OmniTAKMobile.xcframework/         (existing)
 │
 └── maplibre/
-    ├── BUILD.bazel                         ✅ MapLibre config
+    ├── BUILD.bazel                          MapLibre config
     ├── SCMapLibreMapView.h                (existing)
     └── SCMapLibreMapView.m                (existing)
 ```
@@ -45,16 +45,16 @@ Complete iOS build configuration has been created for OmniTAK Mobile. This docum
 
 ```
 /Users/iesouskurios/Downloads/omni-BASE/scripts/
-├── build_ios.sh                            ✅ Build for iOS
-├── run_ios_simulator.sh                    ✅ Run on simulator
-└── test_ios.sh                             ✅ Run tests
+├── build_ios.sh                             Build for iOS
+├── run_ios_simulator.sh                     Run on simulator
+└── test_ios.sh                              Run tests
 ```
 
 ### 4. Bazel Configuration
 
 ```
 /Users/iesouskurios/Downloads/omni-BASE/
-└── .bazelrc.ios                            ✅ iOS-specific Bazel config
+└── .bazelrc.ios                             iOS-specific Bazel config
 ```
 
 ## Prerequisites Checklist
@@ -110,10 +110,10 @@ cd /Users/iesouskurios/Downloads/omni-BASE
 ```
 
 This will:
-- ✅ Build the app for iOS simulator
-- ✅ Boot the iPhone 15 Pro simulator
-- ✅ Install the app
-- ✅ Launch and show console output
+-  Build the app for iOS simulator
+-  Boot the iPhone 15 Pro simulator
+-  Install the app
+-  Launch and show console output
 
 ### 2. Build Only
 
@@ -444,12 +444,12 @@ For issues or questions:
 
 You'll know everything is working when:
 
-- ✅ `./scripts/run_ios_simulator.sh` launches the app successfully
-- ✅ App displays the MapLibre map
-- ✅ Console shows "OmniTAK v0.1.0" or similar
-- ✅ Tests pass with `./scripts/test_ios.sh`
-- ✅ App can connect to TAK server (when configured)
-- ✅ CoT messages can be sent and received
+-  `./scripts/run_ios_simulator.sh` launches the app successfully
+-  App displays the MapLibre map
+-  Console shows "OmniTAK v0.1.0" or similar
+-  Tests pass with `./scripts/test_ios.sh`
+-  App can connect to TAK server (when configured)
+-  CoT messages can be sent and received
 
 ## Quick Reference Card
 

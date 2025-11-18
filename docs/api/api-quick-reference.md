@@ -399,24 +399,23 @@ myTextFieldRef.setAttribute('focused', true);
 
 ---
 
-## ⚠️ Important: Event Handlers
+##  Important: Event Handlers
 
 **Never use inline anonymous functions in TSX.** Always define event handlers as component methods.
 
-**❌ DON'T do this:**
+** DON'T do this:**
 
 ```tsx
 class MyComponent extends Component {
   onRender() {
     <view onTap={() => {
-      // This creates a new function on every render!
-      console.log('tapped');
+      // This creates a new function on every render.      console.log('tapped');
     }} />
   }
 }
 ```
 
-**✅ DO this instead:**
+** DO this instead:**
 
 ```tsx
 class MyComponent extends Component {
@@ -445,7 +444,7 @@ class MyComponent extends Component {
 
 ```tsx
 <layout width="100%" height="100%" justifyContent="center" alignItems="center">
-  <label value="Centered!" />
+  <label value="Centered." />
 </layout>
 ```
 
