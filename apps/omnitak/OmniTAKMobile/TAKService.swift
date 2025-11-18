@@ -2,6 +2,7 @@ import Foundation
 import Combine
 import CoreLocation
 import Network
+import Security
 
 // MARK: - Direct Network Sender (bypasses incomplete Rust FFI)
 
@@ -316,20 +317,55 @@ class DirectTCPSender {
     }
 
     private func loadClientCertificate(name: String, password: String) -> sec_identity_t? {
-        // Look for .p12 file in app bundle
+        // Try loading from CertificateManager first (Keychain storage)
+        if let cert = CertificateManager.shared.certificates.first(where: { $0.name == name }) {
+            #if DEBUG
+            print("🔐 Loading certificate from CertificateManager: \(name)")
+            #endif
+
+            do {
+                let identity = try CertificateManager.shared.getIdentity(for: cert.id)
+                return sec_identity_create(identity)
+            } catch {
+                print("⚠️ Failed to load from CertificateManager: \(error.localizedDescription)")
+                // Fall through to try other sources
+            }
+        }
+
+        // Try loading from Documents folder (enrolled certificates)
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let certificatesPath = documentsPath.appendingPathComponent("Certificates")
+        let docCertPath = certificatesPath.appendingPathComponent("\(name).p12")
+
+        if FileManager.default.fileExists(atPath: docCertPath.path) {
+            #if DEBUG
+            print("📂 Found certificate in Documents: \(docCertPath.path)")
+            #endif
+
+            if let identity = loadP12Identity(from: docCertPath, password: password) {
+                return identity
+            }
+        }
+
+        // Fallback: Look for .p12 file in app bundle
         guard let certPath = Bundle.main.path(forResource: name, ofType: "p12") else {
             print("❌ Certificate file not found: \(name).p12")
-            print("   Make sure to add \(name).p12 to the Xcode project")
+            print("   Searched in: CertificateManager, Documents/Certificates, and app bundle")
             return nil
         }
 
         #if DEBUG
-        print("📂 Found certificate at: \(certPath)")
+        print("📂 Found certificate in app bundle: \(certPath)")
         #endif
 
+        let bundleCertURL = URL(fileURLWithPath: certPath)
+        return loadP12Identity(from: bundleCertURL, password: password)
+    }
+
+    private func loadP12Identity(from url: URL, password: String) -> sec_identity_t? {
         // Load certificate data
-        guard let certData = try? Data(contentsOf: URL(fileURLWithPath: certPath)) as CFData else {
-            print("❌ Failed to read certificate data")
+        guard let certData = try? Data(contentsOf: url) as CFData else {
+            print("❌ Failed to read certificate data from: \(url.path)")
             return nil
         }
 
@@ -344,6 +380,9 @@ class DirectTCPSender {
 
         guard status == errSecSuccess else {
             print("❌ Failed to import certificate: \(status)")
+            if status == errSecAuthFailed {
+                print("   Incorrect password for certificate")
+            }
             return nil
         }
 

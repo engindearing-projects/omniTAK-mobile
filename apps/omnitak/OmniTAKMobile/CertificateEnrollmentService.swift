@@ -300,13 +300,19 @@ class CertificateEnrollmentService: ObservableObject {
     private func importCertificates(trustStoreData: Data, userCertData: Data, password: String, serverHost: String) throws -> String {
         let certificateAlias = "tak-\(serverHost)-\(UUID().uuidString.prefix(8))"
 
-        // Import trust store (CA certificate)
+        // Use CertificateManager to save the user certificate
+        try CertificateManager.shared.saveCertificate(
+            name: certificateAlias,
+            serverURL: "https://\(serverHost)",
+            username: "enrolled-user",
+            p12Data: userCertData,
+            password: password
+        )
+
+        // Also save trust store using old method (for CA certificate chain)
         try importP12Certificate(data: trustStoreData, password: password, alias: "\(certificateAlias)-ca")
 
-        // Import user certificate
-        try importP12Certificate(data: userCertData, password: password, alias: certificateAlias)
-
-        // Save certificate files to app documents for TAKService usage
+        // Save certificate files to app documents for backward compatibility with TAKService
         try saveCertificateToDocuments(data: userCertData, filename: "\(certificateAlias).p12")
         try saveCertificateToDocuments(data: trustStoreData, filename: "\(certificateAlias)-ca.p12")
 
@@ -406,7 +412,14 @@ class CertificateEnrollmentService: ObservableObject {
     // MARK: - Certificate Management
 
     func removeCertificate(_ metadata: CertificateMetadata) {
-        // Remove from keychain
+        // Find matching certificate in CertificateManager by server URL
+        if let cert = CertificateManager.shared.certificates.first(where: {
+            $0.serverURL.contains(metadata.serverHost)
+        }) {
+            CertificateManager.shared.deleteCertificate(id: cert.id)
+        }
+
+        // Remove from keychain (legacy cleanup)
         let deleteQuery: [String: Any] = [
             kSecClass as String: kSecClassIdentity,
             kSecAttrLabel as String: metadata.certificateAlias
