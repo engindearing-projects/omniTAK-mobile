@@ -68,7 +68,7 @@ struct ATAKLoadingScreen: View {
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(.gray)
 
-                    Text("Version 1.1.0 - Built with Valdi")
+                    Text("Version 1.2.0 - Built with Valdi")
                         .font(.system(size: 10))
                         .foregroundColor(.gray.opacity(0.7))
                 }
