@@ -6,6 +6,7 @@ use anyhow::{Context, Result};
 use bytes::BytesMut;
 use omnitak_cert::{build_tls_config, CertBundle};
 use omnitak_core::{ConnectionConfig, ConnectionState, Protocol};
+use omnitak_meshtastic::MeshtasticClient;
 use parking_lot::Mutex;
 use std::sync::Arc;
 use thiserror::Error;
@@ -140,11 +141,53 @@ impl TakClient {
             Protocol::Udp => {
                 Self::udp_connection_task(config, state, rx, callback).await
             }
+            Protocol::Meshtastic => {
+                Self::meshtastic_connection_task(config, state, rx, callback).await
+            }
             Protocol::WebSocket => {
                 // WebSocket support can be added later
                 Err(ClientError::UnsupportedProtocol(Protocol::WebSocket).into())
             }
         }
+    }
+
+    async fn meshtastic_connection_task(
+        config: ConnectionConfig,
+        state: Arc<Mutex<ClientState>>,
+        mut rx: mpsc::UnboundedReceiver<ClientCommand>,
+        callback: Option<Box<dyn Fn(String) + Send + Sync>>,
+    ) -> Result<()> {
+        info!("Starting Meshtastic connection");
+
+        // Connect to Meshtastic device
+        let client = MeshtasticClient::connect(config, callback)
+            .await
+            .context("Failed to connect to Meshtastic device")?;
+
+        // Update state to connected
+        state.lock().connection_state = ConnectionState::Connected;
+
+        // Handle outgoing commands
+        while let Some(cmd) = rx.recv().await {
+            match cmd {
+                ClientCommand::Send(xml) => {
+                    if let Err(e) = client.send_cot(&xml) {
+                        error!("Failed to send CoT via Meshtastic: {}", e);
+                        state.lock().last_error = Some(e.to_string());
+                    } else {
+                        state.lock().messages_sent += 1;
+                    }
+                }
+                ClientCommand::Disconnect => {
+                    info!("Disconnecting from Meshtastic");
+                    client.disconnect();
+                    break;
+                }
+            }
+        }
+
+        state.lock().connection_state = ConnectionState::Disconnected;
+        Ok(())
     }
 
     async fn tcp_connection_task(

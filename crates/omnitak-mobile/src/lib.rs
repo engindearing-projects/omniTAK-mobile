@@ -178,6 +178,95 @@ pub unsafe extern "C" fn omnitak_connect(
     }
 }
 
+/// Connect to a Meshtastic device
+///
+/// # Parameters
+/// - `connection_type`: Connection type (0=Serial, 1=Bluetooth, 2=TCP)
+/// - `device_path`: For Serial: device path (e.g., "/dev/ttyUSB0", "COM3")
+///                  For Bluetooth: device address (e.g., "00:11:22:33:44:55")
+///                  For TCP: hostname/IP
+/// - `port`: Port number (for TCP connections, 0 for Serial/Bluetooth)
+/// - `node_id`: Optional destination node ID (0 for broadcast to all nodes)
+/// - `device_name`: Optional device name for display (null for auto)
+///
+/// # Returns
+/// Connection ID on success, 0 on failure
+///
+/// # Safety
+/// - `device_path` must be a valid null-terminated C string
+/// - `device_name` must be a valid null-terminated C string or null
+#[no_mangle]
+pub unsafe extern "C" fn omnitak_connect_meshtastic(
+    connection_type: c_int,
+    device_path: *const c_char,
+    port: u16,
+    node_id: u32,
+    device_name: *const c_char,
+) -> u64 {
+    use omnitak_core::MeshtasticConnectionType;
+
+    if device_path.is_null() {
+        eprintln!("omnitak_connect_meshtastic: device_path is null");
+        return 0;
+    }
+
+    let device_path_str = match CStr::from_ptr(device_path).to_str() {
+        Ok(s) => s.to_string(),
+        Err(e) => {
+            eprintln!("omnitak_connect_meshtastic: invalid device_path string: {}", e);
+            return 0;
+        }
+    };
+
+    let device_name_opt = if !device_name.is_null() {
+        Some(CStr::from_ptr(device_name).to_str().unwrap_or("").to_string())
+    } else {
+        None
+    };
+
+    let conn_type = match connection_type {
+        0 => MeshtasticConnectionType::Serial(device_path_str.clone()),
+        1 => MeshtasticConnectionType::Bluetooth(device_path_str.clone()),
+        2 => MeshtasticConnectionType::Tcp,
+        _ => {
+            eprintln!("omnitak_connect_meshtastic: invalid connection_type: {}", connection_type);
+            return 0;
+        }
+    };
+
+    let mut global = GLOBAL.lock();
+    if let Some(omnitak) = global.as_mut() {
+        let connection_id = {
+            let mut next_id = omnitak.next_id.lock();
+            let id = *next_id;
+            *next_id += 1;
+            id
+        };
+
+        let node_id_opt = if node_id == 0 { None } else { Some(node_id) };
+
+        match Connection::new_meshtastic(
+            connection_id,
+            &omnitak.runtime,
+            conn_type,
+            node_id_opt,
+            device_name_opt,
+        ) {
+            Ok(conn) => {
+                omnitak.connections.insert(connection_id, conn);
+                connection_id
+            }
+            Err(e) => {
+                eprintln!("Failed to create Meshtastic connection: {}", e);
+                0
+            }
+        }
+    } else {
+        eprintln!("omnitak_connect_meshtastic: library not initialized");
+        0
+    }
+}
+
 /// Disconnect from a TAK server
 ///
 /// # Parameters

@@ -5,6 +5,28 @@
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
+/// Meshtastic connection type
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum MeshtasticConnectionType {
+    /// Serial/USB connection (e.g., /dev/ttyUSB0, COM3)
+    Serial(String),
+    /// Bluetooth connection (device address)
+    Bluetooth(String),
+    /// TCP connection (for network-connected Meshtastic devices)
+    Tcp,
+}
+
+/// Meshtastic-specific configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MeshtasticConfig {
+    /// Connection type
+    pub connection_type: MeshtasticConnectionType,
+    /// Optional node ID for direct messaging (if None, broadcasts to mesh)
+    pub node_id: Option<u32>,
+    /// Device name (for display purposes)
+    pub device_name: Option<String>,
+}
+
 /// Protocol type for TAK server connections
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Protocol {
@@ -16,6 +38,8 @@ pub enum Protocol {
     Tls,
     /// WebSocket connection
     WebSocket,
+    /// Meshtastic mesh network connection
+    Meshtastic,
 }
 
 impl fmt::Display for Protocol {
@@ -25,6 +49,7 @@ impl fmt::Display for Protocol {
             Protocol::Udp => write!(f, "udp"),
             Protocol::Tls => write!(f, "tls"),
             Protocol::WebSocket => write!(f, "ws"),
+            Protocol::Meshtastic => write!(f, "meshtastic"),
         }
     }
 }
@@ -35,6 +60,7 @@ impl From<&str> for Protocol {
             "udp" => Protocol::Udp,
             "tls" | "ssl" => Protocol::Tls,
             "ws" | "websocket" => Protocol::WebSocket,
+            "meshtastic" | "mesh" => Protocol::Meshtastic,
             _ => Protocol::Tcp,
         }
     }
@@ -57,6 +83,8 @@ pub struct ConnectionConfig {
     pub key_pem: Option<String>,
     /// CA certificate PEM (optional)
     pub ca_pem: Option<String>,
+    /// Meshtastic-specific configuration (when protocol is Meshtastic)
+    pub meshtastic_config: Option<MeshtasticConfig>,
 }
 
 impl ConnectionConfig {
@@ -70,6 +98,21 @@ impl ConnectionConfig {
             cert_pem: None,
             key_pem: None,
             ca_pem: None,
+            meshtastic_config: None,
+        }
+    }
+
+    /// Create a new Meshtastic connection configuration
+    pub fn new_meshtastic(meshtastic_config: MeshtasticConfig) -> Self {
+        Self {
+            host: String::new(),
+            port: 0,
+            protocol: Protocol::Meshtastic,
+            use_tls: false,
+            cert_pem: None,
+            key_pem: None,
+            ca_pem: None,
+            meshtastic_config: Some(meshtastic_config),
         }
     }
 

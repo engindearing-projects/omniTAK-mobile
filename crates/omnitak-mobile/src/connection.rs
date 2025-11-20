@@ -6,7 +6,7 @@ use std::sync::Arc;
 use parking_lot::Mutex;
 use tokio::runtime::Runtime;
 
-use omnitak_core::{ConnectionConfig, Protocol};
+use omnitak_core::{ConnectionConfig, Protocol, MeshtasticConfig, MeshtasticConnectionType};
 use omnitak_client::TakClient;
 
 use super::{ConnectionStatus, CotCallback};
@@ -37,6 +37,75 @@ unsafe impl Send for CallbackInfo {}
 unsafe impl Sync for CallbackInfo {}
 
 impl Connection {
+    /// Create a new Meshtastic connection
+    pub fn new_meshtastic(
+        id: u64,
+        runtime: &Runtime,
+        connection_type: MeshtasticConnectionType,
+        node_id: Option<u32>,
+        device_name: Option<String>,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
+        tracing::info!(
+            "Creating Meshtastic connection {} (type={:?}, node_id={:?})",
+            id,
+            connection_type,
+            node_id
+        );
+
+        let state = Arc::new(Mutex::new(ConnectionState {
+            is_connected: false,
+            messages_sent: 0,
+            messages_received: 0,
+            last_error: None,
+        }));
+
+        let callback: Arc<Mutex<Option<CallbackInfo>>> = Arc::new(Mutex::new(None));
+
+        // Create Meshtastic config
+        let meshtastic_config = MeshtasticConfig {
+            connection_type,
+            node_id,
+            device_name,
+        };
+
+        let config = ConnectionConfig::new_meshtastic(meshtastic_config);
+
+        // Create callback wrapper
+        let callback_clone = callback.clone();
+        let connection_id = id;
+        let state_clone = state.clone();
+
+        let callback_fn = Box::new(move |cot_xml: String| {
+            // Update received count
+            state_clone.lock().messages_received += 1;
+
+            // Invoke user callback if registered
+            let cb = callback_clone.lock();
+            if let Some(ref cb_info) = *cb {
+                if let Ok(c_xml) = CString::new(cot_xml) {
+                    unsafe {
+                        (cb_info.callback)(cb_info.user_data, connection_id, c_xml.as_ptr());
+                    }
+                }
+            }
+        });
+
+        // Connect to Meshtastic device
+        let client = runtime.block_on(async {
+            TakClient::connect(config, Some(callback_fn)).await
+        })?;
+
+        // Update state
+        state.lock().is_connected = true;
+
+        Ok(Self {
+            id,
+            client: Some(client),
+            state,
+            callback,
+        })
+    }
+
     pub fn new(
         id: u64,
         runtime: &Runtime,
@@ -52,6 +121,7 @@ impl Connection {
             1 => Protocol::Udp,
             2 => Protocol::Tls,
             3 => Protocol::WebSocket,
+            4 => Protocol::Meshtastic,
             _ => Protocol::Tcp,
         };
 
