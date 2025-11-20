@@ -89,6 +89,15 @@ struct SettingsView: View {
                         Text("Degrees Minutes Seconds (DMS)").tag("DMS")
                         Text("MGRS").tag("MGRS")
                         Text("UTM").tag("UTM")
+                        Text("British National Grid (BNG)").tag("BNG")
+                    }
+
+                    // Help text for coordinate formats
+                    if coordinateFormatString == "BNG" {
+                        Text("BNG is optimized for UK/Ireland (49°N-61°N, 9°W-2°E). Uses OSGB36 datum with grid squares like SU, TQ, NT.")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                            .padding(.top, 4)
                     }
                 }
 
