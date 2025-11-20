@@ -57,38 +57,60 @@ struct CoordinateDisplayView: View {
 
     private func expandedCoordinateDisplay(for coordinate: CLLocationCoordinate2D) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            // Format selector buttons
-            HStack(spacing: 4) {
-                ForEach(CoordinateFormat.allCases, id: \.self) { format in
-                    Button(action: {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            selectedFormat = format
-                        }
-                        // Haptic feedback
-                        let generator = UIImpactFeedbackGenerator(style: .light)
-                        generator.impactOccurred()
-                    }) {
-                        Text(format.rawValue)
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(selectedFormat == format ? .black : .white)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
+            // Format selector buttons - scrollable for better UX
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    ForEach(CoordinateFormat.allCases, id: \.self) { format in
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                selectedFormat = format
+                            }
+                            // Haptic feedback
+                            let generator = UIImpactFeedbackGenerator(style: .light)
+                            generator.impactOccurred()
+                        }) {
+                            VStack(spacing: 2) {
+                                Text(format.rawValue)
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(selectedFormat == format ? .black : .white)
+
+                                // Show indicator for special formats
+                                if format == .bng {
+                                    Text("UK")
+                                        .font(.system(size: 7, weight: .medium))
+                                        .foregroundColor(selectedFormat == format ? .black.opacity(0.7) : .white.opacity(0.5))
+                                }
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
                             .background(selectedFormat == format ? Color(hex: "#FFFC00") : Color.white.opacity(0.2))
-                            .cornerRadius(4)
+                            .cornerRadius(6)
+                        }
                     }
                 }
             }
             .padding(.bottom, 4)
 
             // Coordinate value display
-            VStack(alignment: .leading, spacing: 2) {
-                Text(selectedFormat.displayName)
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(.gray)
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 4) {
+                    Text(selectedFormat.displayName)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.gray)
+
+                    // Special indicator for BNG
+                    if selectedFormat == .bng {
+                        Image(systemName: "map.circle.fill")
+                            .font(.system(size: 9))
+                            .foregroundColor(.gray.opacity(0.7))
+                    }
+                }
 
                 Text(formatCoordinate(coordinate, format: selectedFormat))
-                    .font(.system(size: 14, weight: .bold, design: .monospaced))
+                    .font(.system(size: 13, weight: .bold, design: .monospaced))
                     .foregroundColor(Color(hex: "#00FFFF"))
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.8)
             }
         }
         .padding(12)
@@ -112,6 +134,8 @@ struct CoordinateDisplayView: View {
             return formatMGRS(coordinate)
         case .utm:
             return formatUTM(coordinate)
+        case .bng:
+            return formatBNG(coordinate)
         }
     }
 
@@ -209,6 +233,17 @@ struct CoordinateDisplayView: View {
 
         return String(format: "%02d%@ %06dE %07dN", zone, latBand, easting, northing)
     }
+
+    // MARK: - BNG Formatting
+
+    private func formatBNG(_ coordinate: CLLocationCoordinate2D) -> String {
+        // Use the BNGConverter for accurate conversion
+        if BNGConverter.isWithinBNGBounds(coordinate) {
+            return BNGConverter.formatBNG(coordinate, precision: .tenMeter, withSpaces: true)
+        } else {
+            return "Out of BNG bounds"
+        }
+    }
 }
 
 // MARK: - Coordinate Format Enum
@@ -217,6 +252,7 @@ enum CoordinateFormat: String, CaseIterable {
     case latlon = "LAT/LON"
     case mgrs = "MGRS"
     case utm = "UTM"
+    case bng = "BNG"
 
     var displayName: String {
         switch self {
@@ -226,6 +262,8 @@ enum CoordinateFormat: String, CaseIterable {
             return "Military Grid Reference System"
         case .utm:
             return "Universal Transverse Mercator"
+        case .bng:
+            return "British National Grid"
         }
     }
 }

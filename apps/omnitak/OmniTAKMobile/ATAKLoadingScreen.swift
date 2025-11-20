@@ -67,7 +67,6 @@ struct ATAKLoadingScreen: View {
                     Text("OmniTAK Mobile")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(.gray)
-
                     Text("Version 1.3.0 - Built with Valdi")
                         .font(.system(size: 10))
                         .foregroundColor(.gray.opacity(0.7))

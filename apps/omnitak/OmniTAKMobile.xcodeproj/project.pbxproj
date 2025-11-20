@@ -256,6 +256,7 @@
 		3634C2D8A3E545F0B182B188 /* ContactDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 609A48A79FDE48F8BF6FF8C9 /* ContactDetailView.swift */; };
 		365F79BD6B524D4D887C05C4 /* KMLOverlayManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78866512EA4F46E3A1864D5C /* KMLOverlayManager.swift */; };
 		3666A62F11AC4318A4E3ABF6 /* VideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FF039CF51BB4EFE98798F71 /* VideoPlayerView.swift */; };
+		367F1CFC64E3439597C938EA /* CertificateSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A3EBDFAE1BD433EB10A51C1 /* CertificateSelectionView.swift */; };
 		3708A7E98B4B4C0E95072DE9 /* BloodhoundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4F5F9456F8945C3AB77D0C0 /* BloodhoundView.swift */; };
 		377C99FB8AB5416893038083 /* VideoStreamService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC8B751085AF4B8DB3E70BF8 /* VideoStreamService.swift */; };
 		377DA6B7CE4C4D3C8A53DC1A /* KMZHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 221E028C25ED451BA18CF6AB /* KMZHandler.swift */; };
@@ -1204,6 +1205,7 @@
 		FA4CC0A9793C45B1B6F73C9D /* RadialMenuAnimations.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD93D01865C14989A820F299 /* RadialMenuAnimations.swift */; };
 		FA52ABF71C4C4DABB1C22E9D /* DataPackageModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FC40E3E251F404B8E712697 /* DataPackageModels.swift */; };
 		FA6806F0738D4092A75E106B /* GeofenceCoTGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50CF7082148C424DAC9552BA /* GeofenceCoTGenerator.swift */; };
+		FB215E65CA561B98487BE2F2 /* BNGConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EA644BFC901B3F1A5C29E6 /* BNGConverter.swift */; };
 		FB441DA356914501A200C394 /* LineOfSightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E68CFF0F34F74925A6762EC6 /* LineOfSightView.swift */; };
 		FB83D60A80D7463AB545567C /* RouteModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 494F3582AC124C7A8E654E26 /* RouteModels.swift */; };
 		FBC12C832707455283014BAA /* GeofenceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DEA2C7C03AE465B91DDABF7 /* GeofenceManager.swift */; };
@@ -1224,8 +1226,7 @@
 		FF91C198AF2047A19D7EFCB5 /* WaypointModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D7114DEF75D4812B38B42D5 /* WaypointModels.swift */; };
 		FFC99E7200C64C46ACF1C5BD /* SHARED_INTERFACES.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CC7A10CA8094221926D72EB /* SHARED_INTERFACES.swift */; };
 		FFEC64AE5E6447CAB5485543 /* WaypointModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58AE288AB01544268B56FCFA /* WaypointModels.swift */; };
-		367F1CFC64E3439597C938EA /* CertificateSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A3EBDFAE1BD433EB10A51C1 /* CertificateSelectionView.swift */; };
-	/* End PBXBuildFile section */
+/* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		00342D08B57A40979B7CACB2 /* CertificateEnrollmentService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CertificateEnrollmentService.swift; sourceTree = "<group>"; };
@@ -1721,6 +1722,7 @@
 		709CF8B58DF64F9F87F0A85A /* MeasurementCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeasurementCalculator.swift; sourceTree = "<group>"; };
 		70AB6AF316C543DCA83BBDB2 /* RadialMenuPresets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadialMenuPresets.swift; sourceTree = "<group>"; };
 		70AFBD8895E94E54925D4169 /* ArcGISFeatureService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArcGISFeatureService.swift; sourceTree = "<group>"; };
+		70EA644BFC901B3F1A5C29E6 /* BNGConverter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BNGConverter.swift; sourceTree = "<group>"; };
 		70F92D13829A456A92856DCD /* MEDEVACRequestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MEDEVACRequestView.swift; sourceTree = "<group>"; };
 		710D0E6333A64B18B8EE51F6 /* GeofenceManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeofenceManager.swift; sourceTree = "<group>"; };
 		712BBB181E904F81B7A45278 /* DataPackageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataPackageView.swift; sourceTree = "<group>"; };
@@ -1777,6 +1779,7 @@
 		79F01008A8F5462FAD805C5A /* CoTMessageParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoTMessageParser.swift; sourceTree = "<group>"; };
 		79FB1609CC1C4D23BFF698A2 /* OfflineTileCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineTileCache.swift; sourceTree = "<group>"; };
 		7A390832DEF34C10810E5DA5 /* SALUTEReportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SALUTEReportView.swift; sourceTree = "<group>"; };
+		7A3EBDFAE1BD433EB10A51C1 /* CertificateSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CertificateSelectionView.swift; sourceTree = "<group>"; };
 		7A50E4802EAF4D42ACC7C645 /* VideoPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerView.swift; sourceTree = "<group>"; };
 		7A9CA6AD1B7C465AA66EC996 /* SHARED_INTERFACES.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SHARED_INTERFACES.swift; sourceTree = "<group>"; };
 		7AA542AD85C14B1A81D92AAB /* CertificateEnrollmentService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CertificateEnrollmentService.swift; sourceTree = "<group>"; };
@@ -2443,8 +2446,7 @@
 		FFAFCB91F96F4A86B9BD66C3 /* WaypointModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaypointModels.swift; sourceTree = "<group>"; };
 		FFCBCD27D7F14CE1B5BE4F78 /* WaypointListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaypointListView.swift; sourceTree = "<group>"; };
 		FFFB3D892C4E4B4ABD4E4C98 /* RoutePlanningView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutePlanningView.swift; sourceTree = "<group>"; };
-		7A3EBDFAE1BD433EB10A51C1 /* CertificateSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CertificateSelectionView.swift; sourceTree = "<group>"; };
-	/* End PBXFileReference section */
+/* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		A1111111111111111111111100000061 /* Frameworks */ = {
@@ -3687,8 +3689,9 @@
 				9573D54B1D21495586BF1A62 /* MGRSGridToggleView.swift */,
 				9870574B6C964F118830B1AB /* IntegratedMapView.swift */,
 				6431EC51BB634F17AF076FC1 /* MapViewIntegrationExample.swift */,
-			
-				7A3EBDFAE1BD433EB10A51C1 /* CertificateSelectionView.swift */,);
+				7A3EBDFAE1BD433EB10A51C1 /* CertificateSelectionView.swift */,
+				70EA644BFC901B3F1A5C29E6 /* BNGConverter.swift */,
+			);
 			path = OmniTAKMobile;
 			sourceTree = "<group>";
 		};
@@ -4983,8 +4986,9 @@
 				5AAB2D751A25450A8C460436 /* MGRSGridToggleView.swift in Sources */,
 				66F7A9D53B50402083E32160 /* IntegratedMapView.swift in Sources */,
 				8BFFEBD645D544FCA8D7BE05 /* MapViewIntegrationExample.swift in Sources */,
-			
-				367F1CFC64E3439597C938EA /* CertificateSelectionView.swift in Sources */,);
+				367F1CFC64E3439597C938EA /* CertificateSelectionView.swift in Sources */,
+				FB215E65CA561B98487BE2F2 /* BNGConverter.swift in Sources */,
+			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
@@ -5118,7 +5122,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1.1.0;
+				CURRENT_PROJECT_VERSION = 1.2.0;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -5138,7 +5142,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1.0;
+				MARKETING_VERSION = 1.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.engindearing.omnitak.mobile;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -5159,7 +5163,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1.1.0;
+				CURRENT_PROJECT_VERSION = 1.2.0;
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -5179,7 +5183,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1.0;
+				MARKETING_VERSION = 1.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.engindearing.omnitak.mobile;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
