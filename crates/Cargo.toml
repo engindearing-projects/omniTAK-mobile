@@ -6,6 +6,7 @@ members = [
     "omnitak-cert",
     "omnitak-mobile",
     "omnitak-server",
+    "omnitak-meshtastic",
 ]
 resolver = "2"
 
@@ -21,6 +22,7 @@ omnitak-core = { path = "./omnitak-core" }
 omnitak-cot = { path = "./omnitak-cot" }
 omnitak-client = { path = "./omnitak-client" }
 omnitak-cert = { path = "./omnitak-cert" }
+omnitak-meshtastic = { path = "./omnitak-meshtastic" }
 
 # Async runtime
 tokio = { version = "1.35", features = ["full"] }
@@ -61,3 +63,10 @@ bytes = "1.5"
 # Encoding
 base64 = "0.21"
 hex = "0.4"
+
+# Protobuf (for Meshtastic)
+prost = "0.12"
+prost-types = "0.12"
+
+# Serial port communication (for Meshtastic)
+tokio-serial = "5.4"

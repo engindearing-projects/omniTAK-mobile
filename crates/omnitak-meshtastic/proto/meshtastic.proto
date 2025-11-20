@@ -1,0 +1,283 @@
+syntax = "proto3";
+
+package meshtastic;
+
+// Port numbers for different application types
+enum PortNum {
+    UNKNOWN_APP = 0;
+    TEXT_MESSAGE_APP = 1;
+    REMOTE_HARDWARE_APP = 2;
+    POSITION_APP = 3;
+    NODEINFO_APP = 4;
+    ROUTING_APP = 5;
+    ADMIN_APP = 6;
+    TEXT_MESSAGE_COMPRESSED_APP = 7;
+    WAYPOINT_APP = 8;
+    AUDIO_APP = 9;
+    DETECTION_SENSOR_APP = 10;
+    REPLY_APP = 32;
+    IP_TUNNEL_APP = 33;
+    PAXCOUNTER_APP = 34;
+    SERIAL_APP = 64;
+    STORE_FORWARD_APP = 65;
+    RANGE_TEST_APP = 66;
+    TELEMETRY_APP = 67;
+    ZPS_APP = 68;
+    SIMULATOR_APP = 69;
+    TRACEROUTE_APP = 70;
+    NEIGHBORINFO_APP = 71;
+    ATAK_PLUGIN = 72;
+    MAP_REPORT_APP = 73;
+    PRIVATE_APP = 256;
+    ATAK_FORWARDER = 257;
+    MAX = 511;
+}
+
+// Priority levels for mesh packets
+enum Priority {
+    UNSET = 0;
+    MIN = 1;
+    BACKGROUND = 10;
+    DEFAULT = 64;
+    RELIABLE = 70;
+    ACK = 120;
+    MAX = 127;
+}
+
+// Core mesh packet structure
+message MeshPacket {
+    // Sender node ID
+    fixed32 from = 1;
+
+    // Destination node ID (0xFFFFFFFF for broadcast)
+    fixed32 to = 2;
+
+    // Channel index (0 for primary channel)
+    uint32 channel = 3;
+
+    // Payload (either decoded or encrypted)
+    oneof payload_variant {
+        Data decoded = 4;
+        bytes encrypted = 5;
+    }
+
+    // Unique packet ID
+    fixed32 id = 6;
+
+    // Receive timestamp (Unix epoch ms)
+    fixed32 rx_time = 7;
+
+    // Receive SNR
+    float rx_snr = 8;
+
+    // Number of hops remaining
+    uint32 hop_limit = 9;
+
+    // Request acknowledgment
+    bool want_ack = 10;
+
+    // Priority level
+    Priority priority = 11;
+
+    // RSSI of received packet
+    int32 rx_rssi = 12;
+}
+
+// Data payload
+message Data {
+    // Application port number
+    PortNum portnum = 1;
+
+    // Payload data
+    bytes payload = 2;
+
+    // Want response flag
+    bool want_response = 3;
+
+    // Destination node (for routing)
+    fixed32 dest = 4;
+
+    // Source node
+    fixed32 source = 5;
+
+    // Request ID (for matching responses)
+    fixed32 request_id = 6;
+
+    // Reply ID (for responses)
+    fixed32 reply_id = 7;
+
+    // Emoji (for reactions)
+    uint32 emoji = 8;
+}
+
+// Position information
+message Position {
+    // Latitude (degrees * 1e-7)
+    sfixed32 latitude_i = 1;
+
+    // Longitude (degrees * 1e-7)
+    sfixed32 longitude_i = 2;
+
+    // Altitude (meters above MSL)
+    int32 altitude = 3;
+
+    // Unix timestamp (seconds)
+    fixed32 time = 4;
+
+    // Location source
+    uint32 location_source = 5;
+
+    // Altitude source
+    uint32 altitude_source = 6;
+
+    // Unix timestamp for geoid height (seconds)
+    fixed32 timestamp = 7;
+
+    // Timestamp in milliseconds (optional)
+    fixed32 timestamp_millis_adjust = 8;
+
+    // Altitude in HAE (Height Above Ellipsoid) in centimeters
+    sint32 altitude_hae = 9;
+
+    // Altitude in geoid height in centimeters
+    sint32 altitude_geoidal_separation = 10;
+
+    // Position dilution of precision (PDOP * 100)
+    uint32 PDOP = 11;
+
+    // Horizontal dilution of precision (HDOP * 100)
+    uint32 HDOP = 12;
+
+    // Vertical dilution of precision (VDOP * 100)
+    uint32 VDOP = 13;
+
+    // GPS accuracy (in cm or radians)
+    uint32 gps_accuracy = 14;
+
+    // Ground speed (m/s * 100)
+    uint32 ground_speed = 15;
+
+    // Ground track (degrees * 1e5)
+    uint32 ground_track = 16;
+
+    // Fix quality
+    uint32 fix_quality = 17;
+
+    // Fix type
+    uint32 fix_type = 18;
+
+    // Satellites visible
+    uint32 sats_in_view = 19;
+
+    // Sensor ID
+    uint32 sensor_id = 20;
+
+    // Next update in seconds
+    uint32 next_update = 21;
+
+    // Sequence number
+    uint32 seq_number = 22;
+
+    // Precision bits
+    uint32 precision_bits = 23;
+}
+
+// User information
+message User {
+    // Unique user ID (typically callsign)
+    string id = 1;
+
+    // Long name (display name)
+    string long_name = 2;
+
+    // Short name (abbreviated)
+    string short_name = 3;
+
+    // MAC address (6 bytes)
+    bytes macaddr = 4;
+
+    // Hardware model
+    uint32 hw_model = 5;
+
+    // Is licensed (HAM operator)
+    bool is_licensed = 6;
+
+    // Role
+    uint32 role = 7;
+}
+
+// TAK-specific packet structure for ATAK integration
+message TAKPacket {
+    // Is compressed with gzip + lz4
+    bool is_compressed = 1;
+
+    // Contact callsign (from ATAK)
+    string contact_callsign = 2;
+
+    // Contact UID
+    string contact_uid = 3;
+
+    // PLI Location
+    message PLILocation {
+        double latitude = 1;
+        double longitude = 2;
+        int32 altitude = 3;
+        double speed = 4;
+        double course = 5;
+    }
+
+    // Position Location Information
+    PLILocation pli_location = 4;
+
+    // Group (team affiliation)
+    uint32 group = 5;
+
+    // Status (CoT type)
+    uint32 status = 6;
+
+    // CoT message (full XML or compressed)
+    bytes cot = 7;
+}
+
+// ToRadio - Messages sent from phone/PC to device
+message ToRadio {
+    oneof payload_variant {
+        MeshPacket packet = 1;
+        uint32 want_config_id = 100;
+        bool disconnect = 101;
+    }
+}
+
+// FromRadio - Messages sent from device to phone/PC
+message FromRadio {
+    // Unique message ID
+    uint32 id = 1;
+
+    oneof payload_variant {
+        MeshPacket packet = 2;
+        bytes my_info = 3;
+        bytes node_info = 4;
+        bytes config = 5;
+        bytes log_record = 6;
+        uint32 config_complete_id = 7;
+        bytes rebooted = 8;
+        bytes moduleConfig = 9;
+        bytes channel = 10;
+        bytes queueStatus = 11;
+    }
+}
+
+// Chunked payload for large messages (>233 bytes)
+message ChunkedPayload {
+    // Unique payload ID
+    fixed32 payload_id = 1;
+
+    // Total number of chunks
+    uint32 chunk_count = 2;
+
+    // Current chunk index (0-based)
+    uint32 chunk_index = 3;
+
+    // Chunk data
+    bytes payload_chunk = 4;
+}
