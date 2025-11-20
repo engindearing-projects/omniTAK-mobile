@@ -57,6 +57,7 @@ enum CoordinateDisplayFormat: String, CaseIterable, Identifiable {
     case degreesMinutesSeconds = "DMS"
     case mgrs = "MGRS"
     case utm = "UTM"
+    case bng = "BNG"
 
     var id: String { rawValue }
 
@@ -67,6 +68,7 @@ enum CoordinateDisplayFormat: String, CaseIterable, Identifiable {
         case .degreesMinutesSeconds: return "Degrees Minutes Seconds"
         case .mgrs: return "Military Grid Reference System"
         case .utm: return "Universal Transverse Mercator"
+        case .bng: return "British National Grid"
         }
     }
 
@@ -88,6 +90,12 @@ enum CoordinateDisplayFormat: String, CaseIterable, Identifiable {
             }
         case .utm:
             return MGRSConverter.formatUTM(coordinate)
+        case .bng:
+            if BNGConverter.isWithinBNGBounds(coordinate) {
+                return BNGConverter.formatBNG(coordinate, precision: .tenMeter, withSpaces: true)
+            } else {
+                return "Out of BNG bounds"
+            }
         }
     }
 }

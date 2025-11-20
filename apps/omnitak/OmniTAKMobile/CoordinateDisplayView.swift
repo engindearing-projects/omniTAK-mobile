@@ -112,6 +112,8 @@ struct CoordinateDisplayView: View {
             return formatMGRS(coordinate)
         case .utm:
             return formatUTM(coordinate)
+        case .bng:
+            return formatBNG(coordinate)
         }
     }
 
@@ -209,6 +211,17 @@ struct CoordinateDisplayView: View {
 
         return String(format: "%02d%@ %06dE %07dN", zone, latBand, easting, northing)
     }
+
+    // MARK: - BNG Formatting
+
+    private func formatBNG(_ coordinate: CLLocationCoordinate2D) -> String {
+        // Use the BNGConverter for accurate conversion
+        if BNGConverter.isWithinBNGBounds(coordinate) {
+            return BNGConverter.formatBNG(coordinate, precision: .tenMeter, withSpaces: true)
+        } else {
+            return "Out of BNG bounds"
+        }
+    }
 }
 
 // MARK: - Coordinate Format Enum
@@ -217,6 +230,7 @@ enum CoordinateFormat: String, CaseIterable {
     case latlon = "LAT/LON"
     case mgrs = "MGRS"
     case utm = "UTM"
+    case bng = "BNG"
 
     var displayName: String {
         switch self {
@@ -226,6 +240,8 @@ enum CoordinateFormat: String, CaseIterable {
             return "Military Grid Reference System"
         case .utm:
             return "Universal Transverse Mercator"
+        case .bng:
+            return "British National Grid"
         }
     }
 }
