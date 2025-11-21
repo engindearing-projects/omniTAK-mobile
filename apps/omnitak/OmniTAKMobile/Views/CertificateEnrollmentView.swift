@@ -116,7 +116,22 @@ struct CertificateEnrollmentView: View {
         VStack(spacing: 16) {
             // Camera preview
             ZStack {
-                if qrScanner.isAuthorized {
+                if qrScanner.isInitializing {
+                    // Loading state
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: Color(hex: "#FFFC00")))
+                            .scaleEffect(1.5)
+
+                        Text("Initializing camera...")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white)
+                    }
+                    .frame(height: 280)
+                    .frame(maxWidth: .infinity)
+                    .background(Color(white: 0.15))
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                } else if qrScanner.isAuthorized && !qrScanner.hasCameraError {
                     QRScannerPreview(session: qrScanner.captureSession)
                         .frame(height: 280)
                         .clipShape(RoundedRectangle(cornerRadius: 16))
@@ -136,26 +151,49 @@ struct CertificateEnrollmentView: View {
                     .frame(height: 280)
                     .clipShape(RoundedRectangle(cornerRadius: 16))
                 } else {
+                    // Error or permission denied state
                     VStack(spacing: 12) {
-                        Image(systemName: "camera.fill")
+                        Image(systemName: qrScanner.hasCameraError ? "exclamationmark.camera.fill" : "camera.fill")
                             .font(.system(size: 40))
-                            .foregroundColor(Color(hex: "#CCCCCC"))
+                            .foregroundColor(qrScanner.hasCameraError ? Color(hex: "#FF6B6B") : Color(hex: "#CCCCCC"))
 
-                        Text("Camera Access Required")
+                        Text(qrScanner.hasCameraError ? "Camera Unavailable" : "Camera Access Required")
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.white)
 
-                        Text("Please enable camera access in Settings to scan QR codes")
+                        Text(qrScanner.statusMessage)
                             .font(.system(size: 12))
                             .foregroundColor(Color(hex: "#CCCCCC"))
                             .multilineTextAlignment(.center)
+                            .padding(.horizontal, 16)
 
-                        Button("Open Settings") {
-                            if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
-                                UIApplication.shared.open(settingsURL)
+                        HStack(spacing: 12) {
+                            if !qrScanner.isAuthorized {
+                                Button("Open Settings") {
+                                    if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
+                                        UIApplication.shared.open(settingsURL)
+                                    }
+                                }
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.black)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(Color(hex: "#FFFC00"))
+                                .cornerRadius(8)
+                            }
+
+                            if qrScanner.hasCameraError {
+                                Button("Retry") {
+                                    qrScanner.retryCamera()
+                                }
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(Color(white: 0.3))
+                                .cornerRadius(8)
                             }
                         }
-                        .foregroundColor(Color(hex: "#FFFC00"))
                         .padding(.top, 8)
                     }
                     .frame(height: 280)
@@ -166,17 +204,48 @@ struct CertificateEnrollmentView: View {
             }
             .padding(.horizontal, 24)
 
-            // Status text
-            Text(qrScanner.statusMessage)
-                .font(.system(size: 14))
-                .foregroundColor(Color(hex: "#CCCCCC"))
-                .multilineTextAlignment(.center)
+            // Status text (only show when camera is working)
+            if qrScanner.isAuthorized && !qrScanner.hasCameraError && !qrScanner.isInitializing {
+                Text(qrScanner.statusMessage)
+                    .font(.system(size: 14))
+                    .foregroundColor(Color(hex: "#CCCCCC"))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+            }
+
+            // Helpful hint when camera fails
+            if qrScanner.hasCameraError {
+                VStack(spacing: 12) {
+                    HStack {
+                        Image(systemName: "lightbulb.fill")
+                            .foregroundColor(Color(hex: "#FFFC00"))
+                        Text("Can't scan? Use Manual Entry")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+
+                    Text("Tap the button below to enter server details manually instead")
+                        .font(.system(size: 12))
+                        .foregroundColor(Color(hex: "#CCCCCC"))
+                        .multilineTextAlignment(.center)
+                }
+                .padding(16)
+                .background(Color(hex: "#FFFC00").opacity(0.1))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color(hex: "#FFFC00").opacity(0.3), lineWidth: 1)
+                )
                 .padding(.horizontal, 24)
+            }
         }
         .onAppear {
             qrScanner.checkPermissions()
             qrScanner.onQRCodeScanned = { code in
                 handleScannedCode(code)
+            }
+            qrScanner.onCameraError = {
+                // Auto-scroll to manual entry button would go here if needed
             }
         }
     }
@@ -229,13 +298,16 @@ struct CertificateEnrollmentView: View {
                 Text(showManualEntry ? "Scan QR Code" : "Manual Entry")
                     .font(.system(size: 16, weight: .medium))
             }
-            .foregroundColor(Color(hex: "#FFFC00"))
+            .foregroundColor(qrScanner.hasCameraError && !showManualEntry ? .black : Color(hex: "#FFFC00"))
             .padding(.vertical, 12)
             .padding(.horizontal, 24)
-            .background(Color(white: 0.15))
+            .background(qrScanner.hasCameraError && !showManualEntry ? Color(hex: "#FFFC00") : Color(white: 0.15))
             .cornerRadius(8)
         }
         .padding(.bottom, 32)
+        // Add animation to draw attention when camera fails
+        .scaleEffect(qrScanner.hasCameraError && !showManualEntry ? 1.05 : 1.0)
+        .animation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true), value: qrScanner.hasCameraError && !showManualEntry)
     }
 
     // MARK: - Password Prompt Sheet
@@ -453,19 +525,31 @@ class QRScannerViewModel: NSObject, ObservableObject, AVCaptureMetadataOutputObj
     @Published var isAuthorized = false
     @Published var statusMessage = "Position QR code within frame"
     @Published var scanLineOffset: CGFloat = -140
+    @Published var isInitializing = false
+    @Published var hasCameraError = false
 
     let captureSession = AVCaptureSession()
     private var previewLayer: AVCaptureVideoPreviewLayer?
     private var animationTimer: Timer?
+    private var isSessionConfigured = false
+    private var backgroundObserver: NSObjectProtocol?
+    private var foregroundObserver: NSObjectProtocol?
+    private var interruptionObserver: NSObjectProtocol?
+    private var interruptionEndObserver: NSObjectProtocol?
+    private var retryCount = 0
+    private let maxRetries = 2
 
     var onQRCodeScanned: ((String) -> Void)?
+    var onCameraError: (() -> Void)?
 
     override init() {
         super.init()
         startScanAnimation()
+        setupLifecycleObservers()
     }
 
     func checkPermissions() {
+        isInitializing = true
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized:
             isAuthorized = true
@@ -476,20 +560,48 @@ class QRScannerViewModel: NSObject, ObservableObject, AVCaptureMetadataOutputObj
                     self?.isAuthorized = granted
                     if granted {
                         self?.setupCaptureSession()
+                    } else {
+                        self?.isInitializing = false
+                        self?.hasCameraError = true
+                        self?.statusMessage = "Camera access denied. Please use manual entry below."
+                        self?.onCameraError?()
                     }
                 }
             }
         case .denied, .restricted:
             isAuthorized = false
-            statusMessage = "Camera access denied"
+            hasCameraError = true
+            statusMessage = "Camera access denied. Please enable in Settings or use manual entry."
+            isInitializing = false
+            onCameraError?()
         @unknown default:
             isAuthorized = false
+            hasCameraError = true
+            isInitializing = false
+            statusMessage = "Camera unavailable. Please use manual entry."
+            onCameraError?()
         }
     }
 
+    func retryCamera() {
+        retryCount = 0
+        hasCameraError = false
+        isSessionConfigured = false
+        checkPermissions()
+    }
+
     private func setupCaptureSession() {
+        // Avoid reconfiguring if already set up
+        guard !isSessionConfigured else {
+            DispatchQueue.main.async {
+                self.isInitializing = false
+            }
+            startScanning()
+            return
+        }
+
         guard let videoCaptureDevice = AVCaptureDevice.default(for: .video) else {
-            statusMessage = "No camera available"
+            handleCameraSetupError("No camera available on this device")
             return
         }
 
@@ -497,42 +609,105 @@ class QRScannerViewModel: NSObject, ObservableObject, AVCaptureMetadataOutputObj
         do {
             videoInput = try AVCaptureDeviceInput(device: videoCaptureDevice)
         } catch {
-            statusMessage = "Failed to access camera"
+            handleCameraSetupError("Failed to access camera: \(error.localizedDescription)")
             return
         }
 
+        // Begin atomic configuration
+        captureSession.beginConfiguration()
+
+        // Remove existing inputs/outputs if any
+        for input in captureSession.inputs {
+            captureSession.removeInput(input)
+        }
+        for output in captureSession.outputs {
+            captureSession.removeOutput(output)
+        }
+
+        // Add video input
         if captureSession.canAddInput(videoInput) {
             captureSession.addInput(videoInput)
         } else {
-            statusMessage = "Cannot add camera input"
+            captureSession.commitConfiguration()
+            handleCameraSetupError("Cannot configure camera input")
             return
         }
 
+        // Add metadata output for QR detection
         let metadataOutput = AVCaptureMetadataOutput()
         if captureSession.canAddOutput(metadataOutput) {
             captureSession.addOutput(metadataOutput)
             metadataOutput.setMetadataObjectsDelegate(self, queue: DispatchQueue.main)
             metadataOutput.metadataObjectTypes = [.qr]
         } else {
-            statusMessage = "Cannot add metadata output"
+            captureSession.commitConfiguration()
+            handleCameraSetupError("Cannot configure QR code detection")
             return
         }
 
+        // Commit the configuration
+        captureSession.commitConfiguration()
+        isSessionConfigured = true
+
+        DispatchQueue.main.async {
+            self.isInitializing = false
+            self.hasCameraError = false
+        }
+
+        // Start scanning on success
         startScanning()
     }
 
-    func startScanning() {
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            self?.captureSession.startRunning()
-        }
+    private func handleCameraSetupError(_ message: String) {
         DispatchQueue.main.async {
-            self.statusMessage = "Position QR code within frame"
+            self.isInitializing = false
+            self.statusMessage = message
+
+            // Auto-retry if we haven't exceeded max retries
+            if self.retryCount < self.maxRetries {
+                self.retryCount += 1
+                self.statusMessage = "\(message) Retrying... (\(self.retryCount)/\(self.maxRetries))"
+
+                // Retry after a short delay
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    self.isSessionConfigured = false
+                    self.setupCaptureSession()
+                }
+            } else {
+                // Max retries exceeded, show error and suggest manual entry
+                self.hasCameraError = true
+                self.statusMessage = "\(message). Please use manual entry below."
+                self.onCameraError?()
+            }
+        }
+    }
+
+    func startScanning() {
+        guard isSessionConfigured else {
+            // Try to set up the session first
+            setupCaptureSession()
+            return
+        }
+
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            // Only start if not already running
+            if !self.captureSession.isRunning {
+                self.captureSession.startRunning()
+                DispatchQueue.main.async {
+                    self.statusMessage = "Position QR code within frame"
+                }
+            }
         }
     }
 
     func stopScanning() {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            self?.captureSession.stopRunning()
+            guard let self = self else { return }
+            // Only stop if currently running
+            if self.captureSession.isRunning {
+                self.captureSession.stopRunning()
+            }
         }
     }
 
@@ -563,8 +738,87 @@ class QRScannerViewModel: NSObject, ObservableObject, AVCaptureMetadataOutputObj
         }
     }
 
+    private func setupLifecycleObservers() {
+        // Handle app backgrounding - stop camera to avoid crashes
+        backgroundObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.didEnterBackgroundNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.stopScanning()
+        }
+
+        // Handle app foregrounding - restart camera
+        foregroundObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.willEnterForegroundNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.startScanning()
+        }
+
+        // Handle session interruptions (e.g., phone calls, FaceTime)
+        interruptionObserver = NotificationCenter.default.addObserver(
+            forName: AVCaptureSession.wasInterruptedNotification,
+            object: captureSession,
+            queue: .main
+        ) { [weak self] notification in
+            guard let reason = notification.userInfo?[AVCaptureSessionInterruptionReasonKey] as? AVCaptureSession.InterruptionReason else {
+                return
+            }
+
+            DispatchQueue.main.async {
+                switch reason {
+                case .videoDeviceNotAvailableInBackground:
+                    self?.statusMessage = "Camera unavailable in background"
+                case .audioDeviceInUseByAnotherClient:
+                    self?.statusMessage = "Camera in use by another app"
+                case .videoDeviceInUseByAnotherClient:
+                    self?.statusMessage = "Camera in use by another app"
+                case .videoDeviceNotAvailableWithMultipleForegroundApps:
+                    self?.statusMessage = "Camera unavailable (multitasking)"
+                @unknown default:
+                    self?.statusMessage = "Camera temporarily unavailable"
+                }
+            }
+        }
+
+        // Handle interruption end - restart camera
+        interruptionEndObserver = NotificationCenter.default.addObserver(
+            forName: AVCaptureSession.interruptionEndedNotification,
+            object: captureSession,
+            queue: .main
+        ) { [weak self] _ in
+            DispatchQueue.main.async {
+                self?.statusMessage = "Camera restored"
+            }
+            // Small delay before restarting
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                self?.startScanning()
+            }
+        }
+    }
+
     deinit {
+        // Clean up timer
         animationTimer?.invalidate()
+
+        // Stop camera session
+        stopScanning()
+
+        // Remove all observers
+        if let observer = backgroundObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        if let observer = foregroundObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        if let observer = interruptionObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        if let observer = interruptionEndObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
     }
 }
 
