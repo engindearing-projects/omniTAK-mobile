@@ -81,8 +81,6 @@ class UnitTrailRenderer: MKPolylineRenderer {
     }
 
     private func drawDirectionArrows(in context: CGContext, zoomScale: MKZoomScale) {
-        guard let polyline = polyline else { return }
-
         let points = polyline.points()
         let pointCount = polyline.pointCount
 
@@ -135,7 +133,6 @@ class UnitTrailRenderer: MKPolylineRenderer {
     }
 
     private func drawStartEndMarkers(in context: CGContext, zoomScale: MKZoomScale) {
-        guard let polyline = polyline else { return }
         guard polyline.pointCount >= 2 else { return }
 
         let points = polyline.points()
