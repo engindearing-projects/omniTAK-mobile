@@ -8,25 +8,21 @@ export default function UseCases() {
     {
       title: 'Search & Rescue',
       description: 'Coordinate multi-team search operations with real-time position sharing, waypoint navigation, and off-grid mesh communication.',
-      icon: '🚁',
       color: 'from-orange-500 to-red-500',
     },
     {
       title: 'Military Operations',
       description: 'Full ATAK compatibility ensures seamless integration with existing TAK infrastructure for tactical coordination.',
-      icon: '⚔️',
       color: 'from-green-500 to-emerald-500',
     },
     {
       title: 'First Responders',
       description: 'Emergency services can deploy quickly with GeoChat, tactical mapping, and secure team communication.',
-      icon: '🚒',
       color: 'from-blue-500 to-cyan-500',
     },
     {
       title: 'Disaster Response',
       description: 'When infrastructure fails, Meshtastic mesh networking keeps teams connected without cellular or WiFi.',
-      icon: '🌊',
       color: 'from-purple-500 to-pink-500',
     },
   ];
@@ -55,7 +51,6 @@ export default function UseCases() {
               transition={{ delay: i * 0.1 }}
             >
               <GlassCard glow="teal">
-                <div className="text-6xl mb-4">{useCase.icon}</div>
                 <h3 className="text-3xl font-bold mb-4 text-omni-olive">{useCase.title}</h3>
                 <p className="text-omni-grey-light leading-relaxed">{useCase.description}</p>
                 <div className={`h-1 bg-gradient-to-r ${useCase.color} mt-6 rounded-full`} />
