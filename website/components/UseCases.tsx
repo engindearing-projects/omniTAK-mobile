@@ -54,10 +54,10 @@ export default function UseCases() {
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
             >
-              <GlassCard glow="cyan">
+              <GlassCard glow="teal">
                 <div className="text-6xl mb-4">{useCase.icon}</div>
-                <h3 className="text-3xl font-bold mb-4 text-omni-yellow">{useCase.title}</h3>
-                <p className="text-gray-300 leading-relaxed">{useCase.description}</p>
+                <h3 className="text-3xl font-bold mb-4 text-omni-olive">{useCase.title}</h3>
+                <p className="text-omni-grey-light leading-relaxed">{useCase.description}</p>
                 <div className={`h-1 bg-gradient-to-r ${useCase.color} mt-6 rounded-full`} />
               </GlassCard>
             </motion.div>

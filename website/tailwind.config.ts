@@ -10,11 +10,18 @@ const config: Config = {
     extend: {
       colors: {
         omni: {
-          yellow: "#FFFC00",
-          cyan: "#00FFFF",
-          dark: "#0A0A0A",
-          gray: "#1A1A1A",
-          light: "#F5F5F5",
+          // ATAK-inspired military color palette
+          olive: "#6B7C5A",        // Primary accent - military olive
+          'olive-dark': "#4A5C3A", // Darker olive
+          teal: "#5FABA5",         // Secondary accent - muted teal
+          'teal-dark': "#4A9B9B",  // Darker teal
+          charcoal: "#1A1A1A",     // Primary dark background
+          slate: "#2A2A2A",        // Secondary background
+          'slate-light': "#3A3A3A",// Lighter slate for cards
+          grey: "#4A4A4A",         // Medium grey
+          'grey-light': "#6A6A6A", // Light grey for text
+          'grey-border': "#333333",// Border grey
+          light: "#D0D0D0",        // Light text
         },
       },
       fontFamily: {
@@ -34,8 +41,8 @@ const config: Config = {
           "50%": { transform: "translateY(-20px)" },
         },
         glow: {
-          "0%": { boxShadow: "0 0 5px rgba(255, 252, 0, 0.5)" },
-          "100%": { boxShadow: "0 0 20px rgba(255, 252, 0, 0.8)" },
+          "0%": { boxShadow: "0 0 5px rgba(107, 124, 90, 0.5)" },
+          "100%": { boxShadow: "0 0 20px rgba(107, 124, 90, 0.8)" },
         },
         "slide-up": {
           "0%": { transform: "translateY(100px)", opacity: "0" },

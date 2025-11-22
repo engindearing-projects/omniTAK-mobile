@@ -3,9 +3,9 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 245, 245, 245;
-  --background-start-rgb: 10, 10, 10;
-  --background-end-rgb: 0, 0, 0;
+  --foreground-rgb: 208, 208, 208;
+  --background-start-rgb: 26, 26, 26;
+  --background-end-rgb: 10, 10, 10;
 }
 
 * {
@@ -25,66 +25,66 @@ body {
   overflow-x: hidden;
 }
 
-/* Glassmorphism utilities */
+/* Glassmorphism utilities - ATAK style */
 .glass {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(58, 58, 58, 0.4);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(107, 124, 90, 0.2);
 }
 
 .glass-dark {
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(26, 26, 26, 0.6);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(51, 51, 51, 0.3);
 }
 
-/* Glow effects */
-.glow-yellow {
-  box-shadow: 0 0 20px rgba(255, 252, 0, 0.3),
-              0 0 40px rgba(255, 252, 0, 0.2),
-              0 0 60px rgba(255, 252, 0, 0.1);
+/* Glow effects - ATAK style */
+.glow-olive {
+  box-shadow: 0 0 20px rgba(107, 124, 90, 0.4),
+              0 0 40px rgba(107, 124, 90, 0.2),
+              0 0 60px rgba(107, 124, 90, 0.1);
 }
 
-.glow-cyan {
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.3),
-              0 0 40px rgba(0, 255, 255, 0.2),
-              0 0 60px rgba(0, 255, 255, 0.1);
+.glow-teal {
+  box-shadow: 0 0 20px rgba(95, 171, 165, 0.4),
+              0 0 40px rgba(95, 171, 165, 0.2),
+              0 0 60px rgba(95, 171, 165, 0.1);
 }
 
-/* Text gradient */
+/* Text gradient - ATAK style */
 .text-gradient {
-  background: linear-gradient(135deg, #FFFC00 0%, #00FFFF 100%);
+  background: linear-gradient(135deg, #6B7C5A 0%, #5FABA5 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Mesh grid background */
+/* Mesh grid background - ATAK style */
 .mesh-grid {
   background-image:
-    linear-gradient(rgba(255, 252, 0, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 252, 0, 0.05) 1px, transparent 1px);
+    linear-gradient(rgba(107, 124, 90, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(107, 124, 90, 0.08) 1px, transparent 1px);
   background-size: 50px 50px;
 }
 
-/* Scrollbar styling */
+/* Scrollbar styling - ATAK style */
 ::-webkit-scrollbar {
   width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0A0A0A;
+  background: #1A1A1A;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #FFFC00 0%, #00FFFF 100%);
+  background: linear-gradient(135deg, #6B7C5A 0%, #5FABA5 100%);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #00FFFF 0%, #FFFC00 100%);
+  background: linear-gradient(135deg, #5FABA5 0%, #6B7C5A 100%);
 }
 
 /* Smooth transitions */
@@ -92,10 +92,10 @@ body {
   transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
 }
 
-/* Selection color */
+/* Selection color - ATAK style */
 ::selection {
-  background-color: rgba(255, 252, 0, 0.3);
-  color: #FFFC00;
+  background-color: rgba(107, 124, 90, 0.4);
+  color: #6B7C5A;
 }
 
 /* Hide scrollbar for clean look on certain elements */

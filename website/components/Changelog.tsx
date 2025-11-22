@@ -28,7 +28,7 @@ export default function Changelog() {
     return (
       <section id="changelog" className="relative py-32 px-4">
         <div className="max-w-5xl mx-auto text-center">
-          <div className="text-omni-cyan">Loading changelog...</div>
+          <div className="text-omni-teal">Loading changelog...</div>
         </div>
       </section>
     );
@@ -57,16 +57,16 @@ export default function Changelog() {
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
             >
-              <GlassCard hover={false} glow="cyan">
+              <GlassCard hover={false} glow="teal">
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-4">
-                  <h3 className="text-2xl font-bold text-omni-yellow">{entry.version}</h3>
-                  <span className="text-sm text-gray-400 font-mono">{entry.date}</span>
+                  <h3 className="text-2xl font-bold text-omni-olive">{entry.version}</h3>
+                  <span className="text-sm text-omni-grey-light font-mono">{entry.date}</span>
                 </div>
                 <ul className="space-y-2">
                   {entry.changes.map((change, j) => (
                     <li key={j} className="flex items-start">
-                      <span className="text-omni-cyan mr-2">▸</span>
-                      <span className="text-gray-300">{change}</span>
+                      <span className="text-omni-teal mr-2">▸</span>
+                      <span className="text-omni-grey-light">{change}</span>
                     </li>
                   ))}
                 </ul>
@@ -85,7 +85,7 @@ export default function Changelog() {
             href="https://github.com/engindearing-projects/omniTAK-mobile/blob/main/CHANGELOG.md"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-omni-cyan hover:text-omni-yellow transition-colors font-mono"
+            className="text-omni-teal hover:text-omni-olive transition-colors font-mono"
           >
             View Full Changelog →
           </a>

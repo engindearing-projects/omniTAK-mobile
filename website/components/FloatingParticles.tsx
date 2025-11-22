@@ -25,7 +25,7 @@ export default function FloatingParticles() {
       color: string;
     }> = [];
 
-    const colors = ['#FFFC00', '#00FFFF'];
+    const colors = ['#6B7C5A', '#5FABA5'];
 
     for (let i = 0; i < 50; i++) {
       particles.push({

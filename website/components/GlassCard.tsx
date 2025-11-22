@@ -7,11 +7,14 @@ interface GlassCardProps {
   children: ReactNode;
   className?: string;
   hover?: boolean;
-  glow?: 'yellow' | 'cyan' | 'none';
+  glow?: 'olive' | 'teal' | 'yellow' | 'cyan' | 'none';
 }
 
 export default function GlassCard({ children, className = '', hover = true, glow = 'none' }: GlassCardProps) {
-  const glowClass = glow === 'yellow' ? 'hover:glow-yellow' : glow === 'cyan' ? 'hover:glow-cyan' : '';
+  const glowClass = glow === 'olive' ? 'hover:glow-olive' :
+                    glow === 'teal' ? 'hover:glow-teal' :
+                    glow === 'yellow' ? 'hover:glow-olive' :
+                    glow === 'cyan' ? 'hover:glow-teal' : '';
 
   return (
     <motion.div
