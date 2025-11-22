@@ -17,12 +17,12 @@ This guide covers deploying the OmniTAK promotional website to Vercel.
    - Click "Add New Project"
    - Import your GitHub repository
 
-2. **Configure Project**
+2. **Configure Project** ⚠️ **CRITICAL: Root Directory MUST be set to `website`**
    - **Framework Preset**: Next.js
-   - **Root Directory**: `website`
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `.next`
-   - **Install Command**: `npm install`
+   - **Root Directory**: `website` ← **REQUIRED! The website code is in a subdirectory**
+   - **Build Command**: Leave as default (auto-detected from vercel.json)
+   - **Output Directory**: Leave as default (auto-detected from vercel.json)
+   - **Install Command**: Leave as default (auto-detected from vercel.json)
 
 3. **Environment Variables**
    - No environment variables required for basic deployment
