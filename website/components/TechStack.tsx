@@ -38,7 +38,7 @@ export default function TechStack() {
               viewport={{ once: true }}
               transition={{ delay: i * 0.05 }}
             >
-              <GlassCard hover={true} glow="yellow">
+              <GlassCard hover={true} glow="olive">
                 <div className="text-center">
                   <div className={`text-3xl font-bold ${tech.color} mb-2`}>{tech.name}</div>
                   <div className="text-sm text-gray-400">{tech.desc}</div>
@@ -62,12 +62,12 @@ export default function TechStack() {
                 and support for industry-standard formats like KML/KMZ.
               </p>
               <div className="flex flex-wrap justify-center gap-4 text-sm font-mono">
-                <span className="px-4 py-2 glass-dark rounded-full text-omni-cyan">CoT XML</span>
-                <span className="px-4 py-2 glass-dark rounded-full text-omni-cyan">TLS 1.2/1.3</span>
-                <span className="px-4 py-2 glass-dark rounded-full text-omni-cyan">TCP/UDP</span>
-                <span className="px-4 py-2 glass-dark rounded-full text-omni-cyan">WebSocket</span>
-                <span className="px-4 py-2 glass-dark rounded-full text-omni-cyan">KML/KMZ</span>
-                <span className="px-4 py-2 glass-dark rounded-full text-omni-cyan">MGRS</span>
+                <span className="px-4 py-2 glass-dark rounded-full text-omni-teal">CoT XML</span>
+                <span className="px-4 py-2 glass-dark rounded-full text-omni-teal">TLS 1.2/1.3</span>
+                <span className="px-4 py-2 glass-dark rounded-full text-omni-teal">TCP/UDP</span>
+                <span className="px-4 py-2 glass-dark rounded-full text-omni-teal">WebSocket</span>
+                <span className="px-4 py-2 glass-dark rounded-full text-omni-teal">KML/KMZ</span>
+                <span className="px-4 py-2 glass-dark rounded-full text-omni-teal">MGRS</span>
               </div>
             </div>
           </GlassCard>
