@@ -19,12 +19,25 @@ struct MGRSGridToggleView: View {
         VStack(spacing: 8) {
             // Main toggle button
             Button(action: {
+                #if DEBUG
+                print("🎯 [MGRSGridToggleView] Button tapped!")
+                print("🎯 [MGRSGridToggleView] Current state BEFORE toggle: \(overlayCoordinator.mgrsGridEnabled)")
+                #endif
+
                 withAnimation(.spring(response: 0.3)) {
+                    // Toggle grid on/off
+                    overlayCoordinator.mgrsGridEnabled.toggle()
+
+                    #if DEBUG
+                    print("🎯 [MGRSGridToggleView] State AFTER toggle: \(overlayCoordinator.mgrsGridEnabled)")
+                    #endif
+
+                    // Show options panel when enabling grid
                     if overlayCoordinator.mgrsGridEnabled {
-                        showGridOptions.toggle()
-                    } else {
-                        overlayCoordinator.mgrsGridEnabled = true
                         showGridOptions = true
+                    } else {
+                        // Hide options panel when disabling grid
+                        showGridOptions = false
                     }
                 }
                 hapticFeedback()
@@ -48,6 +61,18 @@ struct MGRSGridToggleView: View {
                 .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
             }
             .buttonStyle(.plain)
+            .simultaneousGesture(
+                LongPressGesture(minimumDuration: 0.5)
+                    .onEnded { _ in
+                        // Long press to show options panel when grid is enabled
+                        if overlayCoordinator.mgrsGridEnabled {
+                            withAnimation(.spring(response: 0.3)) {
+                                showGridOptions.toggle()
+                            }
+                            hapticFeedback()
+                        }
+                    }
+            )
 
             // Expanded options panel
             if showGridOptions && overlayCoordinator.mgrsGridEnabled {

@@ -145,6 +145,7 @@ struct CompassOverlayView: View {
                     .frame(width: 70, height: 1)
 
                 // Cardinal direction letters
+                // Note: Using 1x1 frames instead of 0x0 to avoid "clip: empty path" warnings
                 VStack {
                     Text("N")
                         .font(.system(size: 14, weight: .bold))
@@ -158,7 +159,7 @@ struct CompassOverlayView: View {
                         .foregroundColor(.white.opacity(0.7))
                         .offset(y: 32)
                 }
-                .frame(height: 0)
+                .frame(height: 1)
 
                 HStack {
                     Text("W")
@@ -173,7 +174,7 @@ struct CompassOverlayView: View {
                         .foregroundColor(.white.opacity(0.7))
                         .offset(x: 32)
                 }
-                .frame(width: 0)
+                .frame(width: 1)
             }
             .rotationEffect(.degrees(-displayHeading))
             .animation(.easeInOut(duration: 0.3), value: displayHeading)

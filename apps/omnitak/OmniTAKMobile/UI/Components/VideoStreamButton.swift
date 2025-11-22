@@ -37,7 +37,7 @@ struct VideoStreamButton: View {
                     Text("\(streamService.feeds.count)")
                         .font(.system(size: 10, weight: .bold))
                         .foregroundColor(.black)
-                        .frame(minWidth: 16, minHeight: 16)
+                        .frame(minWidth: 20, minHeight: 20)
                         .background(accentColor)
                         .clipShape(Circle())
                         .offset(x: 14, y: -14)

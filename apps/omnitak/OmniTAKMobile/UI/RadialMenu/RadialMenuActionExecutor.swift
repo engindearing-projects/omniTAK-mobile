@@ -297,18 +297,15 @@ class RadialMenuActionExecutor {
     // MARK: - Measurement Implementation
 
     private static func executeMeasure(context: RadialMenuContext, services: RadialMenuServices) -> Bool {
-        guard let measurementManager = services.measurementManager else {
-            print("MeasurementManager not available")
-            return false
-        }
-
-        measurementManager.startMeasurement(type: .distance)
-        measurementManager.handleMapTap(at: context.mapCoordinate)
-
+        // Post notification to show CompactMeasurementOverlay and start measurement
+        // MapViewController will handle showing the UI and starting the measurement
         NotificationCenter.default.post(
             name: .radialMenuMeasurementStarted,
             object: nil,
-            userInfo: ["type": MeasurementType.distance]
+            userInfo: [
+                "type": MeasurementType.distance,
+                "coordinate": context.mapCoordinate
+            ]
         )
 
         print("Started distance measurement at: \(context.mapCoordinate.latitude), \(context.mapCoordinate.longitude)")
@@ -316,54 +313,42 @@ class RadialMenuActionExecutor {
     }
 
     private static func executeMeasureDistance(context: RadialMenuContext, services: RadialMenuServices) -> Bool {
-        guard let measurementManager = services.measurementManager else {
-            print("MeasurementManager not available")
-            return false
-        }
-
-        measurementManager.startMeasurement(type: .distance)
-        measurementManager.handleMapTap(at: context.mapCoordinate)
-
+        // Post notification to show CompactMeasurementOverlay and start measurement
         NotificationCenter.default.post(
             name: .radialMenuMeasurementStarted,
             object: nil,
-            userInfo: ["type": MeasurementType.distance]
+            userInfo: [
+                "type": MeasurementType.distance,
+                "coordinate": context.mapCoordinate
+            ]
         )
 
         return true
     }
 
     private static func executeMeasureArea(context: RadialMenuContext, services: RadialMenuServices) -> Bool {
-        guard let measurementManager = services.measurementManager else {
-            print("MeasurementManager not available")
-            return false
-        }
-
-        measurementManager.startMeasurement(type: .area)
-        measurementManager.handleMapTap(at: context.mapCoordinate)
-
+        // Post notification to show CompactMeasurementOverlay and start measurement
         NotificationCenter.default.post(
             name: .radialMenuMeasurementStarted,
             object: nil,
-            userInfo: ["type": MeasurementType.area]
+            userInfo: [
+                "type": MeasurementType.area,
+                "coordinate": context.mapCoordinate
+            ]
         )
 
         return true
     }
 
     private static func executeMeasureBearing(context: RadialMenuContext, services: RadialMenuServices) -> Bool {
-        guard let measurementManager = services.measurementManager else {
-            print("MeasurementManager not available")
-            return false
-        }
-
-        measurementManager.startMeasurement(type: .bearing)
-        measurementManager.handleMapTap(at: context.mapCoordinate)
-
+        // Post notification to show CompactMeasurementOverlay and start measurement
         NotificationCenter.default.post(
             name: .radialMenuMeasurementStarted,
             object: nil,
-            userInfo: ["type": MeasurementType.bearing]
+            userInfo: [
+                "type": MeasurementType.bearing,
+                "coordinate": context.mapCoordinate
+            ]
         )
 
         return true

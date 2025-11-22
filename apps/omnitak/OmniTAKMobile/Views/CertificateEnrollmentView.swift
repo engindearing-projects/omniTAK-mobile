@@ -550,6 +550,19 @@ class QRScannerViewModel: NSObject, ObservableObject, AVCaptureMetadataOutputObj
 
     func checkPermissions() {
         isInitializing = true
+
+        // Check if running on simulator
+        #if targetEnvironment(simulator)
+        DispatchQueue.main.async {
+            self.isInitializing = false
+            self.isAuthorized = false
+            self.hasCameraError = true
+            self.statusMessage = "Camera not available on iOS Simulator. Please use manual entry or test on a real device."
+            self.onCameraError?()
+        }
+        return
+        #endif
+
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized:
             isAuthorized = true
@@ -599,6 +612,12 @@ class QRScannerViewModel: NSObject, ObservableObject, AVCaptureMetadataOutputObj
             startScanning()
             return
         }
+
+        // Double-check we're not on simulator (shouldn't get here, but be safe)
+        #if targetEnvironment(simulator)
+        handleCameraSetupError("Camera not supported on iOS Simulator")
+        return
+        #endif
 
         guard let videoCaptureDevice = AVCaptureDevice.default(for: .video) else {
             handleCameraSetupError("No camera available on this device")

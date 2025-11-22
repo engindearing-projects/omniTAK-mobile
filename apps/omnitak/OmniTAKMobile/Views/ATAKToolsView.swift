@@ -6,6 +6,7 @@ import MapKit
 
 struct ATAKToolsView: View {
     @Binding var isPresented: Bool
+    @Binding var showMeasurement: Bool  // Shared measurement state from MapViewController
     @State private var showAlertDialog = false
     @State private var showBrightnessControl = false
     @State private var selectedTool: ATAKTool?
@@ -20,7 +21,6 @@ struct ATAKToolsView: View {
     @State private var showDataPackages = false
     @State private var showVideoStreaming = false
     @State private var showOfflineMaps = false
-    @State private var showMeasurement = false
     @State private var showPointDropper = false
     @State private var showSettings = false
     @State private var showPlugins = false
@@ -95,9 +95,6 @@ struct ATAKToolsView: View {
         .sheet(isPresented: $showOfflineMaps) {
             OfflineMapsView()
         }
-        .sheet(isPresented: $showMeasurement) {
-            MeasurementSheetView(isPresented: $showMeasurement)
-        }
         .sheet(isPresented: $showPointDropper) {
             PointDropperSheetView(isPresented: $showPointDropper)
         }
@@ -160,7 +157,9 @@ struct ATAKToolsView: View {
         case "drawing":
             selectedTool = tool
         case "measure":
+            // Use the shared measurement overlay from MapViewController
             showMeasurement = true
+            isPresented = false  // Dismiss tools menu
 
         // Tactical
         case "alert":
@@ -545,26 +544,6 @@ struct DataPackageSheetView: View {
 
     var body: some View {
         DataPackageView(packageManager: packageManager, isPresented: $isPresented)
-    }
-}
-
-struct MeasurementSheetView: View {
-    @Binding var isPresented: Bool
-    @StateObject private var manager = MeasurementManager()
-
-    var body: some View {
-        NavigationView {
-            MeasurementToolView(manager: manager, isPresented: $isPresented)
-                .navigationTitle("Measurement Tools")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button("Done") {
-                            isPresented = false
-                        }
-                    }
-                }
-        }
     }
 }
 

@@ -71,7 +71,7 @@ struct ATAKMapView: View {
 
     // New ATAK-style UI states
     @State private var isCursorModeActive = false
-    @State private var showQuickActionToolbar = true
+    @State private var showQuickActionToolbar = false  // Hidden - user can access tools via radial menu and ATAK tools menu
     @StateObject private var cursorModeCoordinator = MapCursorModeCoordinator()
     @State private var showRangeBearingLine = false
     @State private var showRouteHere = false
@@ -146,10 +146,10 @@ struct ATAKMapView: View {
 
     @ViewBuilder
     private var gridOverlay: some View {
-        if overlayCoordinator.mgrsGridEnabled {
-            GridOverlayView(region: mapRegion, isVisible: overlayCoordinator.mgrsGridEnabled)
-                .zIndex(100)
-        }
+        GridOverlayView(region: mapRegion, isVisible: overlayCoordinator.mgrsGridEnabled)
+            .zIndex(100)
+            .opacity(overlayCoordinator.mgrsGridEnabled ? 1 : 0)
+            .allowsHitTesting(overlayCoordinator.mgrsGridEnabled)
     }
 
     @ViewBuilder
@@ -429,7 +429,7 @@ struct ATAKMapView: View {
     private var mapOverlayComponents: some View {
         Group {
             compassOverlay
-            coordinateDisplay
+            // coordinateDisplay now integrated with GPS button to avoid overlap
             scaleBar
         }
     }
@@ -619,7 +619,7 @@ struct ATAKMapView: View {
     private var gpsFollowButton: some View {
         VStack {
             Spacer()
-            HStack {
+            HStack(alignment: .bottom, spacing: 8) {
                 // GPS Follow Button - Bottom Left
                 Button(action: centerOnUser) {
                     VStack(spacing: 2) {
@@ -645,11 +645,19 @@ struct ATAKMapView: View {
                     .shadow(color: .black.opacity(0.4), radius: 6, x: 0, y: 3)
                 }
                 .buttonStyle(.plain)
-                .padding(.leading, 12)
-                .padding(.bottom, isCursorModeActive ? 222 : (showQuickActionToolbar ? 130 : 80))
+
+                // Coordinate display next to GPS button
+                if showCoordinates {
+                    CoordinateDisplayView(
+                        coordinate: locationManager.location?.coordinate,
+                        isVisible: true
+                    )
+                }
 
                 Spacer()
             }
+            .padding(.leading, 12)
+            .padding(.bottom, isCursorModeActive ? 222 : (showQuickActionToolbar ? 130 : 80))
         }
         .zIndex(1012)
     }
@@ -665,6 +673,12 @@ struct ATAKMapView: View {
             mapOverlayComponents
             interactiveOverlays
             gpsFollowButton
+
+            // Compact measurement overlay (ATAK-style)
+            if showMeasurement {
+                CompactMeasurementOverlay(manager: measurementManager, isPresented: $showMeasurement)
+                    .zIndex(1000)
+            }
         }
         .background(modalSheets)
         .background(errorOverlays)
@@ -677,7 +691,7 @@ struct ATAKMapView: View {
                 ServerConfigView(takService: takService, federation: federation)
             }
             .fullScreenCover(isPresented: $showToolsMenu) {
-                ATAKToolsView(isPresented: $showToolsMenu)
+                ATAKToolsView(isPresented: $showToolsMenu, showMeasurement: $showMeasurement)
             }
             .sheet(isPresented: $showTeamManagement) {
                 TeamListView()
@@ -726,9 +740,6 @@ struct ATAKMapView: View {
             }
             .sheet(isPresented: $showMissionSync) {
                 MissionPackageSyncView()
-            }
-            .sheet(isPresented: $showMeasurement) {
-                MeasurementToolView(manager: measurementManager, isPresented: $showMeasurement)
             }
     }
 
@@ -819,6 +830,23 @@ struct ATAKMapView: View {
                     showMeshtastic = true
                 default:
                     print("Unknown custom action: \(identifier)")
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .radialMenuMeasurementStarted)) { notification in
+                // Radial menu wants to start measurement - show the CompactMeasurementOverlay
+                DispatchQueue.main.async {
+                    showMeasurement = true
+
+                    // If a specific measurement type was requested, start it
+                    if let userInfo = notification.userInfo,
+                       let type = userInfo["type"] as? MeasurementType {
+                        measurementManager.startMeasurement(type: type)
+
+                        // If a coordinate was provided (from radial menu), add it as the first tap
+                        if let coordinate = userInfo["coordinate"] as? CLLocationCoordinate2D {
+                            measurementManager.handleMapTap(at: coordinate)
+                        }
+                    }
                 }
             }
     }
@@ -1443,9 +1471,6 @@ struct ATAKSidePanel: View {
                 }
                 LayerButton(icon: "ruler", title: "Scale Bar", isActive: showScaleBar, compact: true) {
                     onMapOverlayToggle("scale")
-                }
-                LayerButton(icon: "grid", title: "MGRS Grid", isActive: showGrid, compact: true) {
-                    onMapOverlayToggle("grid")
                 }
             }
             .frame(width: 160)
@@ -2237,8 +2262,13 @@ struct TacticalMapView: UIViewRepresentable {
     }
 
     private func updateOverlays(mapView: MKMapView, context: Context) {
-        // Remove all overlays
-        mapView.removeOverlays(mapView.overlays)
+        // Remove ONLY drawing/measurement overlays (preserve MGRS grid and other tactical overlays)
+        let overlaysToRemove = mapView.overlays.filter { overlay in
+            !(overlay is MGRSGridOverlay) &&
+            !(overlay is BreadcrumbTrailPolyline) &&
+            !(overlay is RangeBearingLineOverlay)
+        }
+        mapView.removeOverlays(overlaysToRemove)
 
         // Add saved drawing overlays
         let savedOverlays = drawingStore.getAllOverlays()
@@ -2280,7 +2310,8 @@ struct TacticalMapView: UIViewRepresentable {
         weak var mapView: MKMapView?
 
         // Overlay management
-        private var currentMGRSGridOverlay: MGRSGridOverlay?
+        // NOTE: MGRS Grid is now managed by MapOverlayCoordinator and IntegratedMapView
+        // private var currentMGRSGridOverlay: MGRSGridOverlay? // REMOVED - was causing duplicate grids
         private var currentBreadcrumbOverlay: BreadcrumbTrailPolyline?
         private var currentRangeBearingOverlays: [RangeBearingLineOverlay] = []
 
@@ -2300,8 +2331,8 @@ struct TacticalMapView: UIViewRepresentable {
         func updateTacticalOverlays(showMGRSGrid: Bool, showBreadcrumbTrail: Bool, showRangeBearingLines: Bool) {
             guard let mapView = mapView else { return }
 
-            // Update MGRS Grid (z-order: bottom)
-            updateMGRSGridOverlay(mapView: mapView, show: showMGRSGrid)
+            // NOTE: MGRS Grid is now managed by MapOverlayCoordinator and IntegratedMapView
+            // updateMGRSGridOverlay(mapView: mapView, show: showMGRSGrid) // REMOVED - was causing duplicate grids
 
             // Update Breadcrumb Trail (z-order: middle)
             updateBreadcrumbTrailOverlay(mapView: mapView, show: showBreadcrumbTrail)
@@ -2310,6 +2341,9 @@ struct TacticalMapView: UIViewRepresentable {
             updateRangeBearingOverlays(mapView: mapView, show: showRangeBearingLines)
         }
 
+        // REMOVED: This was causing duplicate MGRS grids
+        // MGRS Grid is now exclusively managed by MapOverlayCoordinator and IntegratedMapView
+        /*
         private func updateMGRSGridOverlay(mapView: MKMapView, show: Bool) {
             if show {
                 if currentMGRSGridOverlay == nil {
@@ -2331,6 +2365,7 @@ struct TacticalMapView: UIViewRepresentable {
                 }
             }
         }
+        */
 
         private func updateBreadcrumbTrailOverlay(mapView: MKMapView, show: Bool) {
             if show {
@@ -2463,19 +2498,25 @@ struct TacticalMapView: UIViewRepresentable {
 
         // MARK: - Debounced Grid Update (for fast scrolling)
 
+        // REMOVED: Grid updates now handled by MapOverlayCoordinator
+        /*
         func scheduleGridUpdate() {
             gridUpdateTimer?.invalidate()
             gridUpdateTimer = Timer.scheduledTimer(withTimeInterval: gridUpdateDebounceInterval, repeats: false) { [weak self] _ in
                 self?.forceGridRedraw()
             }
         }
+        */
 
+        // REMOVED: Grid is now managed by MapOverlayCoordinator
+        /*
         private func forceGridRedraw() {
             guard let mapView = mapView, let gridOverlay = currentMGRSGridOverlay else { return }
             // Force renderer to redraw by removing and re-adding
             mapView.removeOverlay(gridOverlay)
             mapView.addOverlay(gridOverlay, level: .aboveRoads)
         }
+        */
 
         @objc func handleMapTap(_ gesture: UITapGestureRecognizer) {
             guard let mapView = gesture.view as? MKMapView else { return }
@@ -2620,9 +2661,10 @@ struct TacticalMapView: UIViewRepresentable {
             }
 
             // Debounce grid updates on fast scrolling
-            if currentMGRSGridOverlay != nil {
-                scheduleGridUpdate()
-            }
+            // NOTE: Grid updates now handled by MapOverlayCoordinator
+            // if currentMGRSGridOverlay != nil {
+            //     scheduleGridUpdate()
+            // }
         }
 
         func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
@@ -2711,8 +2753,8 @@ struct TacticalMapView: UIViewRepresentable {
                 return customView
             }
 
-            // Handle temporary point annotations
-            if annotation.title == "Point" {
+            // Handle temporary point annotations (measurement and drawing)
+            if let title = annotation.title as? String, title.hasPrefix("Point") {
                 let identifier = "TempPoint"
                 var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier)
 
@@ -2722,17 +2764,29 @@ struct TacticalMapView: UIViewRepresentable {
                     annotationView?.annotation = annotation
                 }
 
-                // Create small point marker
-                let size = CGSize(width: 12, height: 12)
+                // Create larger, more visible point marker for measurement feedback
+                let size = CGSize(width: 20, height: 20)
                 let renderer = UIGraphicsImageRenderer(size: size)
                 let image = renderer.image { context in
-                    UIColor.systemYellow.setFill()
-                    let path = UIBezierPath(ovalIn: CGRect(origin: .zero, size: size))
-                    path.fill()
+                    // Yellow fill
+                    UIColor(red: 1.0, green: 252/255.0, blue: 0, alpha: 1.0).setFill()
+                    let circlePath = UIBezierPath(ovalIn: CGRect(origin: .zero, size: size))
+                    circlePath.fill()
 
+                    // White border
                     UIColor.white.setStroke()
-                    path.lineWidth = 2
-                    path.stroke()
+                    circlePath.lineWidth = 3
+                    circlePath.stroke()
+
+                    // Black inner dot for center precision
+                    UIColor.black.setFill()
+                    let centerDot = UIBezierPath(ovalIn: CGRect(
+                        x: size.width / 2 - 2,
+                        y: size.height / 2 - 2,
+                        width: 4,
+                        height: 4
+                    ))
+                    centerDot.fill()
                 }
 
                 annotationView?.image = image

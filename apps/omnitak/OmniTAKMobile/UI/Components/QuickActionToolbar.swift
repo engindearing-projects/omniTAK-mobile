@@ -47,17 +47,6 @@ struct QuickActionToolbar: View {
                 onToggleMeasure()
             }
 
-            // Grid Toggle
-            QuickActionButton(
-                icon: "grid",
-                label: "Grid",
-                isActive: showGrid
-            ) {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    showGrid.toggle()
-                }
-            }
-
             // Cursor Mode Toggle
             QuickActionButton(
                 icon: "scope",
@@ -183,10 +172,6 @@ struct CompactQuickActionBar: View {
                 onToggleMeasure()
             }
 
-            CompactActionIcon(icon: "grid", isActive: showGrid) {
-                showGrid.toggle()
-            }
-
             CompactActionIcon(icon: "square.3.layers.3d") {
                 onShowLayers()
             }
@@ -274,15 +259,6 @@ struct ExtendedQuickActionToolbar: View {
                     isActive: false,
                     action: onToggleMeasure
                 )
-
-                // Grid Toggle
-                QuickActionButton(
-                    icon: "grid",
-                    label: "Grid",
-                    isActive: showGrid
-                ) {
-                    showGrid.toggle()
-                }
 
                 // Cursor Mode
                 QuickActionButton(

@@ -177,7 +177,7 @@ export interface MapLibreViewContext {
  * ```tsx
  * <MapLibreView
  *   options={{
- *     style: 'https://demotiles.maplibre.org/style.json',
+ *     style: 'https://tiles.openfreemap.org/styles/liberty',
  *     interactive: true,
  *     showUserLocation: true
  *   }}

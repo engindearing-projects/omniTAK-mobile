@@ -183,16 +183,45 @@ struct IntegratedMapView: UIViewRepresentable {
             allOverlays.append((rbLine, 35))
         }
 
-        // Sort by z-order and add to map
+        // Sort by z-order
         allOverlays.sort { $0.1 < $1.1 }
 
-        // Remove old non-MGRS overlays
-        let currentOverlays = mapView.overlays.filter { !($0 is MGRSGridOverlay) }
-        mapView.removeOverlays(currentOverlays)
+        // Smart overlay management: only add/remove what changed
+        let currentOverlayIds = Set(mapView.overlays.map { ObjectIdentifier($0) })
+        let newOverlayIds = Set(allOverlays.map { ObjectIdentifier($0.0) })
 
-        // Add overlays in z-order
-        for (overlay, _) in allOverlays where !(overlay is MGRSGridOverlay) {
-            mapView.addOverlay(overlay, level: .aboveRoads)
+        // Remove overlays that are no longer needed
+        let overlaysToRemove = mapView.overlays.filter { overlay in
+            !newOverlayIds.contains(ObjectIdentifier(overlay))
+        }
+        if !overlaysToRemove.isEmpty {
+            #if DEBUG
+            print("🗺️ [IntegratedMapView] Removing \(overlaysToRemove.count) overlays (MGRS: \(overlaysToRemove.contains(where: { $0 is MGRSGridOverlay })))")
+            #endif
+            mapView.removeOverlays(overlaysToRemove)
+        }
+
+        // Add new overlays in z-order
+        for (overlay, _) in allOverlays {
+            if !currentOverlayIds.contains(ObjectIdentifier(overlay)) {
+                let level: MKOverlayLevel = overlay is MGRSGridOverlay ? .aboveLabels : .aboveRoads
+                #if DEBUG
+                if overlay is MGRSGridOverlay {
+                    print("🗺️ [IntegratedMapView] Adding MGRS grid overlay")
+                }
+                #endif
+                mapView.addOverlay(overlay, level: level)
+            }
+        }
+
+        // Store MGRS overlay reference in coordinator
+        if overlayCoordinator.mgrsGridEnabled, let mgrsOverlay = allOverlays.first(where: { $0.0 is MGRSGridOverlay })?.0 as? MGRSGridOverlay {
+            context.coordinator.setMGRSOverlay(mgrsOverlay)
+        } else {
+            #if DEBUG
+            print("🗺️ [IntegratedMapView] Grid disabled, removing MGRS overlay from coordinator")
+            #endif
+            context.coordinator.removeMGRSOverlay(from: mapView)
         }
     }
 
@@ -259,6 +288,10 @@ struct IntegratedMapView: UIViewRepresentable {
                 if let polygon = overlay as? MKPolygon {
                     let renderer = MKPolygonRenderer(polygon: polygon)
                     let mapPointForRenderer = renderer.point(for: mapPoint)
+
+                    // Check if path is empty to avoid "clip: empty path" warnings
+                    guard !renderer.path.isEmpty else { continue }
+
                     if renderer.path.contains(mapPointForRenderer) {
                         hitOverlay = overlay
                         if let found = parent.drawingStore.polygons.first(where: { drawing in
@@ -286,6 +319,10 @@ struct IntegratedMapView: UIViewRepresentable {
                 } else if let polyline = overlay as? MKPolyline {
                     let renderer = MKPolylineRenderer(polyline: polyline)
                     let mapPointForRenderer = renderer.point(for: mapPoint)
+
+                    // Check if path is empty before stroking to avoid "clip: empty path" warnings
+                    guard !renderer.path.isEmpty else { continue }
+
                     let strokePath = renderer.path.copy(
                         strokingWithWidth: 30.0,
                         lineCap: .round,

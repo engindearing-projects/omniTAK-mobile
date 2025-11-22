@@ -39,13 +39,21 @@
 
 - (void)setupDefaults {
     _annotationsById = [NSMutableDictionary dictionary];
-    _styleURL = @"https://demotiles.maplibre.org/style.json"; // Default OpenStreetMap style
+    // Use MapTiler's free OSM Bright style - no satellite warnings
+    // Alternative: https://demotiles.maplibre.org/style.json
+    _styleURL = @"https://tiles.openfreemap.org/styles/liberty";
     _userInteractionEnabled = YES;
     _showUserLocation = NO;
     _mapIsReady = NO;
 }
 
 - (void)setupMapView {
+    // Don't create map view with zero bounds - wait for first layout
+    // This prevents "clip: empty path" and CAMetalLayer warnings
+    if (CGRectIsEmpty(self.bounds) || self.bounds.size.width == 0 || self.bounds.size.height == 0) {
+        return;
+    }
+
     // Initialize MapLibre map view with default style
     NSURL *styleURL = [NSURL URLWithString:self.styleURL];
     _mapView = [[MLNMapView alloc] initWithFrame:self.bounds styleURL:styleURL];
@@ -65,6 +73,12 @@
 
 - (void)layoutSubviews {
     [super layoutSubviews];
+
+    // If map view hasn't been created yet (because initial bounds were zero), create it now
+    if (!_mapView && !CGRectIsEmpty(self.bounds) && self.bounds.size.width > 0 && self.bounds.size.height > 0) {
+        [self setupMapView];
+    }
+
     _mapView.frame = self.bounds;
 }
 

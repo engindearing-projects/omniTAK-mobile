@@ -70,7 +70,7 @@ export class MapScreen extends Component<MapScreenViewModel, MapScreenContext> {
       {/* MapLibre map */}
       <MapLibreView
         options={{
-          style: 'https://demotiles.maplibre.org/style.json',
+          style: 'https://tiles.openfreemap.org/styles/liberty',
         }}
         camera={{
           latitude: initialCenter?.lat || 38.8977,

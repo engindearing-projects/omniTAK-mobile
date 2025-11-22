@@ -244,9 +244,23 @@ class MapOverlayCoordinator: ObservableObject {
     }
 
     private func disableMGRSGrid(from mapView: MKMapView) {
+        #if DEBUG
+        print("🗺️ [MapOverlayCoordinator] disableMGRSGrid called")
+        print("🗺️ [MapOverlayCoordinator] mgrsOverlay exists: \(mgrsOverlay != nil)")
+        print("🗺️ [MapOverlayCoordinator] mapView overlays count: \(mapView.overlays.count)")
+        #endif
+
         if let overlay = mgrsOverlay {
             mapView.removeOverlay(overlay)
             mgrsOverlay = nil
+
+            #if DEBUG
+            print("🗺️ [MapOverlayCoordinator] Grid overlay removed. Remaining overlays: \(mapView.overlays.count)")
+            #endif
+        } else {
+            #if DEBUG
+            print("🗺️ [MapOverlayCoordinator] No MGRS overlay to remove")
+            #endif
         }
     }
 
@@ -401,6 +415,10 @@ class MapOverlayCoordinator: ObservableObject {
     func loadSettings() {
         let defaults = UserDefaults.standard
 
+        #if DEBUG
+        print("🗺️ [MapOverlayCoordinator] Loading settings...")
+        #endif
+
         // MGRS Grid settings
         if let densityString = defaults.string(forKey: "mgrsGridDensity"),
            let density = MGRSGridDensity(rawValue: densityString) {
@@ -420,10 +438,25 @@ class MapOverlayCoordinator: ObservableObject {
             trailLineWidth = CGFloat(savedTrailWidth)
         }
 
-        // Load overlay visibility
+        // Load overlay visibility and apply state
         for type in MapOverlayType.allCases {
-            let visible = defaults.bool(forKey: "overlay_\(type.rawValue)_visible")
+            // IMPORTANT: Always start with MGRS grid disabled to fix stuck grid issue
+            // User can manually enable it via the toggle button
+            let visible = type == .mgrsGrid ? false : defaults.bool(forKey: "overlay_\(type.rawValue)_visible")
+
+            #if DEBUG
+            print("🗺️ [MapOverlayCoordinator] Loaded \(type.rawValue): \(visible)")
+            #endif
+
             overlayVisibility[type] = visible
+
+            // Apply the loaded state to the map (if mapView is configured)
+            if visible && mapView != nil {
+                // Delay adding overlays until next run loop to ensure map is ready
+                DispatchQueue.main.async { [weak self] in
+                    self?.addOverlay(type)
+                }
+            }
         }
     }
 }
@@ -432,8 +465,18 @@ class MapOverlayCoordinator: ObservableObject {
 
 extension MapOverlayCoordinator {
     var mgrsGridEnabled: Bool {
-        get { isOverlayVisible(.mgrsGrid) }
+        get {
+            let isVisible = isOverlayVisible(.mgrsGrid)
+            #if DEBUG
+            print("🗺️ [MapOverlayCoordinator] mgrsGridEnabled GET: \(isVisible)")
+            #endif
+            return isVisible
+        }
         set {
+            #if DEBUG
+            print("🗺️ [MapOverlayCoordinator] mgrsGridEnabled SET: \(newValue)")
+            #endif
+
             if newValue {
                 addOverlay(.mgrsGrid)
             } else {

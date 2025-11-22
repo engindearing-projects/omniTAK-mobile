@@ -227,13 +227,25 @@ struct GridOverlayView: View {
     let isVisible: Bool
 
     var body: some View {
+        #if DEBUG
+        let _ = print("🎨 [GridOverlayView] isVisible: \(isVisible)")
+        #endif
+
         if isVisible {
             GeometryReader { geometry in
                 Canvas { context, size in
+                    #if DEBUG
+                    print("🎨 [GridOverlayView] Drawing grid canvas")
+                    #endif
                     drawGrid(context: context, size: size, geometry: geometry)
                 }
             }
             .allowsHitTesting(false) // Allow touches to pass through
+        } else {
+            #if DEBUG
+            let _ = print("🎨 [GridOverlayView] Grid hidden")
+            #endif
+            EmptyView()
         }
     }
 

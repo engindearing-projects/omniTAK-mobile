@@ -41,6 +41,7 @@ struct MeasurementButton: View {
                         .font(.system(size: 10, weight: .bold))
                         .foregroundColor(.white)
                         .padding(4)
+                        .frame(minWidth: 20, minHeight: 20)
                         .background(Color.blue)
                         .clipShape(Circle())
                         .offset(x: -16, y: -16)

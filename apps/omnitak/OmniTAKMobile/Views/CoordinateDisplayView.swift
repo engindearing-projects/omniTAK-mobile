@@ -12,20 +12,12 @@ struct CoordinateDisplayView: View {
 
     var body: some View {
         if isVisible, let coordinate = coordinate {
-            VStack {
-                Spacer()
-                HStack {
-                    VStack(alignment: .leading, spacing: 0) {
-                        Spacer()
-                        if isExpanded {
-                            expandedCoordinateDisplay(for: coordinate)
-                        } else {
-                            collapsedCoordinateDisplay(for: coordinate)
-                        }
-                    }
-                    .padding(.leading, 16)
-                    .padding(.bottom, 20)
-                    Spacer()
+            // Display inline - parent controls positioning
+            VStack(alignment: .leading, spacing: 0) {
+                if isExpanded {
+                    expandedCoordinateDisplay(for: coordinate)
+                } else {
+                    collapsedCoordinateDisplay(for: coordinate)
                 }
             }
         }
