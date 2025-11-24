@@ -1,0 +1,275 @@
+{
+  "_comment": "Example group_structure.json - Defines desired project organization",
+  "_description": "This file defines how files should be organized in Xcode groups",
+
+  "root": {
+    "name": "OmniTAKMobile",
+    "sourceTree": "<group>",
+    "children": [
+      {
+        "name": "Core",
+        "path": "OmniTAKMobile/Core",
+        "sourceTree": "<group>",
+        "files": [
+          "Core/OmniTAKMobileApp.swift",
+          "Core/ContentView.swift"
+        ],
+        "children": []
+      },
+      {
+        "name": "Services",
+        "path": "OmniTAKMobile/Services",
+        "sourceTree": "<group>",
+        "files": [
+          "Services/TAKService.swift",
+          "Services/NavigationService.swift",
+          "Services/ChatService.swift",
+          "Services/LocationService.swift"
+        ],
+        "children": []
+      },
+      {
+        "name": "Views",
+        "path": "OmniTAKMobile/Views",
+        "sourceTree": "<group>",
+        "files": [
+          "Views/SettingsView.swift",
+          "Views/ChatView.swift",
+          "Views/ContactListView.swift"
+        ],
+        "children": []
+      },
+      {
+        "name": "Models",
+        "path": "OmniTAKMobile/Models",
+        "sourceTree": "<group>",
+        "files": [
+          "Models/ChatModels.swift",
+          "Models/WaypointModels.swift",
+          "Models/TeamModels.swift"
+        ],
+        "children": []
+      },
+      {
+        "name": "Managers",
+        "path": "OmniTAKMobile/Managers",
+        "sourceTree": "<group>",
+        "files": [
+          "Managers/ChatManager.swift",
+          "Managers/WaypointManager.swift",
+          "Managers/ServerManager.swift"
+        ],
+        "children": []
+      },
+      {
+        "name": "CoT",
+        "path": "OmniTAKMobile/CoT",
+        "sourceTree": "<group>",
+        "files": [
+          "CoT/CoTEventHandler.swift",
+          "CoT/CoTMessageParser.swift",
+          "CoT/CoTFilterCriteria.swift"
+        ],
+        "children": [
+          {
+            "name": "Parsers",
+            "path": "OmniTAKMobile/CoT/Parsers",
+            "sourceTree": "<group>",
+            "files": [
+              "CoT/Parsers/ChatXMLParser.swift",
+              "CoT/Parsers/ChatXMLGenerator.swift"
+            ],
+            "children": []
+          },
+          {
+            "name": "Generators",
+            "path": "OmniTAKMobile/CoT/Generators",
+            "sourceTree": "<group>",
+            "files": [
+              "CoT/Generators/ChatCoTGenerator.swift",
+              "CoT/Generators/MarkerCoTGenerator.swift",
+              "CoT/Generators/TeamCoTGenerator.swift"
+            ],
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "Map",
+        "path": "OmniTAKMobile/Map",
+        "sourceTree": "<group>",
+        "files": [],
+        "children": [
+          {
+            "name": "Controllers",
+            "path": "OmniTAKMobile/Map/Controllers",
+            "sourceTree": "<group>",
+            "files": [
+              "Map/Controllers/MapViewController.swift",
+              "Map/Controllers/MapStateManager.swift",
+              "Map/Controllers/MapContextMenus.swift"
+            ],
+            "children": []
+          },
+          {
+            "name": "Markers",
+            "path": "OmniTAKMobile/Map/Markers",
+            "sourceTree": "<group>",
+            "files": [
+              "Map/Markers/CustomMarkerAnnotation.swift",
+              "Map/Markers/EnhancedCoTMarker.swift",
+              "Map/Markers/MarkerAnnotationView.swift"
+            ],
+            "children": []
+          },
+          {
+            "name": "Overlays",
+            "path": "OmniTAKMobile/Map/Overlays",
+            "sourceTree": "<group>",
+            "files": [
+              "Map/Overlays/CompassOverlay.swift",
+              "Map/Overlays/MGRSGridOverlay.swift",
+              "Map/Overlays/MeasurementOverlay.swift"
+            ],
+            "children": []
+          },
+          {
+            "name": "TileSources",
+            "path": "OmniTAKMobile/Map/TileSources",
+            "sourceTree": "<group>",
+            "files": [
+              "Map/TileSources/ArcGISTileSource.swift",
+              "Map/TileSources/OfflineTileCache.swift",
+              "Map/TileSources/TileDownloader.swift"
+            ],
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "UI",
+        "path": "OmniTAKMobile/UI",
+        "sourceTree": "<group>",
+        "files": [],
+        "children": [
+          {
+            "name": "Components",
+            "path": "OmniTAKMobile/UI/Components",
+            "sourceTree": "<group>",
+            "files": [
+              "UI/Components/SharedUIComponents.swift",
+              "UI/Components/VideoStreamButton.swift",
+              "UI/Components/TrackRecordingButton.swift"
+            ],
+            "children": []
+          },
+          {
+            "name": "RadialMenu",
+            "path": "OmniTAKMobile/UI/RadialMenu",
+            "sourceTree": "<group>",
+            "files": [
+              "UI/RadialMenu/RadialMenuButton.swift",
+              "UI/RadialMenu/RadialMenuGestureHandler.swift",
+              "UI/RadialMenu/RadialMenuPresets.swift"
+            ],
+            "children": []
+          },
+          {
+            "name": "MilStd2525",
+            "path": "OmniTAKMobile/UI/MilStd2525",
+            "sourceTree": "<group>",
+            "files": [
+              "UI/MilStd2525/MilStd2525Symbols.swift"
+            ],
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "Storage",
+        "path": "OmniTAKMobile/Storage",
+        "sourceTree": "<group>",
+        "files": [
+          "Storage/ChatPersistence.swift",
+          "Storage/ChatStorageManager.swift",
+          "Storage/TeamStorageManager.swift",
+          "Storage/RouteStorageManager.swift"
+        ],
+        "children": []
+      },
+      {
+        "name": "Utilities",
+        "path": "OmniTAKMobile/Utilities",
+        "sourceTree": "<group>",
+        "files": [],
+        "children": [
+          {
+            "name": "Parsers",
+            "path": "OmniTAKMobile/Utilities/Parsers",
+            "sourceTree": "<group>",
+            "files": [
+              "Utilities/Parsers/KMLParser.swift",
+              "Utilities/Parsers/KMZHandler.swift"
+            ],
+            "children": []
+          },
+          {
+            "name": "Integration",
+            "path": "OmniTAKMobile/Utilities/Integration",
+            "sourceTree": "<group>",
+            "files": [
+              "Utilities/Integration/KMLMapIntegration.swift",
+              "Utilities/Integration/KMLOverlayManager.swift"
+            ],
+            "children": []
+          },
+          {
+            "name": "Network",
+            "path": "OmniTAKMobile/Utilities/Network",
+            "sourceTree": "<group>",
+            "files": [
+              "Utilities/Network/NetworkMonitor.swift",
+              "Utilities/Network/MultiServerFederation.swift"
+            ],
+            "children": []
+          },
+          {
+            "name": "Calculators",
+            "path": "OmniTAKMobile/Utilities/Calculators",
+            "sourceTree": "<group>",
+            "files": [
+              "Utilities/Calculators/MeasurementCalculator.swift",
+              "Utilities/Calculators/MGRSConverter.swift"
+            ],
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "Resources",
+        "path": "OmniTAKMobile/Resources",
+        "sourceTree": "<group>",
+        "files": [
+          "Resources/Info.plist",
+          "Resources/omnitak-mobile.p12"
+        ],
+        "children": [
+          {
+            "name": "Documentation",
+            "path": "OmniTAKMobile/Resources/Documentation",
+            "sourceTree": "<group>",
+            "files": [
+              "Resources/Documentation/SHARED_INTERFACES.swift",
+              "Resources/Documentation/USAGE_EXAMPLES.swift"
+            ],
+            "children": []
+          }
+        ]
+      }
+    ],
+    "files": [
+      "Assets.xcassets",
+      "OmniTAKMobile.xcframework"
+    ]
+  }
+}

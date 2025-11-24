@@ -40,3 +40,12 @@ modules/omnitak_mobile/android/native/lib/**/*.a
 
 # Docker build output
 build-output/
+
+# TAK Server files
+takserver/
+
+# Certificate files (security)
+*.p12
+*.jks
+*.key
+*-do-not-share.*

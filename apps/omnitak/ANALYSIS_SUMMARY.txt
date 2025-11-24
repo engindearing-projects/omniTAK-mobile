@@ -1,0 +1,266 @@
+================================================================================
+                    XCODE PROJECT ANALYSIS SUMMARY
+                         OmniTAKMobile Project
+================================================================================
+
+Generated: November 23, 2025
+Location: /Users/iesouskurios/omniTAK-mobile/apps/omnitak/
+
+================================================================================
+FILES CREATED
+================================================================================
+
+1. project_analysis.json (829 KB)
+   - Complete JSON analysis of project.pbxproj
+   - All file references, build files, groups, targets, configurations
+   - Ready for programmatic processing
+
+2. PROJECT_ANALYSIS_README.md (7.8 KB)
+   - Comprehensive documentation
+   - Usage instructions
+   - Structure explanations
+
+3. parse_pbxproj.py (21 KB)
+   - Python parser script
+   - Reusable for future analysis
+   - Extensible for custom parsing
+
+4. ANALYSIS_SUMMARY.txt (this file)
+   - Quick reference summary
+
+================================================================================
+PROJECT METADATA
+================================================================================
+
+Project Name:        OmniTAKMobile
+Bundle Identifier:   com.engindearing.omnitak.mobile
+Development Team:    4HSANV485G
+Version:             1.3.8
+Build Version:       1.3.8
+Swift Version:       5.0
+Deployment Target:   iOS 15.0+
+Display Name:        OmniTAK Mobile
+Target Platform:     iPhone (TARGETED_DEVICE_FAMILY = 1)
+
+================================================================================
+PROJECT STATISTICS
+================================================================================
+
+Total File References:     1,224
+Total Build Files:         191
+Total Source Files:        1,219 (.swift)
+Total Resource Files:      16
+Total Groups:              6
+Total Targets:             1
+Build Configurations:      3 (Debug x2, Release x1)
+
+Build Phase Breakdown:
+  - Sources Phase:         184 files
+  - Resources Phase:       2 files (Assets.xcassets, omnitak-mobile.p12)
+  - Frameworks Phase:      5 files
+
+================================================================================
+FILE ORGANIZATION
+================================================================================
+
+Directory Structure:
+  Views/          386 files (32%)  - SwiftUI views and UI components
+  Services/       164 files (13%)  - Business logic services
+  Models/         156 files (13%)  - Data models
+  UI/             141 files (12%)  - UI components
+  Map/            123 files (10%)  - Map functionality
+  Utilities/       75 files (6%)   - Utility functions
+  CoT/             71 files (6%)   - Cursor-on-Target protocol
+  Managers/        58 files (5%)   - Manager classes
+  Storage/         29 files (2%)   - Data persistence
+  Resources/       16 files (1%)   - Assets and configs
+  Core/             2 files (<1%)  - Core app files
+  Root/             3 files (<1%)  - Root level files
+
+================================================================================
+CRITICAL BUILD SETTINGS (Must Preserve)
+================================================================================
+
+Code Signing:
+  CODE_SIGN_STYLE = Automatic
+  DEVELOPMENT_TEAM = 4HSANV485G
+
+Product Configuration:
+  PRODUCT_BUNDLE_IDENTIFIER = com.engindearing.omnitak.mobile
+  PRODUCT_NAME = $(TARGET_NAME)
+  MARKETING_VERSION = 1.3.8
+  CURRENT_PROJECT_VERSION = 1.3.8
+
+Info.plist Configuration:
+  INFOPLIST_FILE = OmniTAKMobile/Resources/Info.plist
+  INFOPLIST_KEY_CFBundleDisplayName = OmniTAK Mobile
+  GENERATE_INFOPLIST_FILE = YES
+
+Swift Configuration:
+  SWIFT_VERSION = 5.0
+  SWIFT_OBJC_BRIDGING_HEADER = OmniTAKMobile/Core/OmniTAKMobile-Bridging-Header.h
+  SWIFT_EMIT_LOC_STRINGS = YES
+
+Platform Configuration:
+  IPHONEOS_DEPLOYMENT_TARGET = 15.0
+  TARGETED_DEVICE_FAMILY = 1
+  SUPPORTED_PLATFORMS = iphoneos iphonesimulator
+  SUPPORTS_MACCATALYST = NO
+
+Asset Configuration:
+  ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon
+  ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor
+  ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES
+
+SwiftUI Configuration:
+  ENABLE_PREVIEWS = YES
+
+Search Paths:
+  FRAMEWORK_SEARCH_PATHS = ($(inherited), $(PROJECT_DIR))
+  LD_RUNPATH_SEARCH_PATHS = ($(inherited), @executable_path/Frameworks)
+
+================================================================================
+BUILD PHASES
+================================================================================
+
+SOURCES BUILD PHASE (184 Swift files)
+  Core Files:
+    - OmniTAKMobileApp.swift (main app entry)
+    - ContentView.swift (root view)
+  
+  Categories:
+    - 100+ View files
+    - 60+ Service files  
+    - 50+ Model files
+    - 40+ UI component files
+    - 30+ Manager files
+    - 20+ Storage files
+    - And more...
+
+RESOURCES BUILD PHASE (2 files)
+  - Assets.xcassets (all app icons, images, colors)
+  - Resources/omnitak-mobile.p12 (TAK server certificate)
+
+FRAMEWORKS BUILD PHASE (5 frameworks)
+  - OmniTAKMobile.xcframework (primary framework)
+  - Additional system frameworks
+
+================================================================================
+KEY FILE REFERENCES
+================================================================================
+
+Core Application:
+  ✓ Core/OmniTAKMobileApp.swift
+  ✓ Core/ContentView.swift
+
+Configuration:
+  ✓ Resources/Info.plist
+  ✓ Assets.xcassets
+  ✓ Resources/omnitak-mobile.p12
+
+Build Configuration:
+  ✓ SWIFT_OBJC_BRIDGING_HEADER referenced in build settings
+    (OmniTAKMobile/Core/OmniTAKMobile-Bridging-Header.h)
+
+Frameworks:
+  ✓ OmniTAKMobile.xcframework
+
+================================================================================
+JSON STRUCTURE
+================================================================================
+
+The project_analysis.json file contains:
+
+{
+  "metadata": {
+    // Project metadata (bundle ID, team, version, etc.)
+  },
+  "projectInfo": {
+    // Statistics and counts
+  },
+  "fileOrganization": {
+    // Files grouped by directory category
+  },
+  "fileReferences": {
+    // All PBXFileReference entries (UUID -> file details)
+  },
+  "buildFiles": {
+    // All PBXBuildFile entries (UUID -> build file details)
+  },
+  "groups": {
+    // PBXGroup hierarchy (UUID -> group details)
+  },
+  "targets": {
+    // PBXNativeTarget information (UUID -> target details)
+  },
+  "buildConfigurations": {
+    // XCBuildConfiguration entries (UUID -> config details)
+  },
+  "buildPhases": {
+    "sources": { /* PBXSourcesBuildPhase */ },
+    "resources": { /* PBXResourcesBuildPhase */ },
+    "frameworks": { /* PBXFrameworksBuildPhase */ }
+  },
+  "essentialSettings": {
+    // Critical build settings by configuration name
+  }
+}
+
+================================================================================
+USE CASES
+================================================================================
+
+1. PROJECT REORGANIZATION
+   Use the file references and groups to plan new folder structures while
+   maintaining all UUIDs and build references.
+
+2. BUILD SYSTEM MIGRATION
+   All build settings are captured for migration to other build systems or
+   project structures.
+
+3. DOCUMENTATION GENERATION
+   Use the organization data to generate architecture documentation.
+
+4. DEPENDENCY ANALYSIS
+   Analyze which files are in which build phases and their relationships.
+
+5. PROJECT RECONSTRUCTION
+   Use all captured data to rebuild project.pbxproj with proper organization.
+
+================================================================================
+NEXT STEPS
+================================================================================
+
+To use this analysis for project reorganization:
+
+1. Review the file organization in project_analysis.json
+2. Plan new directory structure based on current organization
+3. Update file paths in fileReferences section
+4. Update group hierarchy in groups section
+5. Regenerate project.pbxproj with new structure
+6. Preserve all build settings from buildConfigurations section
+7. Maintain build phase memberships from buildPhases section
+
+To regenerate analysis after changes:
+  cd /Users/iesouskurios/omniTAK-mobile/apps/omnitak
+  python3 parse_pbxproj.py
+
+================================================================================
+VALIDATION RESULTS
+================================================================================
+
+✓ All 1,224 file references extracted
+✓ All 191 build files mapped
+✓ All 6 groups captured
+✓ Target configuration complete
+✓ 3 build configurations with all settings
+✓ All build phases documented
+✓ Essential settings preserved
+✓ File organization categorized
+✓ Critical files identified
+
+Analysis is COMPLETE and READY FOR USE.
+
+================================================================================
+END OF SUMMARY
+================================================================================

@@ -1,0 +1,437 @@
+{
+  "projectName": "OmniTAKMobile",
+  "rootPath": "/Users/iesouskurios/omniTAK-mobile/apps/omnitak/OmniTAKMobile",
+  "structure": {
+    "Core": {
+      "path": "Core",
+      "files": [
+        "ContentView.swift",
+        "OmniTAKMobileApp.swift",
+        "OmniTAKMobile-Bridging-Header.h"
+      ],
+      "description": "Core application entry point and main app structure"
+    },
+    "CoT": {
+      "path": "CoT",
+      "description": "Cursor-on-Target message handling and generation",
+      "files": [
+        "CoTEventHandler.swift",
+        "CoTFilterCriteria.swift",
+        "CoTMessageParser.swift"
+      ],
+      "subgroups": {
+        "Generators": {
+          "path": "CoT/Generators",
+          "files": [
+            "ChatCoTGenerator.swift",
+            "GeofenceCoTGenerator.swift",
+            "MarkerCoTGenerator.swift",
+            "TeamCoTGenerator.swift"
+          ],
+          "description": "CoT message generators for various entity types"
+        },
+        "Parsers": {
+          "path": "CoT/Parsers",
+          "files": [
+            "ChatXMLGenerator.swift",
+            "ChatXMLParser.swift"
+          ],
+          "description": "XML parsing and generation for CoT messages"
+        }
+      }
+    },
+    "Managers": {
+      "path": "Managers",
+      "description": "Business logic and state management",
+      "files": [
+        "CertificateManager.swift",
+        "ChatManager.swift",
+        "CoTFilterManager.swift",
+        "DataPackageManager.swift",
+        "DrawingToolsManager.swift",
+        "GeofenceManager.swift",
+        "MeasurementManager.swift",
+        "MeshtasticManager.swift",
+        "OfflineMapManager.swift",
+        "ServerManager.swift",
+        "WaypointManager.swift"
+      ]
+    },
+    "Map": {
+      "path": "Map",
+      "description": "Map rendering, overlays, and map-related functionality",
+      "subgroups": {
+        "Controllers": {
+          "path": "Map/Controllers",
+          "files": [
+            "EnhancedMapViewController.swift",
+            "EnhancedMapViewRepresentable.swift",
+            "IntegratedMapView.swift",
+            "Map3DViewController.swift",
+            "MapContextMenus.swift",
+            "MapCursorMode.swift",
+            "MapOverlayCoordinator.swift",
+            "MapStateManager.swift",
+            "MapViewController.swift",
+            "MapViewController_Enhanced.swift",
+            "MapViewController_FilterIntegration.swift",
+            "MapViewController_Modified.swift",
+            "MapViewIntegrationExample.swift"
+          ],
+          "description": "Map view controllers and state management"
+        },
+        "Markers": {
+          "path": "Map/Markers",
+          "files": [
+            "CustomMarkerAnnotation.swift",
+            "EnhancedCoTMarker.swift",
+            "MarkerAnnotationView.swift"
+          ],
+          "description": "Map marker annotations and views"
+        },
+        "Overlays": {
+          "path": "Map/Overlays",
+          "files": [
+            "BreadcrumbTrailOverlay.swift",
+            "CompassOverlay.swift",
+            "MeasurementOverlay.swift",
+            "MGRSGridOverlay.swift",
+            "OfflineTileOverlay.swift",
+            "RadialMenuMapOverlay.swift",
+            "RangeBearingOverlay.swift",
+            "TrackOverlayRenderer.swift",
+            "UnitTrailOverlay.swift",
+            "VideoMapOverlay.swift"
+          ],
+          "description": "Map overlay renderers and custom overlays"
+        },
+        "TileSources": {
+          "path": "Map/TileSources",
+          "files": [
+            "ArcGISTileSource.swift",
+            "OfflineTileCache.swift",
+            "TileDownloader.swift"
+          ],
+          "description": "Tile sources and offline map caching"
+        }
+      }
+    },
+    "Models": {
+      "path": "Models",
+      "description": "Data models and structures",
+      "files": [
+        "ArcGISModels.swift",
+        "CASRequestModels.swift",
+        "ChatModels.swift",
+        "CoTFilterModel.swift",
+        "DataPackageModels.swift",
+        "DrawingModels.swift",
+        "EchelonModels.swift",
+        "ElevationProfileModels.swift",
+        "GeofenceModels.swift",
+        "LineOfSightModels.swift",
+        "MeasurementModels.swift",
+        "MEDEVACModels.swift",
+        "MeshtasticModels.swift",
+        "MissionPackageModels.swift",
+        "OfflineMapModels.swift",
+        "PointMarkerModels.swift",
+        "RadialMenuModels.swift",
+        "RouteModels.swift",
+        "SPOTREPModels.swift",
+        "TeamModels.swift",
+        "TrackModels.swift",
+        "VideoStreamModels.swift",
+        "WaypointModels.swift"
+      ]
+    },
+    "Services": {
+      "path": "Services",
+      "description": "Network services and business logic services",
+      "files": [
+        "ArcGISFeatureService.swift",
+        "ArcGISPortalService.swift",
+        "BloodhoundService.swift",
+        "BreadcrumbTrailService.swift",
+        "CertificateEnrollmentService.swift",
+        "ChatService.swift",
+        "DataPackageImportManager.swift",
+        "DigitalPointerService.swift",
+        "EchelonService.swift",
+        "ElevationProfileService.swift",
+        "EmergencyBeaconService.swift",
+        "GeofenceService.swift",
+        "LineOfSightService.swift",
+        "MeasurementService.swift",
+        "MissionPackageSyncService.swift",
+        "NavigationService.swift",
+        "PhotoAttachmentService.swift",
+        "PointDropperService.swift",
+        "PositionBroadcastService.swift",
+        "RangeBearingService.swift",
+        "RoutePlanningService.swift",
+        "TAKService.swift",
+        "TeamService.swift",
+        "TerrainVisualizationService.swift",
+        "TrackRecordingService.swift",
+        "TurnByTurnNavigationService.swift",
+        "VideoStreamService.swift"
+      ]
+    },
+    "Storage": {
+      "path": "Storage",
+      "description": "Data persistence and storage management",
+      "files": [
+        "ChatPersistence.swift",
+        "ChatStorageManager.swift",
+        "DrawingPersistence.swift",
+        "RouteStorageManager.swift",
+        "TeamStorageManager.swift"
+      ]
+    },
+    "UI": {
+      "path": "UI",
+      "description": "User interface components and views",
+      "subgroups": {
+        "Components": {
+          "path": "UI/Components",
+          "files": [
+            "ATAKBottomToolbar_Modified.swift",
+            "ConnectionStatusWidget.swift",
+            "DataPackageButton.swift",
+            "MeasurementButton.swift",
+            "QuickActionToolbar.swift",
+            "SharedUIComponents.swift",
+            "TrackRecordingButton.swift",
+            "VideoStreamButton.swift"
+          ],
+          "description": "Reusable UI components and widgets"
+        },
+        "MilStd2525": {
+          "path": "UI/MilStd2525",
+          "files": [
+            "MilStd2525Symbols.swift"
+          ],
+          "description": "MIL-STD-2525 military symbology"
+        },
+        "RadialMenu": {
+          "path": "UI/RadialMenu",
+          "files": [
+            "RadialMenuActionExecutor.swift",
+            "RadialMenuAnimations.swift",
+            "RadialMenuButton.swift",
+            "RadialMenuGestureHandler.swift",
+            "RadialMenuItemView.swift",
+            "RadialMenuMapCoordinator.swift",
+            "RadialMenuPresets.swift"
+          ],
+          "description": "Radial menu system components"
+        }
+      }
+    },
+    "Utilities": {
+      "path": "Utilities",
+      "description": "Helper utilities and common functions",
+      "subgroups": {
+        "Calculators": {
+          "path": "Utilities/Calculators",
+          "files": [
+            "MeasurementCalculator.swift"
+          ],
+          "description": "Calculation utilities for measurements and geometry"
+        },
+        "Converters": {
+          "path": "Utilities/Converters",
+          "files": [
+            "BNGConverter.swift",
+            "MGRSConverter.swift"
+          ],
+          "description": "Coordinate system converters"
+        },
+        "Integration": {
+          "path": "Utilities/Integration",
+          "files": [
+            "KMLMapIntegration.swift",
+            "KMLOverlayManager.swift"
+          ],
+          "description": "Third-party integration utilities"
+        },
+        "Network": {
+          "path": "Utilities/Network",
+          "files": [
+            "MultiServerFederation.swift",
+            "NetworkMonitor.swift"
+          ],
+          "description": "Network monitoring and utilities"
+        },
+        "Parsers": {
+          "path": "Utilities/Parsers",
+          "files": [
+            "KMLParser.swift",
+            "KMZHandler.swift"
+          ],
+          "description": "File format parsers"
+        }
+      }
+    },
+    "Views": {
+      "path": "Views",
+      "description": "SwiftUI view screens and pages",
+      "files": [
+        "AboutView.swift",
+        "ArcGISPortalView.swift",
+        "ATAKLoadingScreen.swift",
+        "ATAKToolsView.swift",
+        "BloodhoundView.swift",
+        "CASRequestView.swift",
+        "CertificateEnrollmentView.swift",
+        "CertificateManagementView.swift",
+        "CertificateSelectionView.swift",
+        "ChatView.swift",
+        "CompassOverlayView.swift",
+        "ContactDetailView.swift",
+        "ContactListView.swift",
+        "ConversationView.swift",
+        "CoordinateDisplayView.swift",
+        "CoTFilterPanel.swift",
+        "CoTUnitListView.swift",
+        "DataPackageImportView.swift",
+        "DataPackageView.swift",
+        "DigitalPointerView.swift",
+        "DrawingPropertiesView.swift",
+        "DrawingToolsPanel.swift",
+        "EchelonHierarchyView.swift",
+        "ElevationProfileView.swift",
+        "EmergencyBeaconView.swift",
+        "FirstTimeOnboarding.swift",
+        "GeofenceManagementView.swift",
+        "KMLImportView.swift",
+        "LineOfSightView.swift",
+        "Map3DSettingsView.swift",
+        "MarkerInfoPanel.swift",
+        "MeasurementToolView.swift",
+        "MEDEVACRequestView.swift",
+        "MeshtasticConnectionView.swift",
+        "MeshtasticDevicePickerView.swift",
+        "MeshTopologyView.swift",
+        "MGRSGridToggleView.swift",
+        "MilStd2525MarkerView.swift",
+        "MilStd2525SymbolView.swift",
+        "MissionPackageSyncView.swift",
+        "NavigationDrawer.swift",
+        "NetworkPreferencesView.swift",
+        "OfflineMapsView.swift",
+        "PhotoPickerView.swift",
+        "PluginsListView.swift",
+        "PointDropperView.swift",
+        "PositionBroadcastView.swift",
+        "QuickConnectView.swift",
+        "RadialMenuView.swift",
+        "RangeRingConfigView.swift",
+        "RegionSelectionView.swift",
+        "RoutePlanningView.swift",
+        "SALUTEReportView.swift",
+        "ScaleBarView.swift",
+        "SettingsView.swift",
+        "SignalHistoryView.swift",
+        "SPOTREPView.swift",
+        "TeamManagementView.swift",
+        "TrackListView.swift",
+        "TrackRecordingView.swift",
+        "TurnByTurnNavigationView.swift",
+        "VideoFeedListView.swift",
+        "VideoPlayerView.swift",
+        "WaypointListView.swift"
+      ]
+    },
+    "Resources": {
+      "path": "Resources",
+      "description": "Assets, documentation, and resource files",
+      "files": [
+        "Info.plist"
+      ],
+      "subgroups": {
+        "Documentation": {
+          "path": "Resources/Documentation",
+          "files": [
+            "SHARED_INTERFACES.swift",
+            "USAGE_EXAMPLES.swift"
+          ],
+          "description": "Code documentation and examples"
+        },
+        "Assets": {
+          "path": "../Assets.xcassets",
+          "description": "Asset catalog containing app icons and colors",
+          "subgroups": {
+            "AppIcon": {
+              "path": "../Assets.xcassets/AppIcon.appiconset",
+              "files": [
+                "Contents.json",
+                "1024.png",
+                "180.png",
+                "167.png",
+                "152.png",
+                "120.png",
+                "87.png",
+                "80.png",
+                "60.png",
+                "58.png",
+                "40.png",
+                "29.png",
+                "20.png"
+              ],
+              "description": "Application icon assets"
+            },
+            "AccentColor": {
+              "path": "../Assets.xcassets/AccentColor.colorset",
+              "files": [
+                "Contents.json"
+              ],
+              "description": "App accent color definition"
+            }
+          }
+        }
+      }
+    }
+  },
+  "fileCount": {
+    "swift": 192,
+    "header": 1,
+    "plist": 3,
+    "xcassets": 1,
+    "total": 197
+  },
+  "groupHierarchy": [
+    "Core",
+    "CoT",
+    "CoT/Generators",
+    "CoT/Parsers",
+    "Managers",
+    "Map",
+    "Map/Controllers",
+    "Map/Markers",
+    "Map/Overlays",
+    "Map/TileSources",
+    "Models",
+    "Services",
+    "Storage",
+    "UI",
+    "UI/Components",
+    "UI/MilStd2525",
+    "UI/RadialMenu",
+    "Utilities",
+    "Utilities/Calculators",
+    "Utilities/Converters",
+    "Utilities/Integration",
+    "Utilities/Network",
+    "Utilities/Parsers",
+    "Views",
+    "Resources",
+    "Resources/Documentation"
+  ],
+  "metadata": {
+    "generatedDate": "2025-11-23",
+    "purpose": "Define clean organized Xcode project structure",
+    "usage": "Reference for reorganizing Xcode project groups to match filesystem structure"
+  }
+}

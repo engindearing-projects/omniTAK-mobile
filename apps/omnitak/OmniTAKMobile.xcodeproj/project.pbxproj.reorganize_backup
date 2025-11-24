@@ -35,7 +35,6 @@
 		2895B7D185ED4644B6042FF6 /* UI/Components/TrackRecordingButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34724366111A4CC1848D2837 /* UI/Components/TrackRecordingButton.swift */; };
 		3013BEA116AB65293CA6B796 /* Services/DigitalPointerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A66A61FB37ED26B0425F26F /* Services/DigitalPointerService.swift */; };
 		3025C35F05D6415A9F0287E7 /* Views/ATAKToolsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 809324E1A2EE4993BDAB1366 /* Views/ATAKToolsView.swift */; };
-		31151487A72D4552A74E15DF /* TAKServersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6C94693DEB048E1A44FE7ED /* TAKServersView.swift */; };
 		333749F8265C45A18E2E8300 /* Views/RadialMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 017D1C50896F46C183D5A29E /* Views/RadialMenuView.swift */; };
 		367F1CFC64E3439597C938EA /* Views/CertificateSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A3EBDFAE1BD433EB10A51C1 /* Views/CertificateSelectionView.swift */; };
 		37D8D8E1A61940F9B3DD788E /* Services/MissionPackageSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B825E86C4DC400D91A254A9 /* Services/MissionPackageSyncService.swift */; };
@@ -1288,7 +1287,6 @@
 		E64176515BA341E2BB0CA016 /* Views/VideoFeedListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/VideoFeedListView.swift; sourceTree = "<group>"; };
 		E6777E46DDF24D129067B6F9 /* Models/MeasurementModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models/MeasurementModels.swift; sourceTree = "<group>"; };
 		E68CFF0F34F74925A6762EC6 /* Views/LineOfSightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/LineOfSightView.swift; sourceTree = "<group>"; };
-		E6C94693DEB048E1A44FE7ED /* TAKServersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TAKServersView.swift; path = Views/TAKServersView.swift; sourceTree = "<group>"; };
 		E6E7358F994B40E8AE54E739 /* Views/TrackListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/TrackListView.swift; sourceTree = "<group>"; };
 		E6F423F00DB243C1A4CFDFA4 /* Views/ContactListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/ContactListView.swift; sourceTree = "<group>"; };
 		E707CAD48D474F66819EEA71 /* Views/EmergencyBeaconView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/EmergencyBeaconView.swift; sourceTree = "<group>"; };
@@ -1453,7 +1451,6 @@
 				27DA6489B819104445237C1B /* MeshTopologyView.swift */,
 				F331489CF1193923DBCBCEED /* SignalHistoryView.swift */,
 				C2B02B2B4023437280EEDAF5 /* NetworkPreferencesView.swift */,
-				E6C94693DEB048E1A44FE7ED /* TAKServersView.swift */,
 			);
 			name = Views;
 			sourceTree = "<group>";
@@ -2973,7 +2970,6 @@
 				03D3665CF42E98053FAEC2FB /* MeshTopologyView.swift in Sources */,
 				79651FC08FFA1DFD27EF1530 /* SignalHistoryView.swift in Sources */,
 				E8929C17394445BFAB7742B3 /* NetworkPreferencesView.swift in Sources */,
-				31151487A72D4552A74E15DF /* TAKServersView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
