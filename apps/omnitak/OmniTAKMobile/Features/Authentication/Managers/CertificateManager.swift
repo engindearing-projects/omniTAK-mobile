@@ -208,7 +208,8 @@ class CertificateManager: ObservableObject {
 
     // MARK: - Certificate List Persistence
 
-    private func loadCertificates() {
+    /// Reload certificates from storage - called after external changes
+    func loadCertificates() {
         if let data = UserDefaults.standard.data(forKey: certificatesKey),
            let decoded = try? JSONDecoder().decode([TAKCertificate].self, from: data) {
             certificates = decoded
