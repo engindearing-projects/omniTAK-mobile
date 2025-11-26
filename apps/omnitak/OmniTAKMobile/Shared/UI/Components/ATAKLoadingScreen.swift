@@ -6,14 +6,19 @@ import SwiftUI
 struct ATAKLoadingScreen: View {
     @Binding var isLoading: Bool
     @State private var loadingProgress: Double = 0.0
-    @State private var loadingMessage = "Please wait..."
+    @State private var loadingMessage = "Initializing..."
     @State private var animationAmount: CGFloat = 1
 
+    // Get version from bundle
+    private var appVersion: String {
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+        return "\(version) (\(build))"
+    }
+
+    // Faster loading - just 2 quick stages
     let loadingStages = [
-        (0.2, "Initializing TAK Client..."),
-        (0.4, "Loading Map Tiles..."),
-        (0.6, "Connecting to Server..."),
-        (0.8, "Synchronizing CoT..."),
+        (0.5, "Loading..."),
         (1.0, "Ready")
     ]
 
@@ -67,7 +72,7 @@ struct ATAKLoadingScreen: View {
                     Text("OmniTAK Mobile")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(.gray)
-                    Text("Version 1.3.8 - Built with Valdi")
+                    Text("Version \(appVersion)")
                         .font(.system(size: 10))
                         .foregroundColor(.gray.opacity(0.7))
                 }
@@ -82,17 +87,18 @@ struct ATAKLoadingScreen: View {
     private func simulateLoading() {
         var currentStage = 0
 
-        Timer.scheduledTimer(withTimeInterval: 0.8, repeats: true) { timer in
+        // Fast loading - 0.3s per stage (total ~0.6s)
+        Timer.scheduledTimer(withTimeInterval: 0.3, repeats: true) { timer in
             guard currentStage < loadingStages.count else {
                 timer.invalidate()
-                // Delay before dismissing
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                // Minimal delay before dismissing
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                     isLoading = false
                 }
                 return
             }
 
-            withAnimation(.easeInOut(duration: 0.4)) {
+            withAnimation(.easeInOut(duration: 0.2)) {
                 loadingProgress = loadingStages[currentStage].0
                 loadingMessage = loadingStages[currentStage].1
             }
