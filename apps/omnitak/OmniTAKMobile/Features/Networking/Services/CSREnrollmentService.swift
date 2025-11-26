@@ -124,11 +124,17 @@ class CSREnrollmentService {
         let caConfig = try await fetchCAConfiguration(config: config)
         print("[CSREnroll] CA configuration retrieved: O=\(caConfig.organizationNames), OU=\(caConfig.organizationalUnitNames)")
 
+        // TAKaware approach: Use consistent label for both private key and certificate
+        // This allows iOS to automatically create the SecIdentity
+        let certificateAlias = "omnitak-cert-\(config.serverHost)"
+
         // Step 2: Generate CSR with DN from server
-        print("[CSREnroll] Generating CSR...")
+        // Use certificate alias as the key tag so they match
+        print("[CSREnroll] Generating CSR with key tag: \(certificateAlias)")
         let csrResult = try csrGenerator.generateCSR(
             username: config.username,
-            caConfig: caConfig
+            caConfig: caConfig,
+            keyTag: certificateAlias  // Use same label as certificate
         )
         print("[CSREnroll] CSR generated successfully")
 
@@ -141,11 +147,12 @@ class CSREnrollmentService {
         print("[CSREnroll] Received signed certificate from server")
 
         // Step 4: Store signed certificate with private key
+        // Use the same certificateAlias that was used for the key tag
         print("[CSREnroll] Storing certificate and creating identity...")
-        let certificateAlias = try storeCertificateIdentity(
+        try storeCertificateIdentity(
             response: enrollmentResponse,
             privateKeyTag: csrResult.privateKeyTag,
-            serverHost: config.serverHost
+            certificateAlias: certificateAlias
         )
         print("[CSREnroll] Certificate identity stored successfully")
 
@@ -159,7 +166,7 @@ class CSREnrollmentService {
             useTLS: config.useSSL,
             isDefault: false,
             certificateName: certificateAlias,
-            certificatePassword: nil
+            certificatePassword: "omnitak"  // Password for CSR-enrolled certificates
         )
 
         // Add server to manager (must be on main thread for @Published properties)
@@ -357,13 +364,14 @@ class CSREnrollmentService {
     }
 
     // MARK: - Certificate Storage
+    // Implementation follows TAKaware's approach for keychain identity creation
 
     private func storeCertificateIdentity(
         response: EnrollmentResponse,
         privateKeyTag: String,
-        serverHost: String
-    ) throws -> String {
-        // Retrieve the private key we generated earlier (verify it exists)
+        certificateAlias: String
+    ) throws {
+        // Verify the private key exists (it should have been created with the same label)
         guard csrGenerator.retrievePrivateKey(tag: privateKeyTag) != nil else {
             throw CSREnrollmentError.certificateStorageFailed("Failed to retrieve private key from keychain")
         }
@@ -373,26 +381,69 @@ class CSREnrollmentService {
             throw CSREnrollmentError.certificateStorageFailed("Failed to create certificate from DER data")
         }
 
-        // Create identity by associating certificate with private key
-        let certificateAlias = "omnitak-cert-\(serverHost)"
+        // Clear existing certificates and identities (TAKaware approach)
+        clearCertsAndIdentities(label: certificateAlias)
 
-        // Store certificate in keychain
-        let certQuery: [String: Any] = [
+        print("[CSREnroll] Adding client certificate to keychain with label: \(certificateAlias)")
+
+        // Add certificate to keychain with kSecReturnAttributes to get issuer/serial
+        // This is exactly how TAKaware does it
+        let addArgs: [String: Any] = [
             kSecClass as String: kSecClassCertificate,
-            kSecValueRef as String: certificate,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
             kSecAttrLabel as String: certificateAlias,
-            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+            kSecValueRef as String: certificate,
+            kSecReturnAttributes as String: true
         ]
 
-        // Delete existing if present
-        SecItemDelete(certQuery as CFDictionary)
+        var resultRef: AnyObject?
+        let addStatus = SecItemAdd(addArgs as CFDictionary, &resultRef)
 
-        let certStatus = SecItemAdd(certQuery as CFDictionary, nil)
-        guard certStatus == errSecSuccess || certStatus == errSecDuplicateItem else {
-            throw CSREnrollmentError.certificateStorageFailed("Failed to store certificate: \(certStatus)")
+        guard addStatus == errSecSuccess, let certAttrs = resultRef as? [String: Any] else {
+            throw CSREnrollmentError.certificateStorageFailed("Failed to add certificate to keychain: \(addStatus)")
         }
 
-        print("[CSREnroll] Stored certificate with alias: \(certificateAlias)")
+        print("[CSREnroll] Certificate added, attempting to create identity...")
+
+        // Get issuer and serial number from certificate attributes
+        // These are used to match the certificate with the private key
+        guard let issuer = certAttrs[kSecAttrIssuer as String] as? Data,
+              let serialNumber = certAttrs[kSecAttrSerialNumber as String] as? Data else {
+            print("[CSREnroll] Warning: Could not retrieve issuer/serial from certificate attributes")
+            print("[CSREnroll] Available attributes: \(certAttrs.keys)")
+
+            // Store mapping for fallback retrieval
+            UserDefaults.standard.set(privateKeyTag, forKey: "csr_key_tag_\(certificateAlias)")
+            UserDefaults.standard.set(response.signedCertificate, forKey: "csr_cert_data_\(certificateAlias)")
+            return  // Early return - identity will be found by certificate matching
+        }
+
+        print("[CSREnroll] Got issuer (\(issuer.count) bytes) and serial (\(serialNumber.count) bytes)")
+
+        // Query for identity using issuer and serial number (TAKaware approach)
+        // This creates a persistent identity linking the certificate with the private key
+        let identityArgs: [String: Any] = [
+            kSecClass as String: kSecClassIdentity,
+            kSecAttrIssuer as String: issuer,
+            kSecAttrSerialNumber as String: serialNumber,
+            kSecReturnPersistentRef as String: true  // Important: creates persistent identity
+        ]
+
+        var identityRef: AnyObject?
+        let identityStatus = SecItemCopyMatching(identityArgs as CFDictionary, &identityRef)
+
+        if identityStatus == errSecSuccess {
+            print("[CSREnroll] ✅ SecIdentity created successfully!")
+        } else {
+            print("[CSREnroll] ⚠️ Identity not found (status: \(identityStatus))")
+            print("[CSREnroll] This may indicate the private key was not properly stored")
+        }
+
+        // Store mapping for TAKService lookup
+        UserDefaults.standard.set(privateKeyTag, forKey: "csr_key_tag_\(certificateAlias)")
+        UserDefaults.standard.set(response.signedCertificate, forKey: "csr_cert_data_\(certificateAlias)")
+
+        print("[CSREnroll] Stored certificate mapping: \(certificateAlias) -> \(privateKeyTag)")
 
         // Store CA trust chain
         for (index, caData) in response.trustChain.enumerated() {
@@ -414,8 +465,23 @@ class CSREnrollmentService {
                 }
             }
         }
+    }
 
-        return certificateAlias
+    /// Clear existing certificates and identities for a given label
+    private func clearCertsAndIdentities(label: String) {
+        // Delete certificate with this label
+        let certQuery: [String: Any] = [
+            kSecClass as String: kSecClassCertificate,
+            kSecAttrLabel as String: label
+        ]
+        SecItemDelete(certQuery as CFDictionary)
+
+        // Delete identity with this label
+        let identityQuery: [String: Any] = [
+            kSecClass as String: kSecClassIdentity,
+            kSecAttrLabel as String: label
+        ]
+        SecItemDelete(identityQuery as CFDictionary)
     }
 
     // MARK: - Helper Methods

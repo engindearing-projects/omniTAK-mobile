@@ -120,9 +120,12 @@ class CSRGenerator {
         deleteKeyFromKeychain(tag: tag)
 
         // Key generation parameters
+        // TAKaware approach: Use both kSecAttrLabel and kSecAttrApplicationTag
+        // The label is what iOS uses to match the certificate with the private key
         let privateKeyAttrs: [String: Any] = [
             kSecAttrIsPermanent as String: true,
             kSecAttrApplicationTag as String: tag.data(using: .utf8)!,
+            kSecAttrLabel as String: tag,  // Add label for identity matching
             kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         ]
 
@@ -480,15 +483,26 @@ class CSRGenerator {
 
     /// Delete key from keychain
     func deleteKeyFromKeychain(tag: String) {
-        let query: [String: Any] = [
+        // Delete by application tag
+        let tagQuery: [String: Any] = [
             kSecClass as String: kSecClassKey,
             kSecAttrApplicationTag as String: tag.data(using: .utf8)!,
             kSecAttrKeyType as String: kSecAttrKeyTypeRSA
         ]
-
-        let status = SecItemDelete(query as CFDictionary)
-        if status == errSecSuccess {
+        let tagStatus = SecItemDelete(tagQuery as CFDictionary)
+        if tagStatus == errSecSuccess {
             print("[CSR] Deleted existing key with tag: \(tag)")
+        }
+
+        // Also delete by label (TAKaware approach)
+        let labelQuery: [String: Any] = [
+            kSecClass as String: kSecClassKey,
+            kSecAttrLabel as String: tag,
+            kSecAttrKeyType as String: kSecAttrKeyTypeRSA
+        ]
+        let labelStatus = SecItemDelete(labelQuery as CFDictionary)
+        if labelStatus == errSecSuccess {
+            print("[CSR] Deleted existing key with label: \(tag)")
         }
     }
 
@@ -532,7 +546,11 @@ extension CSRGenerator {
     }
 
     /// Generate CSR with CA configuration from server
-    func generateCSR(username: String, caConfig: CAConfiguration) throws -> CSRResult {
+    /// - Parameters:
+    ///   - username: The username (CN) for the certificate
+    ///   - caConfig: CA configuration from server with DN components
+    ///   - keyTag: Optional custom key tag (defaults to standard format if nil)
+    func generateCSR(username: String, caConfig: CAConfiguration, keyTag: String? = nil) throws -> CSRResult {
         // Use DN components from server, or defaults if not provided
         let organization = caConfig.organizationNames.first ?? "TAK"
         let organizationalUnit = caConfig.organizationalUnitNames.first ?? "TAK"
@@ -542,7 +560,8 @@ extension CSRGenerator {
             organization: organization,
             organizationalUnit: organizationalUnit,
             country: "US",
-            domainComponents: caConfig.domainComponents
+            domainComponents: caConfig.domainComponents,
+            keyTag: keyTag  // Pass through custom key tag
         )
 
         try validateConfiguration(config)

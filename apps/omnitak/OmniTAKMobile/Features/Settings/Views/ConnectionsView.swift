@@ -115,6 +115,9 @@ struct ConnectionsView: View {
                         onTap: {
                             serverManager.setActiveServer(server)
                         },
+                        onToggleEnabled: {
+                            serverManager.toggleServerEnabled(server)
+                        },
                         onEdit: {
                             editingServer = server
                         },
@@ -136,6 +139,7 @@ struct ConnectionServerCard: View {
     let server: TAKServer
     let isActive: Bool
     let onTap: () -> Void
+    let onToggleEnabled: () -> Void
     let onEdit: () -> Void
     let onDelete: () -> Void
 
@@ -143,17 +147,25 @@ struct ConnectionServerCard: View {
         Button(action: onTap) {
             VStack(spacing: 0) {
                 // Main content
-                HStack(spacing: 16) {
+                HStack(spacing: 12) {
+                    // Enable/Disable checkbox
+                    Button(action: onToggleEnabled) {
+                        Image(systemName: server.enabled ? "checkmark.square.fill" : "square")
+                            .font(.system(size: 22))
+                            .foregroundColor(server.enabled ? Color(hex: "#FFFC00") : Color(hex: "#666666"))
+                    }
+                    .buttonStyle(PlainButtonStyle())
+
                     // Status indicator
                     Circle()
-                        .fill(isActive ? Color(hex: "#00FF00") : Color(hex: "#666666"))
+                        .fill(server.enabled ? (isActive ? Color(hex: "#00FF00") : Color(hex: "#666666")) : Color(hex: "#333333"))
                         .frame(width: 12, height: 12)
 
                     // Server info
                     VStack(alignment: .leading, spacing: 6) {
                         Text(server.name)
                             .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(.white)
+                            .foregroundColor(server.enabled ? .white : Color(hex: "#666666"))
 
                         HStack(spacing: 8) {
                             Label(server.host, systemImage: "network")

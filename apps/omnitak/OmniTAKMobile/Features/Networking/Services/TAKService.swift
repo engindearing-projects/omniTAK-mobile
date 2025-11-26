@@ -362,6 +362,14 @@ class DirectTCPSender {
             }
         }
 
+        // Try loading CSR-enrolled certificate (stored by CSREnrollmentService)
+        if let identity = loadCSREnrolledIdentity(name: name) {
+            #if DEBUG
+            print("🔐 Loaded CSR-enrolled certificate: \(name)")
+            #endif
+            return identity
+        }
+
         // Try loading from Documents folder (enrolled certificates)
         let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         let certificatesPath = documentsPath.appendingPathComponent("Certificates")
@@ -380,7 +388,7 @@ class DirectTCPSender {
         // Fallback: Look for .p12 file in app bundle
         guard let certPath = Bundle.main.path(forResource: name, ofType: "p12") else {
             print("❌ Certificate file not found: \(name).p12")
-            print("   Searched in: CertificateManager, Documents/Certificates, and app bundle")
+            print("   Searched in: CertificateManager, CSR-enrolled, Documents/Certificates, and app bundle")
             return nil
         }
 
@@ -390,6 +398,87 @@ class DirectTCPSender {
 
         let bundleCertURL = URL(fileURLWithPath: certPath)
         return loadP12Identity(from: bundleCertURL, password: password)
+    }
+
+    /// Load identity from CSR-enrolled certificate (TAKaware approach - query by label)
+    private func loadCSREnrolledIdentity(name: String) -> sec_identity_t? {
+        #if DEBUG
+        print("🔐 Looking for CSR-enrolled identity with label: \(name)")
+        #endif
+
+        // First check if we have a certificate with this label (confirms CSR enrollment was done)
+        let certQuery: [String: Any] = [
+            kSecClass as String: kSecClassCertificate,
+            kSecAttrLabel as String: name,
+            kSecReturnRef as String: true
+        ]
+
+        var certItem: CFTypeRef?
+        let certStatus = SecItemCopyMatching(certQuery as CFDictionary, &certItem)
+
+        guard certStatus == errSecSuccess else {
+            #if DEBUG
+            print("🔍 No CSR-enrolled certificate found for: \(name)")
+            #endif
+            return nil
+        }
+
+        #if DEBUG
+        print("📜 Found certificate with label: \(name)")
+        #endif
+
+        // TAKaware approach: Query for identity directly by label
+        // iOS creates identity automatically when cert and key have matching public keys
+        let identityQuery: [String: Any] = [
+            kSecClass as String: kSecClassIdentity,
+            kSecAttrLabel as String: name,
+            kSecReturnRef as String: true
+        ]
+
+        var identityRef: CFTypeRef?
+        let identityStatus = SecItemCopyMatching(identityQuery as CFDictionary, &identityRef)
+
+        if identityStatus == errSecSuccess, let identity = identityRef {
+            #if DEBUG
+            print("✅ Found SecIdentity by label: \(name)")
+            #endif
+            return sec_identity_create(identity as! SecIdentity)
+        }
+
+        #if DEBUG
+        print("⚠️ Identity not found by label (status: \(identityStatus)), trying certificate match...")
+        #endif
+
+        // Fallback: Query all identities and find the one matching our certificate
+        let allIdentitiesQuery: [String: Any] = [
+            kSecClass as String: kSecClassIdentity,
+            kSecReturnRef as String: true,
+            kSecMatchLimit as String: kSecMatchLimitAll
+        ]
+
+        var identityItems: CFTypeRef?
+        let allIdentitiesStatus = SecItemCopyMatching(allIdentitiesQuery as CFDictionary, &identityItems)
+
+        if allIdentitiesStatus == errSecSuccess, let identities = identityItems as? [SecIdentity] {
+            let targetCertData = SecCertificateCopyData(certItem as! SecCertificate)
+
+            for identity in identities {
+                var identityCert: SecCertificate?
+                if SecIdentityCopyCertificate(identity, &identityCert) == errSecSuccess,
+                   let cert = identityCert {
+                    let identityCertData = SecCertificateCopyData(cert)
+                    if targetCertData == identityCertData {
+                        #if DEBUG
+                        print("✅ Found matching SecIdentity by certificate comparison")
+                        #endif
+                        return sec_identity_create(identity)
+                    }
+                }
+            }
+        }
+
+        print("❌ Could not find identity for CSR-enrolled certificate: \(name)")
+        return nil
     }
 
     private func loadP12Identity(from url: URL, password: String) -> sec_identity_t? {

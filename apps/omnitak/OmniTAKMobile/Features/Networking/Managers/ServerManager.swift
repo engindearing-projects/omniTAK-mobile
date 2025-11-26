@@ -22,8 +22,11 @@ struct TAKServer: Identifiable, Codable, Equatable {
     var certificateName: String?  // Name of certificate file (e.g., "omnitak-mobile")
     var certificatePassword: String?  // Password for .p12 certificate
     var allowLegacyTLS: Bool  // Allow TLS 1.0/1.1 for extremely old servers (security risk)
+    var username: String?  // Username for enrollment
+    var password: String?  // Password for enrollment
+    var enrollmentPort: UInt16?  // Enrollment API port (default 8446)
 
-    init(id: UUID = UUID(), name: String, host: String, port: UInt16, protocolType: String = "tcp", useTLS: Bool = false, isDefault: Bool = false, enabled: Bool = true, certificateName: String? = nil, certificatePassword: String? = nil, allowLegacyTLS: Bool = false) {
+    init(id: UUID = UUID(), name: String, host: String, port: UInt16, protocolType: String = "tcp", useTLS: Bool = false, isDefault: Bool = false, enabled: Bool = true, certificateName: String? = nil, certificatePassword: String? = nil, allowLegacyTLS: Bool = false, username: String? = nil, password: String? = nil, enrollmentPort: UInt16? = nil) {
         self.id = id
         self.name = name
         self.host = host
@@ -35,6 +38,9 @@ struct TAKServer: Identifiable, Codable, Equatable {
         self.certificateName = certificateName
         self.certificatePassword = certificatePassword
         self.allowLegacyTLS = allowLegacyTLS
+        self.username = username
+        self.password = password
+        self.enrollmentPort = enrollmentPort
     }
 
     var displayName: String {
