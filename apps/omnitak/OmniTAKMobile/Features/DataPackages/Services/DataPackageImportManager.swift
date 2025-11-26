@@ -31,13 +31,25 @@ class DataPackageImportManager: ObservableObject {
 
         // Extract zip file
         await statusCallback(.extracting)
-        try await extractZipFile(from: url, to: tempDir)
+        try extractZipFile(from: url, to: tempDir)
 
         // Find and process contents
         let contents = try findPackageContents(in: tempDir)
 
-        // Import certificates
         var importedItems = 0
+
+        // Parse preferences FIRST to get passwords for certificate import
+        await statusCallback(.configuring)
+        for prefURL in contents.preferences {
+            do {
+                try await parsePreferences(from: prefURL)
+                importedItems += 1
+            } catch {
+                print("⚠️ Failed to parse preferences: \(error.localizedDescription)")
+            }
+        }
+
+        // Import certificates (using passwords extracted from preferences)
         for certURL in contents.certificates {
             do {
                 try await importCertificate(from: certURL)
@@ -47,23 +59,13 @@ class DataPackageImportManager: ObservableObject {
             }
         }
 
-        // Parse and apply server configurations
-        await statusCallback(.configuring)
+        // Parse and apply additional server configurations
         for configURL in contents.serverConfigs {
             do {
                 try await parseServerConfig(from: configURL)
                 importedItems += 1
             } catch {
                 print("⚠️ Failed to parse server config: \(error.localizedDescription)")
-            }
-        }
-
-        // Parse preferences
-        for prefURL in contents.preferences {
-            do {
-                try await parsePreferences(from: prefURL)
-            } catch {
-                print("⚠️ Failed to parse preferences: \(error.localizedDescription)")
             }
         }
 
@@ -83,7 +85,7 @@ class DataPackageImportManager: ObservableObject {
 
     // MARK: - Extract ZIP
 
-    private func extractZipFile(from sourceURL: URL, to destinationURL: URL) async throws {
+    private func extractZipFile(from sourceURL: URL, to destinationURL: URL) throws {
         // Read the ZIP data
         let zipData = try Data(contentsOf: sourceURL)
 
@@ -117,6 +119,9 @@ class DataPackageImportManager: ObservableObject {
         var serverConfigs: [URL] = []
         var preferences: [URL] = []
 
+        // First, extract any nested zip files (TAK data packages often have nested zips)
+        try extractNestedZips(in: directory)
+
         let enumerator = fileManager.enumerator(at: directory, includingPropertiesForKeys: [.isRegularFileKey])
 
         while let fileURL = enumerator?.nextObject() as? URL {
@@ -127,13 +132,13 @@ class DataPackageImportManager: ObservableObject {
             if ext == "p12" || ext == "pfx" || ext == "pem" || ext == "crt" || ext == "cer" {
                 certificates.append(fileURL)
             }
-            // Server config files
-            else if ext == "xml" || ext == "json" || filename.contains("server") || filename.contains("connection") {
-                serverConfigs.append(fileURL)
-            }
-            // Preference files
-            else if filename.contains("pref") || filename.contains("config") {
+            // Preference files (check first - .pref files contain server config)
+            else if ext == "pref" || filename.contains("preference") {
                 preferences.append(fileURL)
+            }
+            // Server config files (but not manifest.xml)
+            else if (ext == "xml" && !filename.contains("manifest")) || ext == "json" || filename.contains("server") || filename.contains("connection") {
+                serverConfigs.append(fileURL)
             }
         }
 
@@ -142,6 +147,29 @@ class DataPackageImportManager: ObservableObject {
             serverConfigs: serverConfigs,
             preferences: preferences
         )
+    }
+
+    // MARK: - Extract Nested Zips
+
+    private func extractNestedZips(in directory: URL) throws {
+        let enumerator = fileManager.enumerator(at: directory, includingPropertiesForKeys: [.isRegularFileKey])
+
+        while let fileURL = enumerator?.nextObject() as? URL {
+            if fileURL.pathExtension.lowercased() == "zip" {
+                let nestedDir = fileURL.deletingPathExtension()
+                try fileManager.createDirectory(at: nestedDir, withIntermediateDirectories: true)
+
+                do {
+                    try extractZipFile(from: fileURL, to: nestedDir)
+                    print("📦 Extracted nested zip: \(fileURL.lastPathComponent)")
+
+                    // Recursively extract any further nested zips
+                    try extractNestedZips(in: nestedDir)
+                } catch {
+                    print("⚠️ Failed to extract nested zip: \(error.localizedDescription)")
+                }
+            }
+        }
     }
 
     // MARK: - Import Certificate
@@ -154,8 +182,19 @@ class DataPackageImportManager: ObservableObject {
         let ext = url.pathExtension.lowercased()
 
         if ext == "p12" || ext == "pfx" {
-            // P12/PFX file - try common passwords or prompt user
-            let passwords = ["atakatak", ""] // Common TAK server passwords
+            // P12/PFX file - try passwords from preferences first, then common defaults
+            var passwords = ["atakatak", ""] // Common TAK server passwords
+
+            // Check if we have passwords from the preference file
+            if filename.lowercased().contains("truststore") || filename.lowercased().contains("ca") {
+                if let caPassword = UserDefaults.standard.string(forKey: "lastImportCAPassword") {
+                    passwords.insert(caPassword, at: 0)
+                }
+            } else {
+                if let clientPassword = UserDefaults.standard.string(forKey: "lastImportClientPassword") {
+                    passwords.insert(clientPassword, at: 0)
+                }
+            }
 
             for password in passwords {
                 do {
@@ -322,9 +361,61 @@ class DataPackageImportManager: ObservableObject {
     // MARK: - Parse Preferences
 
     private func parsePreferences(from url: URL) async throws {
-        // Parse TAK preference files
-        // This would apply app-wide settings from the package
         print("ℹ️ Parsing preferences from: \(url.lastPathComponent)")
+
+        let data = try Data(contentsOf: url)
+        guard let xmlString = String(data: data, encoding: .utf8) else {
+            throw ImportError.configParsingFailed("Invalid XML encoding")
+        }
+
+        // Parse TAK preference.pref format
+        // Look for connectString entries like: "public.opentakserver.io:8089:ssl"
+        if let connectString = extractPreferenceEntry(from: xmlString, key: "connectString0") {
+            let components = connectString.split(separator: ":")
+            if components.count >= 2 {
+                let host = String(components[0])
+                let port = UInt16(components[1]) ?? 8089
+                let useTLS = components.count >= 3 && components[2] == "ssl"
+
+                // Get server description if available
+                let description = extractPreferenceEntry(from: xmlString, key: "description0") ?? "Imported Server"
+
+                // Get certificate passwords
+                let clientPassword = extractPreferenceEntry(from: xmlString, key: "clientPassword") ?? "atakatak"
+                let caPassword = extractPreferenceEntry(from: xmlString, key: "caPassword") ?? "atakatak"
+
+                // Store passwords for certificate import
+                UserDefaults.standard.set(clientPassword, forKey: "lastImportClientPassword")
+                UserDefaults.standard.set(caPassword, forKey: "lastImportCAPassword")
+
+                let server = TAKServer(
+                    name: description,
+                    host: host,
+                    port: port,
+                    protocolType: useTLS ? "ssl" : "tcp",
+                    useTLS: useTLS,
+                    isDefault: false,
+                    certificateName: "administrator"
+                )
+
+                serverManager.addServer(server)
+                print("✅ Imported server from preferences: \(description) (\(host):\(port), TLS: \(useTLS))")
+            }
+        }
+    }
+
+    private func extractPreferenceEntry(from xml: String, key: String) -> String? {
+        // Match TAK preference format: <entry key="keyName" class="...">value</entry>
+        let pattern = "key=\"\(key)\"[^>]*>([^<]*)</entry>"
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return nil }
+
+        let range = NSRange(xml.startIndex..., in: xml)
+        guard let match = regex.firstMatch(in: xml, range: range),
+              let valueRange = Range(match.range(at: 1), in: xml) else {
+            return nil
+        }
+
+        return String(xml[valueRange])
     }
 }
 
