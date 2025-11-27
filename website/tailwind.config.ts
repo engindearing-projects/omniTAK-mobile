@@ -15,6 +15,7 @@ const config: Config = {
           'olive-dark': "#4A5C3A", // Darker olive
           teal: "#5FABA5",         // Secondary accent - muted teal
           'teal-dark': "#4A9B9B",  // Darker teal
+          black: "#0D0D0D",        // Deep black for contrast
           charcoal: "#1A1A1A",     // Primary dark background
           slate: "#2A2A2A",        // Secondary background
           'slate-light': "#3A3A3A",// Lighter slate for cards
@@ -34,6 +35,7 @@ const config: Config = {
         "slide-up": "slide-up 0.5s ease-out",
         "fade-in": "fade-in 0.5s ease-out",
         "shimmer": "shimmer 2s linear infinite",
+        "gradient-x": "gradient-x 3s ease infinite",
       },
       keyframes: {
         float: {
@@ -55,6 +57,10 @@ const config: Config = {
         shimmer: {
           "0%": { backgroundPosition: "-1000px 0" },
           "100%": { backgroundPosition: "1000px 0" },
+        },
+        "gradient-x": {
+          "0%, 100%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
         },
       },
       backgroundImage: {
