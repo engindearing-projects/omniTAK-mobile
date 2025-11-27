@@ -595,6 +595,67 @@ class DirectTCPSender {
     }
 }
 
+// MARK: - Connection State Snapshot
+
+struct ReconnectionState {
+    var isReconnecting: Bool = false
+    var attemptNumber: Int = 0
+    var maxAttempts: Int = 5
+}
+
+struct ConnectionStateSnapshot {
+    var isConnected: Bool
+    var status: String
+    var reconnectionState: ReconnectionState
+    var serverName: String?
+    var protocolType: String?
+    var lastConnectedTime: Date?
+
+    static var disconnected: ConnectionStateSnapshot {
+        ConnectionStateSnapshot(
+            isConnected: false,
+            status: "Not Connected",
+            reconnectionState: ReconnectionState(),
+            serverName: nil,
+            protocolType: nil,
+            lastConnectedTime: nil
+        )
+    }
+
+    static func connected(serverName: String, protocolType: String) -> ConnectionStateSnapshot {
+        ConnectionStateSnapshot(
+            isConnected: true,
+            status: "Connected",
+            reconnectionState: ReconnectionState(),
+            serverName: serverName,
+            protocolType: protocolType,
+            lastConnectedTime: Date()
+        )
+    }
+
+    static func connecting(serverName: String) -> ConnectionStateSnapshot {
+        ConnectionStateSnapshot(
+            isConnected: false,
+            status: "Connecting...",
+            reconnectionState: ReconnectionState(),
+            serverName: serverName,
+            protocolType: nil,
+            lastConnectedTime: nil
+        )
+    }
+
+    static func reconnecting(attempt: Int, maxAttempts: Int) -> ConnectionStateSnapshot {
+        ConnectionStateSnapshot(
+            isConnected: false,
+            status: "Reconnecting...",
+            reconnectionState: ReconnectionState(isReconnecting: true, attemptNumber: attempt, maxAttempts: maxAttempts),
+            serverName: nil,
+            protocolType: nil,
+            lastConnectedTime: nil
+        )
+    }
+}
+
 // MARK: - CoT Event Models
 
 // CoT Event Model
@@ -632,6 +693,7 @@ class TAKService: ObservableObject {
 
     @Published var connectionStatus = "Disconnected"
     @Published var isConnected = false
+    @Published var connectionState: ConnectionStateSnapshot = .disconnected
     @Published var lastError = ""
     @Published var messagesReceived: Int = 0
     @Published var messagesSent: Int = 0
@@ -639,6 +701,10 @@ class TAKService: ObservableObject {
     @Published var cotEvents: [CoTEvent] = []
     @Published var enhancedMarkers: [String: EnhancedCoTMarker] = [:]  // UID -> Marker map
     @Published var bytesReceived: Int = 0
+
+    // Connection tracking
+    private var currentServerName: String = ""
+    private var currentProtocolType: String = ""
 
     private var connectionHandle: UInt64 = 0
     private var directTCP: DirectTCPSender?  // Direct TCP sender (bypasses incomplete Rust FFI)
@@ -677,11 +743,20 @@ class TAKService: ObservableObject {
 
         directTCP?.onConnectionStateChanged = { [weak self] connected in
             DispatchQueue.main.async {
-                if !connected && self?.isConnected == true {
-                    self?.isConnected = false
-                    self?.connectionStatus = "Disconnected"
+                guard let self = self else { return }
+                if !connected && self.isConnected {
+                    self.isConnected = false
+                    self.connectionStatus = "Disconnected"
+                    self.connectionState = .disconnected
                     #if DEBUG
                     print("🔌 TAKService: Connection lost")
+                    #endif
+                } else if connected && !self.isConnected {
+                    self.isConnected = true
+                    self.connectionStatus = "Connected"
+                    self.connectionState = .connected(serverName: self.currentServerName, protocolType: self.currentProtocolType)
+                    #if DEBUG
+                    print("🔌 TAKService: Connection restored")
                     #endif
                 }
             }
@@ -722,8 +797,14 @@ class TAKService: ObservableObject {
         print("🔌 TAKService.connect() called with host=\(host), port=\(port), protocol=\(protocolType), tls=\(useTLS), cert=\(certificateName ?? "none")")
         #endif
 
+        // Track current connection details
+        currentServerName = "\(host):\(port)"
+        currentProtocolType = useTLS ? "TLS" : protocolType.uppercased()
+
         // Use DirectTCPSender for actual network communication
         connectionStatus = "Connecting..."
+        connectionState = .connecting(serverName: currentServerName)
+
         directTCP?.connect(host: host, port: port, protocolType: protocolType, useTLS: useTLS, certificateName: certificateName, certificatePassword: certificatePassword) { [weak self] success in
             DispatchQueue.main.async {
                 guard let self = self else { return }
@@ -731,6 +812,7 @@ class TAKService: ObservableObject {
                 if success {
                     self.isConnected = true
                     self.connectionStatus = "Connected"
+                    self.connectionState = .connected(serverName: self.currentServerName, protocolType: self.currentProtocolType)
                     self.lastError = ""
                     #if DEBUG
                     print("✅ DirectTCP Connected to TAK server: \(host):\(port)")
@@ -768,7 +850,9 @@ class TAKService: ObservableObject {
                         #endif
                     }
                 } else {
+                    self.isConnected = false
                     self.connectionStatus = "Connection Failed"
+                    self.connectionState = .disconnected
                     self.lastError = "Failed to connect to \(host):\(port)"
                     print("❌ Connection failed")
                 }
@@ -789,6 +873,7 @@ class TAKService: ObservableObject {
 
         isConnected = false
         connectionStatus = "Disconnected"
+        connectionState = .disconnected
         #if DEBUG
         print("🔌 Disconnected from TAK server")
         #endif
