@@ -5,6 +5,52 @@ All notable changes to OmniTAK Mobile will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2025-01-27
+
+### Added
+- **Intelligent Server Connection Diagnostics**: New ServerValidator service automatically detects and diagnoses TAK server connection issues
+  - Port mismatch detection (streaming vs enrollment vs web interface)
+  - HTML response detection when server returns error pages instead of binary/API responses
+  - Context-aware error analysis for HTTP status codes (401, 403, 404, 500, etc.)
+  - Validates server configuration before connection attempts
+
+- **Enhanced Error Messages**: Comprehensive troubleshooting guidance for real TAK server deployments
+  - Detailed explanations replacing generic "Server error (500)" messages
+  - Step-by-step troubleshooting instructions for common issues
+  - Port-specific guidance (8089 for streaming, 8446 for enrollment, 8443 for web)
+  - Suggestions for alternative connection methods (Data Packages when CSR fails)
+
+- **Improved Error UI**: Professional error display with scrollable troubleshooting panels
+  - Formatted error sections with visual hierarchy
+  - Collapsible troubleshooting steps with icons
+  - Scrollable error messages for long diagnostic output
+  - ImprovedErrorDialog component for reusable error displays
+
+### Changed
+- **CSREnrollmentService**: Enhanced error handling with ServerValidator integration
+  - Pre-connection validation prevents invalid connection attempts
+  - Server response analysis provides actionable error messages
+  - Better compatibility with real-world TAK server deployments
+
+- **SimpleEnrollView**: Improved error section with formatted troubleshooting display
+  - Parses structured error messages (title, description, steps)
+  - Visual distinction between error types and resolution steps
+  - Maximum height with scrolling for lengthy error messages
+
+### Fixed
+- **Connection Error Clarity**: Users now receive helpful guidance instead of raw HTML error pages
+  - Detects when connecting to wrong port (e.g., web interface instead of streaming)
+  - Identifies authentication failures with credential verification steps
+  - Recognizes disabled enrollment APIs and suggests alternatives
+  - Provides server administrator contact recommendations
+
+### Technical Details
+- Added `ServerValidator.swift` with comprehensive validation logic
+- Added `ImprovedErrorDialog.swift` for reusable error UI component
+- Updated error handling in enrollment and connection flows
+- Enhanced error message formatting throughout TAK service layer
+- Project version updated to MARKETING_VERSION 2.1.0
+
 ## [2.0.0] - 2025-01-26
 
 ### Release

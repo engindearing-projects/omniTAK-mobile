@@ -119,6 +119,25 @@ class CSREnrollmentService {
     func enrollWithCSR(config: CSREnrollmentConfiguration) async throws -> TAKServer {
         print("[CSREnroll] Starting CSR-based enrollment for user: \(config.username)")
 
+        // Validate configuration before attempting enrollment
+        let validator = ServerValidator.shared
+        let validation = validator.validateServerConfig(
+            host: config.serverHost,
+            port: config.enrollmentPort,
+            useTLS: config.useSSL,
+            isEnrollment: true,
+            username: config.username,
+            password: config.password
+        )
+
+        if !validation.isValid {
+            if let issue = validation.primaryIssue {
+                let formatted = ErrorMessageFormatter.format(issue: issue)
+                let errorMsg = "\(formatted.title)\n\n\(formatted.message)\n\n\(formatted.steps)"
+                throw CSREnrollmentError.configurationError(errorMsg)
+            }
+        }
+
         // Step 1: Get CA configuration from server (provides DN components)
         print("[CSREnroll] Fetching CA configuration from server...")
         let caConfig = try await fetchCAConfiguration(config: config)
@@ -205,10 +224,16 @@ class CSREnrollmentService {
             print("[CSREnroll] Config response status: \(httpResponse.statusCode)")
 
             guard (200...299).contains(httpResponse.statusCode) else {
-                if httpResponse.statusCode == 401 {
-                    throw CSREnrollmentError.authenticationFailed
-                }
-                let errorMsg = String(data: data, encoding: .utf8) ?? "Unknown error"
+                // Use ServerValidator to analyze the error response
+                let validator = ServerValidator.shared
+                let issue = validator.analyzeErrorResponse(
+                    statusCode: httpResponse.statusCode,
+                    data: data,
+                    context: .enrollment
+                )
+
+                let formatted = ErrorMessageFormatter.format(issue: issue)
+                let errorMsg = "\(formatted.title)\n\n\(formatted.message)\n\n\(formatted.steps)"
                 throw CSREnrollmentError.serverError(httpResponse.statusCode, errorMsg)
             }
 
@@ -307,10 +332,16 @@ class CSREnrollmentService {
             print("[CSREnroll] CSR submission response status: \(httpResponse.statusCode)")
 
             guard (200...299).contains(httpResponse.statusCode) else {
-                if httpResponse.statusCode == 401 {
-                    throw CSREnrollmentError.authenticationFailed
-                }
-                let errorMsg = String(data: data, encoding: .utf8) ?? "Unknown error"
+                // Use ServerValidator to analyze the error response
+                let validator = ServerValidator.shared
+                let issue = validator.analyzeErrorResponse(
+                    statusCode: httpResponse.statusCode,
+                    data: data,
+                    context: .enrollment
+                )
+
+                let formatted = ErrorMessageFormatter.format(issue: issue)
+                let errorMsg = "\(formatted.title)\n\n\(formatted.message)\n\n\(formatted.steps)"
                 throw CSREnrollmentError.serverError(httpResponse.statusCode, errorMsg)
             }
 

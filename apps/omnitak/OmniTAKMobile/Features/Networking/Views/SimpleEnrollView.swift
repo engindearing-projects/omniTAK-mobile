@@ -439,39 +439,90 @@ struct SimpleEnrollView: View {
     // MARK: - Error Section
 
     private func errorSection(_ message: String) -> some View {
-        VStack(spacing: 16) {
-            HStack(spacing: 12) {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.system(size: 24))
-                    .foregroundColor(Color(hex: "#FF6B6B"))
+        ScrollView {
+            VStack(spacing: 16) {
+                HStack(spacing: 12) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 24))
+                        .foregroundColor(Color(hex: "#FF6B6B"))
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Connection Failed")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white)
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Connection Failed")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.white)
 
-                    Text(message)
-                        .font(.system(size: 14))
-                        .foregroundColor(Color(hex: "#CCCCCC"))
-                        .fixedSize(horizontal: false, vertical: true)
+                        // Parse formatted error message (title\n\nmessage\n\nsteps)
+                        let parts = message.components(separatedBy: "\n\n")
+                        if parts.count >= 2 {
+                            VStack(alignment: .leading, spacing: 12) {
+                                // Error title
+                                Text(parts[0])
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(Color(hex: "#FFAAAA"))
+                                    .fixedSize(horizontal: false, vertical: true)
+
+                                // Error message
+                                if parts.count >= 2 && !parts[1].isEmpty {
+                                    Text(parts[1])
+                                        .font(.system(size: 13))
+                                        .foregroundColor(Color(hex: "#CCCCCC"))
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+
+                                // Troubleshooting steps
+                                if parts.count >= 3 && !parts[2].isEmpty {
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        HStack {
+                                            Image(systemName: "wrench.and.screwdriver")
+                                                .foregroundColor(Color(hex: "#FFFC00"))
+                                                .font(.system(size: 12))
+                                            Text("Troubleshooting")
+                                                .font(.system(size: 12, weight: .semibold))
+                                                .foregroundColor(.white)
+                                        }
+
+                                        ForEach(parts[2].components(separatedBy: "\n"), id: \.self) { step in
+                                            if !step.isEmpty {
+                                                Text(step)
+                                                    .font(.system(size: 12))
+                                                    .foregroundColor(Color(hex: "#AAAAAA"))
+                                                    .fixedSize(horizontal: false, vertical: true)
+                                                    .padding(.leading, step.hasPrefix("•") || step.hasPrefix("1.") ? 12 : 0)
+                                            }
+                                        }
+                                    }
+                                    .padding(12)
+                                    .background(Color(white: 0.08))
+                                    .cornerRadius(8)
+                                }
+                            }
+                        } else {
+                            // Fallback for simple error messages
+                            Text(message)
+                                .font(.system(size: 14))
+                                .foregroundColor(Color(hex: "#CCCCCC"))
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+
+                    Spacer(minLength: 0)
                 }
 
-                Spacer()
+                Button(action: { enrollmentState = .idle }) {
+                    Text("Try Again")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(Color(hex: "#FF6B6B"))
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 10)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color(hex: "#FF6B6B"), lineWidth: 1)
+                        )
+                }
             }
-
-            Button(action: { enrollmentState = .idle }) {
-                Text("Try Again")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(Color(hex: "#FF6B6B"))
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 10)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color(hex: "#FF6B6B"), lineWidth: 1)
-                    )
-            }
+            .padding(16)
         }
-        .padding(16)
+        .frame(maxHeight: 400)
         .background(Color(hex: "#FF6B6B").opacity(0.1))
         .cornerRadius(12)
         .overlay(
