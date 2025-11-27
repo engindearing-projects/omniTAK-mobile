@@ -5,6 +5,37 @@ All notable changes to OmniTAK Mobile will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2025-01-26
+
+### Release
+- **App Store Release**: Version 2.0.0 prepared for iOS App Store submission
+- Major version bump reflecting significant architectural improvements and UI refinements
+
+### Changed
+- **Dynamic Version Management**: All hardcoded version strings now read from Bundle configuration
+  - Updated CoT generators (MarkerCoTGenerator, ChatXMLGenerator) to use CFBundleShortVersionString
+  - Position broadcast, emergency beacon, and digital pointer services now report actual app version
+  - Map view controllers display current version dynamically
+  - Navigation drawer shows live version from Bundle
+  - TAK XML version fields now reflect actual app version in all messages
+
+- **UI Layout Improvements**: Enhanced GPS button positioning to prevent interface overlap
+  - Increased bottom padding from 80pt to 90pt in normal mode
+  - Increased padding from 130pt to 150pt when Quick Action Toolbar is visible
+  - Improved clearance from 12pt to 50pt between GPS button and bottom toolbar
+  - Ensures GPS lock button remains accessible without obscuring other UI elements
+
+- **Architecture**: Standardized TAKService usage across all views
+  - Replaced multiple TAKService instances with shared singleton pattern
+  - ContentView and ATAKMapViewEnhanced now use TAKService.shared
+  - Ensures consistent service state and reduces memory overhead
+
+### Technical Details
+- Project configuration updated to MARKETING_VERSION 2.0.0
+- Build number updated to CURRENT_PROJECT_VERSION 2.0.0
+- Cleaned up null build file references in Xcode project
+- All version strings now centrally managed through Info.plist
+
 ## [1.3.8] - 2025-01-22
 
 ### Release
@@ -119,6 +150,7 @@ This project uses [Semantic Versioning](https://semver.org/):
 - **Minor (0.X.0)**: New features, backward compatible
 - **Patch (0.0.X)**: Bug fixes
 
+[2.0.0]: https://github.com/engindearing-projects/omniTAK-mobile/compare/v1.3.8...v2.0.0
 [1.3.8]: https://github.com/engindearing-projects/omniTAK-mobile/compare/v1.3.7...v1.3.8
 [1.3.7]: https://github.com/engindearing-projects/omniTAK-mobile/compare/v1.3.0...v1.3.7
 [1.3.0]: https://github.com/engindearing-projects/omniTAK-mobile/compare/v1.2.0...v1.3.0

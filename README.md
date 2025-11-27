@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE.md)
 [![Platforms](https://img.shields.io/badge/platform-iOS%20%7C%20Android-lightgrey)]()
-[![Status](https://img.shields.io/badge/status-beta-blue)]()
+[![Version](https://img.shields.io/badge/version-2.0.0-green)]()
 [![Swift](https://img.shields.io/badge/Swift-5.0-orange?logo=swift)](https://swift.org)
 [![Rust](https://img.shields.io/badge/Rust-1.70+-orange?logo=rust)](https://www.rust-lang.org/)
 
@@ -10,8 +10,13 @@
 
 ## Latest Update
 
-**OmniTAK Mobile is now available on the App Store for iOS.**
+**Version 2.0.0** - January 26, 2025
 
+OmniTAK Mobile version 2.0.0 is now ready for the iOS App Store. This major release includes architectural improvements and UI refinements:
+
+- Dynamic version management across all components
+- Improved GPS button positioning for better UI layout
+- Standardized service architecture with singleton pattern
 - Full ATAK-style UI with tactical theme
 - Multi-server management with TLS support
 - Certificate management with Keychain storage
@@ -547,4 +552,4 @@ For questions, issues, or feature requests:
 
 ---
 
-**Note**: This is an alpha release. Features are under active development and APIs may change.
+**Note**: OmniTAK Mobile is under active development. While the iOS version is production-ready, new features are continuously being added and some APIs may evolve.
