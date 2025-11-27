@@ -10,7 +10,7 @@
 
 ## Latest Update
 
-**Version 2.0.0** - January 26, 2025
+**Version 2.0.0** - Nov 26th 2025
 
 OmniTAK Mobile version 2.0.0 is now ready for the iOS App Store. This major release includes architectural improvements and UI refinements:
 
