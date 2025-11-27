@@ -185,11 +185,11 @@ struct SettingsView: View {
                 // Data Management
                 Section("DATA MANAGEMENT") {
                     Button("Export All Data") {
-                        // Export
+                        // TODO: Implement export functionality
                     }
 
-                    Button("Import Data Package") {
-                        // Import
+                    NavigationLink(destination: DataPackageImportView()) {
+                        Text("Import Data Package")
                     }
 
                     Button("Reset to Defaults") {

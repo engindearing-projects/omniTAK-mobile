@@ -5,6 +5,30 @@ All notable changes to OmniTAK Mobile will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - 2025-01-27
+
+### Fixed
+- **Data Package Import Connection Failures**: Fixed critical certificate matching bug preventing successful connections after data package import
+  - Certificate labels now stored without file extensions (e.g., "omnitak_test" instead of "omnitak_test.p12")
+  - Server configuration now correctly extracts certificate name from preferences
+  - Certificate password properly passed to server configuration
+  - Fixed hardcoded "administrator" certificate name that prevented imported certificates from being found
+
+- **Settings Import Button**: Fixed non-functional "Import Data Package" button in Settings
+  - Changed from empty action to proper NavigationLink to DataPackageImportView
+  - Users can now import data packages from both Servers view and Settings view
+
+### Changed
+- **Certificate Import Consistency**: Improved certificate labeling consistency across keychain storage
+  - PEM certificates also stored without file extensions for uniform naming
+  - Better debug logging shows actual certificate labels being stored and retrieved
+
+### Technical Details
+- Updated `DataPackageImportManager.swift` to strip file extensions when storing certificates in keychain
+- Updated `parsePreferences()` to extract actual certificate name from preference file instead of hardcoding
+- Added certificate password parameter to TAKServer initialization from data package import
+- Fixed SettingsView data package import button implementation
+
 ## [2.1.0] - 2025-01-27
 
 ### Added

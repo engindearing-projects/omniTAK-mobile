@@ -211,7 +211,6 @@ class DataPackageImportManager: ObservableObject {
         else if ext == "pem" || ext == "crt" || ext == "cer" {
             // PEM/CRT file
             try await importPEMCertificate(data: data, name: filename)
-            print("✅ Imported PEM certificate: \(filename)")
         }
     }
 
@@ -231,11 +230,15 @@ class DataPackageImportManager: ObservableObject {
             throw ImportError.certificateImportFailed("No identity found in P12")
         }
 
+        // Remove file extension from certificate name for consistent keychain labeling
+        // e.g., "omnitak_test.p12" -> "omnitak_test"
+        let certificateLabel = (name as NSString).deletingPathExtension
+
         // Store identity in keychain
         let addQuery: [String: Any] = [
             kSecClass as String: kSecClassIdentity,
             kSecValueRef as String: identity,
-            kSecAttrLabel as String: name
+            kSecAttrLabel as String: certificateLabel
         ]
 
         let addStatus = SecItemAdd(addQuery as CFDictionary, nil)
@@ -246,16 +249,21 @@ class DataPackageImportManager: ObservableObject {
 
         // Update certificate manager
         await certificateManager.loadCertificates()
+
+        print("✅ Imported P12 certificate: \(certificateLabel)")
     }
 
     private func importPEMCertificate(data: Data, name: String) async throws {
+        // Remove file extension for consistent labeling
+        let certificateLabel = (name as NSString).deletingPathExtension
+
         // For PEM certificates, we'll store them for reference
         // In a full implementation, you'd parse the PEM and add to keychain
 
         let addQuery: [String: Any] = [
             kSecClass as String: kSecClassCertificate,
             kSecValueData as String: data,
-            kSecAttrLabel as String: name
+            kSecAttrLabel as String: certificateLabel
         ]
 
         let status = SecItemAdd(addQuery as CFDictionary, nil)
@@ -266,6 +274,8 @@ class DataPackageImportManager: ObservableObject {
 
         // Update certificate manager
         await certificateManager.loadCertificates()
+
+        print("✅ Imported PEM certificate: \(certificateLabel)")
     }
 
     // MARK: - Parse Server Config
@@ -384,6 +394,16 @@ class DataPackageImportManager: ObservableObject {
                 let clientPassword = extractPreferenceEntry(from: xmlString, key: "clientPassword") ?? "atakatak"
                 let caPassword = extractPreferenceEntry(from: xmlString, key: "caPassword") ?? "atakatak"
 
+                // Get certificate location from preferences
+                let certificateLocation = extractPreferenceEntry(from: xmlString, key: "certificateLocation")
+
+                // Extract certificate name from path (e.g., "cert/omnitak_test.p12" -> "omnitak_test")
+                var certificateName: String? = nil
+                if let certPath = certificateLocation {
+                    let filename = (certPath as NSString).lastPathComponent
+                    certificateName = (filename as NSString).deletingPathExtension
+                }
+
                 // Store passwords for certificate import
                 UserDefaults.standard.set(clientPassword, forKey: "lastImportClientPassword")
                 UserDefaults.standard.set(caPassword, forKey: "lastImportCAPassword")
@@ -395,7 +415,8 @@ class DataPackageImportManager: ObservableObject {
                     protocolType: useTLS ? "ssl" : "tcp",
                     useTLS: useTLS,
                     isDefault: false,
-                    certificateName: "administrator"
+                    certificateName: certificateName,
+                    certificatePassword: clientPassword
                 )
 
                 serverManager.addServer(server)
