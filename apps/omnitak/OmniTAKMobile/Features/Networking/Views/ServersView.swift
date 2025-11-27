@@ -17,6 +17,7 @@ struct ServersView: View {
 
     @State private var showEnrollment = false
     @State private var showDataPackageImport = false
+    @State private var serverToEdit: TAKServer? = nil
 
     var body: some View {
         NavigationView {
@@ -54,6 +55,9 @@ struct ServersView: View {
         .sheet(isPresented: $showDataPackageImport) {
             DataPackageImportView()
         }
+        .sheet(item: $serverToEdit) { server in
+            ServerEditView(server: server)
+        }
     }
 
     // MARK: - Server List
@@ -79,6 +83,9 @@ struct ServersView: View {
                     },
                     onSelect: {
                         serverManager.setActiveServer(server)
+                    },
+                    onEdit: {
+                        serverToEdit = server
                     },
                     onDelete: {
                         if takService.isConnected && server.id == serverManager.activeServer?.id {
@@ -169,6 +176,7 @@ struct ServerRowSimple: View {
     let isConnected: Bool
     let onToggleEnabled: () -> Void
     let onSelect: () -> Void
+    let onEdit: () -> Void
     let onDelete: () -> Void
 
     @State private var showDeleteConfirm = false
@@ -231,6 +239,14 @@ struct ServerRowSimple: View {
             }
             .buttonStyle(PlainButtonStyle())
 
+            // Edit
+            Button(action: onEdit) {
+                Image(systemName: "pencil")
+                    .font(.system(size: 14))
+                    .foregroundColor(Color(hex: "#888888"))
+            }
+            .buttonStyle(PlainButtonStyle())
+
             // Delete
             Button(action: { showDeleteConfirm = true }) {
                 Image(systemName: "trash")
@@ -261,6 +277,176 @@ struct ServerRowSimple: View {
         } else {
             return Color(hex: "#444444")
         }
+    }
+}
+
+// MARK: - Server Edit View
+
+struct ServerEditView: View {
+    @Environment(\.dismiss) private var dismiss
+    @StateObject private var serverManager = ServerManager.shared
+
+    let server: TAKServer
+
+    @State private var name: String = ""
+    @State private var host: String = ""
+    @State private var port: String = ""
+    @State private var enrollmentPort: String = ""
+    @State private var useTLS: Bool = true
+    @State private var allowLegacyTLS: Bool = false
+
+    init(server: TAKServer) {
+        self.server = server
+        _name = State(initialValue: server.name)
+        _host = State(initialValue: server.host)
+        _port = State(initialValue: String(server.port))
+        _enrollmentPort = State(initialValue: String(server.enrollmentPort ?? 8446))
+        _useTLS = State(initialValue: server.useTLS)
+        _allowLegacyTLS = State(initialValue: server.allowLegacyTLS)
+    }
+
+    var body: some View {
+        NavigationView {
+            ZStack {
+                Color.black.ignoresSafeArea()
+
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // Server Name
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Server Name")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(Color(hex: "#CCCCCC"))
+
+                            TextField("My TAK Server", text: $name)
+                                .textFieldStyle(TAKTextFieldStyle())
+                        }
+
+                        // Host
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Host")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(Color(hex: "#CCCCCC"))
+
+                            TextField("tak.example.com", text: $host)
+                                .textFieldStyle(TAKTextFieldStyle())
+                                .autocapitalization(.none)
+                                .disableAutocorrection(true)
+                                .keyboardType(.URL)
+                        }
+
+                        // Ports
+                        HStack(spacing: 12) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Streaming Port")
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundColor(Color(hex: "#CCCCCC"))
+
+                                TextField("8089", text: $port)
+                                    .textFieldStyle(TAKTextFieldStyle())
+                                    .keyboardType(.numberPad)
+                            }
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Enrollment Port")
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundColor(Color(hex: "#CCCCCC"))
+
+                                TextField("8446", text: $enrollmentPort)
+                                    .textFieldStyle(TAKTextFieldStyle())
+                                    .keyboardType(.numberPad)
+                            }
+                        }
+
+                        // TLS Toggle
+                        Toggle(isOn: $useTLS) {
+                            HStack {
+                                Image(systemName: "lock.fill")
+                                    .foregroundColor(useTLS ? Color(hex: "#00FF00") : Color(hex: "#666666"))
+
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Use TLS/SSL")
+                                        .font(.system(size: 14))
+                                        .foregroundColor(.white)
+
+                                    Text("Encrypted connection (recommended)")
+                                        .font(.system(size: 11))
+                                        .foregroundColor(Color(hex: "#999999"))
+                                }
+                            }
+                        }
+                        .tint(Color(hex: "#00FF00"))
+                        .padding(16)
+                        .background(Color(white: 0.08))
+                        .cornerRadius(10)
+
+                        // Legacy TLS Toggle
+                        Toggle(isOn: $allowLegacyTLS) {
+                            HStack {
+                                Image(systemName: "exclamationmark.shield.fill")
+                                    .foregroundColor(allowLegacyTLS ? Color(hex: "#FF6B6B") : Color(hex: "#666666"))
+
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Allow Legacy TLS")
+                                        .font(.system(size: 14))
+                                        .foregroundColor(.white)
+
+                                    Text("For old servers (less secure)")
+                                        .font(.system(size: 11))
+                                        .foregroundColor(Color(hex: "#999999"))
+                                }
+                            }
+                        }
+                        .tint(Color(hex: "#FF6B6B"))
+                        .padding(16)
+                        .background(Color(white: 0.08))
+                        .cornerRadius(10)
+
+                        // Save Button
+                        Button(action: saveChanges) {
+                            Text("Save Changes")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(.black)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                                .background(isFormValid ? Color(hex: "#FFFC00") : Color(hex: "#666666"))
+                                .cornerRadius(12)
+                        }
+                        .disabled(!isFormValid)
+                    }
+                    .padding(20)
+                }
+            }
+            .navigationTitle("Edit Server")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") { dismiss() }
+                        .foregroundColor(Color(hex: "#FFFC00"))
+                }
+            }
+        }
+    }
+
+    private var isFormValid: Bool {
+        !name.isEmpty && !host.isEmpty && !port.isEmpty && (UInt16(port) != nil)
+    }
+
+    private func saveChanges() {
+        guard let portNum = UInt16(port) else { return }
+        let enrollPortNum = UInt16(enrollmentPort) ?? 8446
+
+        var updatedServer = server
+        updatedServer.name = name
+        updatedServer.host = host
+        updatedServer.port = portNum
+        updatedServer.enrollmentPort = enrollPortNum
+        updatedServer.useTLS = useTLS
+        updatedServer.allowLegacyTLS = allowLegacyTLS
+        updatedServer.protocolType = useTLS ? "tls" : "tcp"
+
+        serverManager.updateServer(updatedServer)
+        dismiss()
     }
 }
 

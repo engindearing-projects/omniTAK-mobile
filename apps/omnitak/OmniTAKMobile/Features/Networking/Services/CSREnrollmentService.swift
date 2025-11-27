@@ -185,10 +185,15 @@ class CSREnrollmentService {
             throw CSREnrollmentError.invalidServerURL
         }
 
+        let authHeader = generateAuthHeader(config: config)
+        print("[CSREnroll] Request URL: \(url.absoluteString)")
+        print("[CSREnroll] Auth header: \(authHeader)")
+        print("[CSREnroll] Username: '\(config.username)' Password length: \(config.password.count)")
+
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("text/plain; charset=utf-8", forHTTPHeaderField: "Content-Type")
-        request.setValue(generateAuthHeader(config: config), forHTTPHeaderField: "Authorization")
+        request.setValue(authHeader, forHTTPHeaderField: "Authorization")
 
         do {
             let (data, response) = try await urlSession.data(for: request)
