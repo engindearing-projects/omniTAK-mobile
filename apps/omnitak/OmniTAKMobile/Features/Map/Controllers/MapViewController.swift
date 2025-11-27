@@ -658,7 +658,7 @@ struct ATAKMapView: View {
                 Spacer()
             }
             .padding(.leading, 12)
-            .padding(.bottom, isCursorModeActive ? 222 : (showQuickActionToolbar ? 130 : 80))
+            .padding(.bottom, isCursorModeActive ? 222 : (showQuickActionToolbar ? 150 : 90))
         }
         .zIndex(1012)
     }
