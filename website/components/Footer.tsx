@@ -25,6 +25,7 @@ export default function Footer() {
           <div>
             <h4 className="font-bold mb-4 text-omni-olive">Community</h4>
             <ul className="space-y-2 text-sm">
+              <li><a href="https://discord.gg/VSUjDddRt3" target="_blank" rel="noopener noreferrer" className="text-omni-grey-light hover:text-omni-teal transition-colors">Discord</a></li>
               <li><a href="https://github.com/engindearing-projects/omniTAK-mobile" target="_blank" rel="noopener noreferrer" className="text-omni-grey-light hover:text-omni-teal transition-colors">GitHub</a></li>
               <li><a href="https://github.com/engindearing-projects/omniTAK-mobile/issues" target="_blank" rel="noopener noreferrer" className="text-omni-grey-light hover:text-omni-teal transition-colors">Issues</a></li>
               <li><a href="https://github.com/engindearing-projects/omniTAK-mobile/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer" className="text-omni-grey-light hover:text-omni-teal transition-colors">Contributing</a></li>
