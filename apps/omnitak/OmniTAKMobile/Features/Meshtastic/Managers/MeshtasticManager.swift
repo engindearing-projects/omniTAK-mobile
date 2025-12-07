@@ -2,12 +2,13 @@
 //  MeshtasticManager.swift
 //  OmniTAK Mobile
 //
-//  Meshtastic mesh network manager - TCP/Network connections only
+//  Meshtastic mesh network manager - supports TCP and Bluetooth connections
 //
 
 import Foundation
 import Combine
 import SwiftUI
+import CoreBluetooth
 
 @MainActor
 public class MeshtasticManager: ObservableObject {
@@ -26,9 +27,15 @@ public class MeshtasticManager: ObservableObject {
     @Published public var myNodeNum: UInt32 = 0
     @Published public var firmwareVersion: String = ""
 
+    // BLE-specific published properties
+    @Published public var isScanning: Bool = false
+    @Published public var discoveredBLEDevices: [MeshtasticBLEDevice] = []
+
     // MARK: - Private Properties
 
     private var _tcpClient: Any? = nil
+    private var _bleClient: Any? = nil
+    private var activeConnectionType: MeshtasticConnectionType?
 
     @available(iOS 13.0, *)
     private var tcpClient: MeshtasticTCPClient {
@@ -39,7 +46,17 @@ public class MeshtasticManager: ObservableObject {
         return _tcpClient as! MeshtasticTCPClient
     }
 
+    @available(iOS 13.0, *)
+    private var bleClient: MeshtasticBLEClient {
+        if _bleClient == nil {
+            _bleClient = MeshtasticBLEClient()
+            setupBLEClientObservers()
+        }
+        return _bleClient as! MeshtasticBLEClient
+    }
+
     private var tcpClientCancellables = Set<AnyCancellable>()
+    private var bleClientCancellables = Set<AnyCancellable>()
 
     // Saved TCP connections
     @AppStorage("meshtastic_saved_hosts") private var savedHostsData: Data = Data()
@@ -114,6 +131,72 @@ public class MeshtasticManager: ObservableObject {
             device.isConnected = false
             connectedDevice = device
         }
+        activeConnectionType = nil
+    }
+
+    // MARK: - BLE Client Setup
+
+    @available(iOS 13.0, *)
+    private func setupBLEClientObservers() {
+        guard let client = _bleClient as? MeshtasticBLEClient else { return }
+
+        client.$isConnected
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] (connected: Bool) in
+                if !connected {
+                    self?.handleDisconnection()
+                }
+            }
+            .store(in: &bleClientCancellables)
+
+        client.$connectionState
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] (state: MeshtasticBLEClient.ConnectionState) in
+                self?.connectionState = state.rawValue
+            }
+            .store(in: &bleClientCancellables)
+
+        client.$isScanning
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] (scanning: Bool) in
+                self?.isScanning = scanning
+            }
+            .store(in: &bleClientCancellables)
+
+        client.$discoveredDevices
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] (devices: [MeshtasticBLEDevice]) in
+                self?.discoveredBLEDevices = devices
+            }
+            .store(in: &bleClientCancellables)
+
+        client.$nodes
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] (nodes: [UInt32: MeshNode]) in
+                self?.meshNodes = Array(nodes.values)
+            }
+            .store(in: &bleClientCancellables)
+
+        client.$myNodeNum
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] (nodeNum: UInt32) in
+                self?.myNodeNum = nodeNum
+            }
+            .store(in: &bleClientCancellables)
+
+        client.$firmwareVersion
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] (version: String) in
+                self?.firmwareVersion = version
+            }
+            .store(in: &bleClientCancellables)
+
+        client.$lastError
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] (error: String?) in
+                self?.lastError = error
+            }
+            .store(in: &bleClientCancellables)
     }
 
     // MARK: - Saved Hosts
@@ -152,17 +235,22 @@ public class MeshtasticManager: ObservableObject {
 
     // MARK: - Connection Management
 
-    /// Connect to a Meshtastic device (TCP only for iOS)
+    /// Connect to a Meshtastic device (supports TCP and Bluetooth)
     public func connect(to device: MeshtasticDevice) {
         lastError = nil
 
-        guard device.connectionType == .tcp else {
-            lastError = "Only TCP/Network connections are supported on iOS"
-            return
+        switch device.connectionType {
+        case .tcp:
+            let port = UInt16(device.nodeId ?? "4403") ?? 4403
+            connectTCP(host: device.devicePath, port: port, device: device)
+        case .bluetooth:
+            // For BLE devices, devicePath contains the peripheral UUID
+            if let bleDevice = discoveredBLEDevices.first(where: { $0.id.uuidString == device.devicePath }) {
+                connectBLE(device: bleDevice)
+            } else {
+                lastError = "Bluetooth device not found. Try scanning again."
+            }
         }
-
-        let port = UInt16(device.nodeId ?? "4403") ?? 4403
-        connectTCP(host: device.devicePath, port: port, device: device)
     }
 
     /// Connect via TCP to a Meshtastic device
@@ -173,6 +261,7 @@ public class MeshtasticManager: ObservableObject {
         }
 
         lastError = nil
+        activeConnectionType = .tcp
 
         // Create or use provided device
         var targetDevice = device ?? MeshtasticDevice(
@@ -198,10 +287,69 @@ public class MeshtasticManager: ObservableObject {
         print("Connecting to Meshtastic TCP: \(host):\(port)")
     }
 
+    // MARK: - Bluetooth Connection
+
+    /// Start scanning for Bluetooth Meshtastic devices
+    public func startBluetoothScan() {
+        guard #available(iOS 13.0, *) else {
+            lastError = "Bluetooth requires iOS 13.0 or later"
+            return
+        }
+
+        lastError = nil
+        bleClient.startScanning()
+        print("MeshtasticManager: Started Bluetooth scanning")
+    }
+
+    /// Stop scanning for Bluetooth devices
+    public func stopBluetoothScan() {
+        guard #available(iOS 13.0, *) else { return }
+        bleClient.stopScanning()
+        print("MeshtasticManager: Stopped Bluetooth scanning")
+    }
+
+    /// Connect to a discovered Bluetooth device
+    public func connectBLE(device: MeshtasticBLEDevice) {
+        guard #available(iOS 13.0, *) else {
+            lastError = "Bluetooth requires iOS 13.0 or later"
+            return
+        }
+
+        lastError = nil
+        activeConnectionType = .bluetooth
+        stopBluetoothScan()
+
+        // Create MeshtasticDevice from BLE device
+        var targetDevice = MeshtasticDevice(
+            id: "ble-\(device.id.uuidString)",
+            name: device.name,
+            connectionType: .bluetooth,
+            devicePath: device.id.uuidString,
+            isConnected: false,
+            signalStrength: device.rssi
+        )
+
+        bleClient.connect(to: device)
+
+        // Update device state optimistically
+        targetDevice.lastSeen = Date()
+        connectedDevice = targetDevice
+
+        print("MeshtasticManager: Connecting to Bluetooth device: \(device.name)")
+    }
+
     /// Disconnect from current device
     public func disconnect() {
-        if #available(iOS 13.0, *) {
+        guard #available(iOS 13.0, *) else { return }
+
+        switch activeConnectionType {
+        case .tcp:
             tcpClient.disconnect()
+        case .bluetooth:
+            bleClient.disconnect()
+        case .none:
+            tcpClient.disconnect()
+            bleClient.disconnect()
         }
 
         if var device = connectedDevice {
@@ -213,6 +361,7 @@ public class MeshtasticManager: ObservableObject {
         myNodeNum = 0
         firmwareVersion = ""
         connectionState = "Disconnected"
+        activeConnectionType = nil
 
         print("Disconnected from Meshtastic")
     }
@@ -224,7 +373,14 @@ public class MeshtasticManager: ObservableObject {
             return
         }
 
-        tcpClient.sendTextMessage(text, to: destination)
+        switch activeConnectionType {
+        case .tcp:
+            tcpClient.sendTextMessage(text, to: destination)
+        case .bluetooth:
+            bleClient.sendTextMessage(text, to: destination)
+        case .none:
+            lastError = "Not connected"
+        }
     }
 
     // MARK: - Status Properties

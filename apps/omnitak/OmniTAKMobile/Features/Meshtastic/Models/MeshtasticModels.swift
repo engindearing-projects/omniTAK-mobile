@@ -11,16 +11,21 @@ import CoreLocation
 // MARK: - Device Models
 
 /// Connection type for Meshtastic devices
-/// Note: Only TCP is supported on iOS - serial/bluetooth require native USB or CoreBluetooth
 public enum MeshtasticConnectionType: String, Codable {
     case tcp = "TCP/IP"
+    case bluetooth = "Bluetooth"
 
     public var displayName: String {
         return self.rawValue
     }
 
     public var iconName: String {
-        return "wifi"
+        switch self {
+        case .tcp:
+            return "wifi"
+        case .bluetooth:
+            return "antenna.radiowaves.left.and.right"
+        }
     }
 }
 
