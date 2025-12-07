@@ -1687,12 +1687,14 @@ struct TacticalMapView: UIViewRepresentable {
     }
 
     private func updateAnnotations(mapView: MKMapView, markers: [CoTMarker], aircraft: [Aircraft], context: Context) {
-        // Remove old CoT and aircraft annotations (but keep drawing annotations)
-        let oldAnnotations = mapView.annotations.filter { annotation in
+        // Remove old CoT annotations only (not aircraft - they're updated incrementally)
+        let oldCotAnnotations = mapView.annotations.filter { annotation in
+            annotation is MKPointAnnotation &&
             !(annotation is MKUserLocation) &&
-            !context.coordinator.isDrawingAnnotation(annotation)
+            !context.coordinator.isDrawingAnnotation(annotation) &&
+            !(annotation is AircraftAnnotation)
         }
-        mapView.removeAnnotations(oldAnnotations)
+        mapView.removeAnnotations(oldCotAnnotations)
 
         // Add new CoT annotations
         let cotAnnotations = markers.map { marker -> MKPointAnnotation in
@@ -1704,12 +1706,52 @@ struct TacticalMapView: UIViewRepresentable {
         }
         mapView.addAnnotations(cotAnnotations)
 
-        // Add aircraft annotations
-        let aircraftAnnotations = aircraft.map { AircraftAnnotation(aircraft: $0) }
-        mapView.addAnnotations(aircraftAnnotations)
+        // Update aircraft annotations incrementally (no flicker)
+        updateAircraftAnnotations(mapView: mapView, aircraft: aircraft)
 
         // Update drawing annotations
         updateDrawingAnnotations(mapView: mapView, context: context)
+    }
+
+    private func updateAircraftAnnotations(mapView: MKMapView, aircraft: [Aircraft]) {
+        // Get existing aircraft annotations
+        let existingAircraftAnnotations = mapView.annotations.compactMap { $0 as? AircraftAnnotation }
+        var existingById: [String: AircraftAnnotation] = [:]
+        for annotation in existingAircraftAnnotations {
+            existingById[annotation.aircraft.id] = annotation
+        }
+
+        // Create set of current aircraft IDs
+        let currentIds = Set(aircraft.map { $0.id })
+
+        // Remove departed aircraft
+        let departedAnnotations = existingAircraftAnnotations.filter { !currentIds.contains($0.aircraft.id) }
+        if !departedAnnotations.isEmpty {
+            mapView.removeAnnotations(departedAnnotations)
+        }
+
+        // Update existing and add new aircraft
+        var newAnnotations: [AircraftAnnotation] = []
+        for aircraftData in aircraft {
+            if let existingAnnotation = existingById[aircraftData.id] {
+                // Update existing annotation in-place (no remove/add)
+                existingAnnotation.update(with: aircraftData)
+
+                // Refresh view if needed
+                if existingAnnotation.needsVisualUpdate,
+                   let view = mapView.view(for: existingAnnotation) as? AircraftAnnotationView {
+                    view.refreshIfNeeded()
+                }
+            } else {
+                // New aircraft - add annotation
+                newAnnotations.append(AircraftAnnotation(aircraft: aircraftData))
+            }
+        }
+
+        // Batch add new annotations
+        if !newAnnotations.isEmpty {
+            mapView.addAnnotations(newAnnotations)
+        }
     }
 
     private func updateDrawingAnnotations(mapView: MKMapView, context: Context) {

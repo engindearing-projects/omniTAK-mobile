@@ -77,7 +77,7 @@ struct MeshtasticConnectionView: View {
                 }
             }
             .sheet(isPresented: $showingDevicePicker) {
-                MeshtasticDevicePickerView()
+                MeshtasticDevicePickerView(manager: manager)
             }
             .sheet(isPresented: $showingMeshTopology) {
                 MeshTopologyView()

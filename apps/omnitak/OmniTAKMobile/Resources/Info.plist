@@ -2,6 +2,11 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.engindearing.omnitak.mobile.refresh</string>
+		<string>com.engindearing.omnitak.mobile.processing</string>
+	</array>
 	<key>CFBundleIconName</key>
 	<string>AppIcon</string>
 	<key>CFBundleURLTypes</key>
@@ -47,13 +52,8 @@
 		<string>location</string>
 		<string>bluetooth-central</string>
 		<string>fetch</string>
+		<string>remote-notification</string>
 		<string>processing</string>
-		<string>external-accessory</string>
-	</array>
-	<key>BGTaskSchedulerPermittedIdentifiers</key>
-	<array>
-		<string>com.engindearing.omnitak.mobile.refresh</string>
-		<string>com.engindearing.omnitak.mobile.processing</string>
 	</array>
 	<key>UILaunchScreen</key>
 	<dict/>
