@@ -248,7 +248,7 @@ class DataPackageImportManager: ObservableObject {
         }
 
         // Update certificate manager
-        await certificateManager.loadCertificates()
+        certificateManager.loadCertificates()
 
         print("✅ Imported P12 certificate: \(certificateLabel)")
     }
@@ -273,7 +273,7 @@ class DataPackageImportManager: ObservableObject {
         }
 
         // Update certificate manager
-        await certificateManager.loadCertificates()
+        certificateManager.loadCertificates()
 
         print("✅ Imported PEM certificate: \(certificateLabel)")
     }

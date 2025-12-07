@@ -49,3 +49,4 @@ takserver/
 *.jks
 *.key
 *-do-not-share.*
+.env.local

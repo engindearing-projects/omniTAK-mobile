@@ -24,13 +24,15 @@ struct VerticalQuickActionMenu: View {
     let onDropPoint: () -> Void
 
     @State private var isVisible = true
+    @ObservedObject private var pluginManager = PluginSettingsManager.shared
 
     var body: some View {
         HStack(spacing: 6) {
-            // Zoom to Self
+            // Zoom to Self (always enabled)
             QuickActionCircularButton(
                 icon: "location.fill",
                 isActive: false,
+                isEnabled: true,
                 color: .white,
                 action: {
                     onZoomToSelf()
@@ -38,10 +40,11 @@ struct VerticalQuickActionMenu: View {
             )
             .accessibilityLabel("Zoom to my location")
 
-            // Drop Point
+            // Drop Point (always enabled - core feature)
             QuickActionCircularButton(
                 icon: "mappin.circle.fill",
                 isActive: isCursorModeActive,
+                isEnabled: true,
                 color: .white,
                 action: {
                     onDropPoint()
@@ -53,9 +56,12 @@ struct VerticalQuickActionMenu: View {
             QuickActionCircularButton(
                 icon: "ruler",
                 isActive: showMeasurement,
+                isEnabled: pluginManager.isEnabled(.measurementTools),
                 color: .white,
                 action: {
-                    showMeasurement.toggle()
+                    if pluginManager.isEnabled(.measurementTools) {
+                        showMeasurement.toggle()
+                    }
                 }
             )
             .accessibilityLabel("Measurement tool")
@@ -64,17 +70,21 @@ struct VerticalQuickActionMenu: View {
             QuickActionCircularButton(
                 icon: "pencil.tip.crop.circle",
                 isActive: showDrawingPanel,
+                isEnabled: pluginManager.isEnabled(.drawingTools),
                 color: .white,
                 action: {
-                    showDrawingPanel.toggle()
+                    if pluginManager.isEnabled(.drawingTools) {
+                        showDrawingPanel.toggle()
+                    }
                 }
             )
             .accessibilityLabel("Drawing tools")
 
-            // Layers
+            // Layers (always enabled - core feature)
             QuickActionCircularButton(
                 icon: "square.3.layers.3d",
                 isActive: showLayersPanel,
+                isEnabled: true,
                 color: .white,
                 action: {
                     showLayersPanel.toggle()
@@ -86,17 +96,21 @@ struct VerticalQuickActionMenu: View {
             QuickActionCircularButton(
                 icon: "exclamationmark.triangle.fill",
                 isActive: showEmergencySOS,
+                isEnabled: pluginManager.isEnabled(.emergencyBeacon),
                 color: Color(hex: "#FF5252"),
                 action: {
-                    showEmergencySOS.toggle()
+                    if pluginManager.isEnabled(.emergencyBeacon) {
+                        showEmergencySOS.toggle()
+                    }
                 }
             )
             .accessibilityLabel("Emergency SOS")
 
-            // Tools Menu
+            // Tools Menu (always enabled)
             QuickActionCircularButton(
                 icon: "ellipsis.circle",
                 isActive: showToolsMenu,
+                isEnabled: true,
                 color: .white,
                 action: {
                     showToolsMenu.toggle()
@@ -127,6 +141,7 @@ struct VerticalQuickActionMenu: View {
 private struct QuickActionCircularButton: View {
     let icon: String
     let isActive: Bool
+    var isEnabled: Bool = true
     let color: Color
     let action: () -> Void
 
@@ -134,6 +149,7 @@ private struct QuickActionCircularButton: View {
 
     var body: some View {
         Button(action: {
+            guard isEnabled else { return }
             // Haptic feedback
             let generator = UIImpactFeedbackGenerator(style: .medium)
             generator.impactOccurred()
@@ -143,11 +159,11 @@ private struct QuickActionCircularButton: View {
             ZStack {
                 // Background circle
                 Circle()
-                    .fill(isActive ? Color(hex: "#FFFC00").opacity(0.3) : Color.black.opacity(0.6))
+                    .fill(backgroundFillColor)
                     .frame(width: 36, height: 36)
 
                 // Active border
-                if isActive {
+                if isActive && isEnabled {
                     Circle()
                         .strokeBorder(Color(hex: "#FFFC00"), lineWidth: 1.5)
                         .frame(width: 36, height: 36)
@@ -157,15 +173,18 @@ private struct QuickActionCircularButton: View {
                 // Icon
                 Image(systemName: icon)
                     .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(isActive ? Color(hex: "#FFFC00") : color)
+                    .foregroundColor(iconColor)
             }
             .scaleEffect(isPressed ? 0.9 : 1.0)
             .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
+            .opacity(isEnabled ? 1.0 : 0.4)
         }
         .buttonStyle(PlainButtonStyle())
+        .disabled(!isEnabled)
         .simultaneousGesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { _ in
+                    guard isEnabled else { return }
                     withAnimation(.easeInOut(duration: 0.1)) {
                         isPressed = true
                     }
@@ -176,6 +195,20 @@ private struct QuickActionCircularButton: View {
                     }
                 }
         )
+    }
+
+    private var backgroundFillColor: Color {
+        if !isEnabled {
+            return Color.black.opacity(0.3)
+        }
+        return isActive ? Color(hex: "#FFFC00").opacity(0.3) : Color.black.opacity(0.6)
+    }
+
+    private var iconColor: Color {
+        if !isEnabled {
+            return .gray.opacity(0.5)
+        }
+        return isActive ? Color(hex: "#FFFC00") : color
     }
 }
 

@@ -11,8 +11,8 @@ import CoreLocation
 // MARK: - Device Models
 
 /// Connection type for Meshtastic devices
-/// Note: Only TCP is supported on iOS - serial/bluetooth require native USB or CoreBluetooth
 public enum MeshtasticConnectionType: String, Codable {
+    case bluetooth = "Bluetooth"
     case tcp = "TCP/IP"
 
     public var displayName: String {
@@ -20,7 +20,12 @@ public enum MeshtasticConnectionType: String, Codable {
     }
 
     public var iconName: String {
-        return "wifi"
+        switch self {
+        case .bluetooth:
+            return "antenna.radiowaves.left.and.right"
+        case .tcp:
+            return "wifi"
+        }
     }
 }
 
@@ -67,7 +72,7 @@ public struct MeshtasticDevice: Identifiable, Codable {
 
 // MARK: - Mesh Network Models
 
-public struct MeshNode: Identifiable, Codable {
+public struct MeshNode: Identifiable, Codable, Equatable {
     public let id: UInt32
     public var shortName: String
     public var longName: String
@@ -98,7 +103,7 @@ public struct MeshNode: Identifiable, Codable {
     }
 }
 
-public struct MeshPosition: Codable {
+public struct MeshPosition: Codable, Equatable {
     public var latitude: Double
     public var longitude: Double
     public var altitude: Int?

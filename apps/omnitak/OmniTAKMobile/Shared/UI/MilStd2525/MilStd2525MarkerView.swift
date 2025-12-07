@@ -13,8 +13,8 @@ import UIKit
 
 /// Custom MKAnnotationView that displays MIL-STD-2525B military symbols
 class MilStd2525MapAnnotationView: MKAnnotationView {
-    private let markerSize: CGFloat = 40
-    private let callsignHeight: CGFloat = 18
+    private let markerSize: CGFloat = 24
+    private let callsignHeight: CGFloat = 14
     private var hostingController: UIHostingController<MilStdMarkerSymbolView>?
 
     var cotType: String = "a-u-G" {
@@ -54,7 +54,7 @@ class MilStd2525MapAnnotationView: MKAnnotationView {
     private func setupView() {
         canShowCallout = false // Custom info panel instead
         centerOffset = CGPoint(x: 0, y: -markerSize / 2)
-        frame = CGRect(x: 0, y: 0, width: markerSize * 1.5, height: markerSize + callsignHeight + 10)
+        frame = CGRect(x: 0, y: 0, width: markerSize * 2.5, height: markerSize + callsignHeight + 6)
 
         // Create initial hosting controller
         let symbolView = MilStdMarkerSymbolView(
@@ -120,16 +120,37 @@ struct MilStdMarkerSymbolView: View {
         return props
     }
 
+    // Adaptive stroke width based on size
+    private var strokeWidth: CGFloat {
+        max(1.5, size * 0.08)
+    }
+
+    // Adaptive icon size
+    private var iconSize: CGFloat {
+        size * 0.45
+    }
+
+    // Adaptive corner radius for friendly rectangle
+    private var cornerRadius: CGFloat {
+        size * 0.12
+    }
+
     var body: some View {
-        VStack(spacing: 2) {
+        VStack(spacing: 1) {
             ZStack {
                 // Selection highlight
                 if isSelected {
                     affiliationShape
-                        .fill(Color.white.opacity(0.3))
-                        .frame(width: size * 1.3, height: size * 1.3)
-                        .blur(radius: 4)
+                        .fill(Color.white.opacity(0.25))
+                        .frame(width: size * 1.2, height: size * 1.2)
+                        .blur(radius: 3)
                 }
+
+                // Shadow/glow for visibility on any background
+                affiliationShape
+                    .fill(Color.black.opacity(0.4))
+                    .frame(width: size + 2, height: size + 2)
+                    .blur(radius: 1)
 
                 // Main affiliation shape with fill
                 affiliationShape
@@ -138,42 +159,41 @@ struct MilStdMarkerSymbolView: View {
 
                 // Shape outline
                 affiliationShape
-                    .stroke(properties.affiliation.color, lineWidth: 2.5)
+                    .stroke(properties.affiliation.color, lineWidth: strokeWidth)
                     .frame(width: size, height: size)
 
                 // Unit type icon inside
                 Image(systemName: properties.unitType.icon)
-                    .font(.system(size: size * 0.4, weight: .bold))
+                    .font(.system(size: iconSize, weight: .semibold))
                     .foregroundColor(properties.affiliation.color)
             }
-            .shadow(color: .black.opacity(0.5), radius: 3, x: 0, y: 2)
 
-            // Callsign label
+            // Callsign label - compact and readable
             Text(callsign)
-                .font(.system(size: 10, weight: .bold))
+                .font(.system(size: max(8, size * 0.35), weight: .semibold))
                 .foregroundColor(.white)
                 .lineLimit(1)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 3)
+                .padding(.horizontal, 4)
+                .padding(.vertical, 2)
                 .background(
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(properties.affiliation.color.opacity(0.85))
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(properties.affiliation.color.opacity(0.9))
+                        .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
                 )
-                .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
         }
     }
 
     private var affiliationShape: AnyShape {
         switch properties.affiliation {
         case .friendly, .assumed:
-            // Rectangle for friendly (blue)
-            return AnyShape(RoundedRectangle(cornerRadius: 2))
+            // Rectangle for friendly (blue) - with rounded corners
+            return AnyShape(RoundedRectangle(cornerRadius: cornerRadius))
         case .hostile, .suspect, .joker, .faker:
             // Diamond for hostile (red)
             return AnyShape(RotatedSquare())
         case .neutral:
-            // Square for neutral (green)
-            return AnyShape(Rectangle())
+            // Square for neutral (green) - slight rounding
+            return AnyShape(RoundedRectangle(cornerRadius: cornerRadius * 0.5))
         case .unknown, .pending:
             // Quatrefoil/Cloverleaf for unknown (yellow)
             return AnyShape(QuatrefoilShape())
@@ -241,18 +261,32 @@ struct CompactMilStdMarkerView: View {
         MilStdCoTParser.parse(cotType: cotType)
     }
 
+    private var strokeWidth: CGFloat {
+        max(1.5, size * 0.08)
+    }
+
+    private var cornerRadius: CGFloat {
+        size * 0.12
+    }
+
     var body: some View {
         ZStack {
+            // Shadow for visibility
+            affiliationShape
+                .fill(Color.black.opacity(0.35))
+                .frame(width: size + 1, height: size + 1)
+                .blur(radius: 0.5)
+
             affiliationShape
                 .fill(properties.affiliation.fillColor)
                 .frame(width: size, height: size)
 
             affiliationShape
-                .stroke(properties.affiliation.color, lineWidth: 2)
+                .stroke(properties.affiliation.color, lineWidth: strokeWidth)
                 .frame(width: size, height: size)
 
             Image(systemName: properties.unitType.icon)
-                .font(.system(size: size * 0.35, weight: .semibold))
+                .font(.system(size: size * 0.4, weight: .semibold))
                 .foregroundColor(properties.affiliation.color)
         }
     }
@@ -260,11 +294,11 @@ struct CompactMilStdMarkerView: View {
     private var affiliationShape: AnyShape {
         switch properties.affiliation {
         case .friendly, .assumed:
-            return AnyShape(RoundedRectangle(cornerRadius: 2))
+            return AnyShape(RoundedRectangle(cornerRadius: cornerRadius))
         case .hostile, .suspect, .joker, .faker:
             return AnyShape(RotatedSquare())
         case .neutral:
-            return AnyShape(Rectangle())
+            return AnyShape(RoundedRectangle(cornerRadius: cornerRadius * 0.5))
         case .unknown, .pending:
             return AnyShape(QuatrefoilShape())
         }
