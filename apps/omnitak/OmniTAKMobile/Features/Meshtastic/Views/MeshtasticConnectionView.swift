@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct MeshtasticConnectionView: View {
-    @StateObject private var manager = MeshtasticManager()
+    @ObservedObject private var manager = MeshtasticManager.shared
     @State private var showingDevicePicker = false
     @State private var showingMeshTopology = false
 
@@ -55,10 +55,10 @@ struct MeshtasticConnectionView: View {
                 }
             }
             .sheet(isPresented: $showingDevicePicker) {
-                MeshtasticDevicePickerView(manager: manager)
+                MeshtasticDevicePickerView()
             }
             .sheet(isPresented: $showingMeshTopology) {
-                MeshTopologyView(manager: manager)
+                MeshTopologyView()
             }
         }
     }

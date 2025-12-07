@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct MeshTopologyView: View {
-    @ObservedObject var manager: MeshtasticManager
+    @ObservedObject var manager: MeshtasticManager = MeshtasticManager.shared
     @Environment(\.dismiss) var dismiss
 
     @State private var viewMode: ViewMode = .list
@@ -388,6 +388,6 @@ struct MeshNodeDetailRow: View {
 
 struct MeshTopologyView_Previews: PreviewProvider {
     static var previews: some View {
-        MeshTopologyView(manager: MeshtasticManager())
+        MeshTopologyView()
     }
 }

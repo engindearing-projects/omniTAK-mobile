@@ -9,11 +9,11 @@
 import SwiftUI
 
 struct MeshtasticDevicePickerView: View {
-    @ObservedObject var manager: MeshtasticManager
+    @ObservedObject var manager: MeshtasticManager = MeshtasticManager.shared
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
-        MeshtasticTCPConnectionView(manager: manager)
+        MeshtasticTCPConnectionView()
     }
 }
 
@@ -21,6 +21,6 @@ struct MeshtasticDevicePickerView: View {
 
 struct MeshtasticDevicePickerView_Previews: PreviewProvider {
     static var previews: some View {
-        MeshtasticDevicePickerView(manager: MeshtasticManager())
+        MeshtasticDevicePickerView()
     }
 }

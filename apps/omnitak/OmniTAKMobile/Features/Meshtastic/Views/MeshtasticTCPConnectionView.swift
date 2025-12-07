@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct MeshtasticTCPConnectionView: View {
-    @ObservedObject var manager: MeshtasticManager
+    @ObservedObject var manager: MeshtasticManager = MeshtasticManager.shared
     @Environment(\.dismiss) var dismiss
 
     @State private var hostAddress: String = ""
@@ -308,6 +308,6 @@ private struct AddDeviceSheet: View {
 
 struct MeshtasticTCPConnectionView_Previews: PreviewProvider {
     static var previews: some View {
-        MeshtasticTCPConnectionView(manager: MeshtasticManager())
+        MeshtasticTCPConnectionView()
     }
 }

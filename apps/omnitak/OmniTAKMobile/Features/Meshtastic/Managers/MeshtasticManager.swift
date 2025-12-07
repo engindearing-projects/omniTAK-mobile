@@ -12,6 +12,11 @@ import SwiftUI
 @MainActor
 public class MeshtasticManager: ObservableObject {
 
+    // MARK: - Singleton
+
+    /// Shared instance for app-wide Meshtastic management
+    public static let shared = MeshtasticManager()
+
     // MARK: - Published Properties
 
     @Published public var connectedDevice: MeshtasticDevice?
@@ -43,6 +48,14 @@ public class MeshtasticManager: ObservableObject {
 
     public init() {
         // TCP client is lazily initialized when needed
+        // Configure COT bridge to convert mesh nodes to map markers
+        configureCOTBridge()
+    }
+
+    /// Configure the COT bridge for converting Meshtastic data to TAK format
+    private func configureCOTBridge() {
+        MeshtasticCOTBridge.shared.configure(meshtasticManager: self)
+        print("MeshtasticManager: COT bridge configured")
     }
 
     // MARK: - TCP Client Setup
