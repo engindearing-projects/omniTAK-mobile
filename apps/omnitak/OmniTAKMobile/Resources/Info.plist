@@ -45,6 +45,15 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
+		<string>bluetooth-central</string>
+		<string>fetch</string>
+		<string>processing</string>
+		<string>external-accessory</string>
+	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.engindearing.omnitak.mobile.refresh</string>
+		<string>com.engindearing.omnitak.mobile.processing</string>
 	</array>
 	<key>UILaunchScreen</key>
 	<dict/>

@@ -12,6 +12,7 @@ struct MeshTopologyView: View {
     @Environment(\.dismiss) var dismiss
 
     @State private var viewMode: ViewMode = .list
+    @State private var showingCoTPublishAlert = false
 
     enum ViewMode: String, CaseIterable {
         case graph = "Graph"
@@ -53,11 +54,27 @@ struct MeshTopologyView: View {
             .navigationTitle("Mesh Nodes")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    if !manager.nodesWithPositions.isEmpty {
+                        Button {
+                            manager.publishMeshNodesToMap()
+                            showingCoTPublishAlert = true
+                        } label: {
+                            Label("Show on Map", systemImage: "map")
+                        }
+                    }
+                }
+
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }
                 }
+            }
+            .alert("Published to Map", isPresented: $showingCoTPublishAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text("\(manager.nodesWithPositions.count) mesh nodes with positions have been published to the TAK map.")
             }
         }
     }
@@ -342,6 +359,25 @@ struct MeshNodeDetailRow: View {
                 }
             }
 
+            // Position row
+            if let position = node.position {
+                HStack(spacing: 8) {
+                    Image(systemName: "location.fill")
+                        .foregroundColor(.green)
+                        .font(.caption)
+
+                    Text(formatCoordinate(lat: position.latitude, lon: position.longitude))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+
+                    if let alt = position.altitude {
+                        Text("\(alt)m")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+
             HStack(spacing: 16) {
                 if let snr = node.snr {
                     Label(String(format: "%.1f dB", snr), systemImage: "waveform")
@@ -363,6 +399,12 @@ struct MeshNodeDetailRow: View {
             }
         }
         .padding(.vertical, 4)
+    }
+
+    private func formatCoordinate(lat: Double, lon: Double) -> String {
+        let latDir = lat >= 0 ? "N" : "S"
+        let lonDir = lon >= 0 ? "E" : "W"
+        return String(format: "%.5f%@ %.5f%@", abs(lat), latDir, abs(lon), lonDir)
     }
 
     private var hopColor: Color {

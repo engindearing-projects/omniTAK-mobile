@@ -33,11 +33,23 @@ struct ATAKToolsView: View {
     @State private var showDigitalPointer = false
     @State private var showTurnByTurnNav = false
     @State private var showMeshtastic = false
+    @State private var showADSB = false
 
     @ObservedObject private var chatManager = ChatManager.shared
     @StateObject private var trackRecordingService = TrackRecordingService()
+    @ObservedObject private var pluginManager = PluginSettingsManager.shared
+    @AppStorage("showDisabledTools") private var showDisabledTools: Bool = true
 
     let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 5)
+
+    /// Filtered tools based on the toggle
+    private var visibleTools: [ATAKTool] {
+        if showDisabledTools {
+            return ATAKTool.allTools
+        } else {
+            return ATAKTool.allTools.filter { pluginManager.isToolEnabled($0.id) }
+        }
+    }
 
     var body: some View {
         ZStack {
@@ -46,17 +58,24 @@ struct ATAKToolsView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Header
-                ToolsHeader(onClose: { isPresented = false })
+                // Header with toggle
+                ToolsHeader(
+                    showDisabledTools: $showDisabledTools,
+                    onClose: { isPresented = false }
+                )
 
                 // Tools Grid (5x4 layout)
                 ScrollView {
                     LazyVGrid(columns: columns, spacing: 0) {
-                        ForEach(ATAKTool.allTools) { tool in
+                        ForEach(visibleTools) { tool in
+                            let isEnabled = pluginManager.isToolEnabled(tool.id)
                             ToolButton(
                                 tool: tool,
+                                isEnabled: isEnabled,
                                 action: {
-                                    handleToolSelection(tool)
+                                    if isEnabled {
+                                        handleToolSelection(tool)
+                                    }
                                 }
                             )
                         }
@@ -131,6 +150,9 @@ struct ATAKToolsView: View {
         .sheet(isPresented: $showMeshtastic) {
             MeshtasticConnectionView()
         }
+        .sheet(isPresented: $showADSB) {
+            ADSBTrafficView()
+        }
     }
 
     private func handleToolSelection(_ tool: ATAKTool) {
@@ -192,6 +214,8 @@ struct ATAKToolsView: View {
             showTurnByTurnNav = true
         case "meshtastic":
             showMeshtastic = true
+        case "adsb":
+            showADSB = true
 
         default:
             selectedTool = tool
@@ -202,24 +226,42 @@ struct ATAKToolsView: View {
 // MARK: - Tools Header
 
 struct ToolsHeader: View {
+    @Binding var showDisabledTools: Bool
     let onClose: () -> Void
 
     var body: some View {
-        HStack {
-            Text("Tools")
-                .font(.system(size: 24, weight: .semibold))
-                .foregroundColor(.white)
-
-            Spacer()
-
-            // Close button
-            Button(action: onClose) {
-                Image(systemName: "xmark")
-                    .font(.system(size: 20))
+        VStack(spacing: 0) {
+            HStack {
+                Text("Tools")
+                    .font(.system(size: 24, weight: .semibold))
                     .foregroundColor(.white)
+
+                Spacer()
+
+                // Close button
+                Button(action: onClose) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 20))
+                        .foregroundColor(.white)
+                }
             }
+            .padding()
+
+            // Toggle row
+            HStack {
+                Text("Show disabled")
+                    .font(.system(size: 13))
+                    .foregroundColor(.gray)
+
+                Spacer()
+
+                Toggle("", isOn: $showDisabledTools)
+                    .labelsHidden()
+                    .scaleEffect(0.8)
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 8)
         }
-        .padding()
         .background(Color.black)
     }
 }
@@ -228,6 +270,7 @@ struct ToolsHeader: View {
 
 struct ToolButton: View {
     let tool: ATAKTool
+    var isEnabled: Bool = true
     let action: () -> Void
 
     var body: some View {
@@ -235,24 +278,33 @@ struct ToolButton: View {
             VStack(spacing: 8) {
                 Image(systemName: tool.iconName)
                     .font(.system(size: 32))
-                    .foregroundColor(.white)
+                    .foregroundColor(isEnabled ? .white : .gray.opacity(0.4))
                     .frame(height: 44)
 
                 Text(tool.displayName)
                     .font(.system(size: 12))
-                    .foregroundColor(.white)
+                    .foregroundColor(isEnabled ? .white : .gray.opacity(0.4))
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
                     .frame(height: 32)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
-            .background(Color(white: 0.15))
+            .background(isEnabled ? Color(white: 0.15) : Color(white: 0.08))
             .overlay(
                 Rectangle()
                     .stroke(Color(white: 0.3), lineWidth: 0.5)
             )
+            .overlay(
+                // Disabled overlay
+                Group {
+                    if !isEnabled {
+                        Color.black.opacity(0.3)
+                    }
+                }
+            )
         }
+        .disabled(!isEnabled)
     }
 }
 
@@ -295,6 +347,7 @@ struct ATAKTool: Identifiable {
 
         // Row 5 - Additional Utilities
         ATAKTool(id: "arcgis", displayName: "ArcGIS", iconName: "globe.americas.fill", description: "ArcGIS Portal content"),
+        ATAKTool(id: "adsb", displayName: "ADS-B", iconName: "airplane.circle.fill", description: "ADS-B aircraft tracking"),
         ATAKTool(id: "plugins", displayName: "Plugins", iconName: "puzzlepiece.extension.fill", description: "Manage plugins"),
         ATAKTool(id: "settings", displayName: "Settings", iconName: "gearshape.fill", description: "App settings")
     ]

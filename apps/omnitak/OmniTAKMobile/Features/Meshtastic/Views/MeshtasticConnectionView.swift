@@ -11,6 +11,7 @@ struct MeshtasticConnectionView: View {
     @ObservedObject private var manager = MeshtasticManager.shared
     @State private var showingDevicePicker = false
     @State private var showingMeshTopology = false
+    @State private var showingNodeMap = false
 
     var body: some View {
         NavigationView {
@@ -20,6 +21,11 @@ struct MeshtasticConnectionView: View {
                     connectionStatusCard
 
                     if manager.isConnected {
+                        // Mini Map Preview (if nodes have positions)
+                        if !manager.nodesWithPositions.isEmpty {
+                            miniMapCard
+                        }
+
                         // Device Info Card
                         deviceInfoCard
 
@@ -43,6 +49,22 @@ struct MeshtasticConnectionView: View {
                                 Label("View Nodes", systemImage: "circle.hexagongrid")
                             }
 
+                            if !manager.nodesWithPositions.isEmpty {
+                                Button(action: { showingNodeMap = true }) {
+                                    Label("Node Map", systemImage: "map")
+                                }
+
+                                Button(action: { manager.publishMeshNodesToMap() }) {
+                                    Label("Publish to TAK Map", systemImage: "square.and.arrow.up")
+                                }
+                            }
+
+                            Divider()
+
+                            Toggle(isOn: $manager.autoMapUpdateEnabled) {
+                                Label("Auto Map Updates", systemImage: "arrow.triangle.2.circlepath")
+                            }
+
                             Divider()
 
                             Button(role: .destructive, action: { manager.disconnect() }) {
@@ -60,7 +82,55 @@ struct MeshtasticConnectionView: View {
             .sheet(isPresented: $showingMeshTopology) {
                 MeshTopologyView()
             }
+            .sheet(isPresented: $showingNodeMap) {
+                NavigationView {
+                    MeshNodeMapView(manager: manager)
+                        .navigationTitle("Node Map")
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .navigationBarTrailing) {
+                                Button("Done") { showingNodeMap = false }
+                            }
+                        }
+                }
+            }
         }
+    }
+
+    // MARK: - Mini Map Card
+
+    private var miniMapCard: some View {
+        VStack(spacing: 0) {
+            // Map header
+            HStack {
+                Label("\(manager.nodesWithPositions.count) nodes with position", systemImage: "map")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                Spacer()
+
+                Button("Full Map") {
+                    showingNodeMap = true
+                }
+                .font(.caption)
+            }
+            .padding(.horizontal)
+            .padding(.top, 12)
+            .padding(.bottom, 8)
+
+            // Mini map
+            MeshNodeMapView(manager: manager)
+                .frame(height: 200)
+                .cornerRadius(12)
+                .padding(.horizontal)
+                .padding(.bottom, 12)
+                .onTapGesture {
+                    showingNodeMap = true
+                }
+        }
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .shadow(radius: 2)
     }
 
     // MARK: - Connection Status Card
@@ -265,12 +335,45 @@ struct MeshtasticConnectionView: View {
                 .multilineTextAlignment(.center)
                 .foregroundColor(.secondary)
 
-            VStack(alignment: .leading, spacing: 12) {
-                SetupStep(number: 1, text: "Enable TCP/WiFi on your Meshtastic device")
-                SetupStep(number: 2, text: "Connect your phone to the same WiFi network")
-                SetupStep(number: 3, text: "Enter the device IP (e.g. 192.168.1.100:4403)")
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Connection Options:")
+                    .font(.headline)
+
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: "antenna.radiowaves.left.and.right")
+                        .font(.title2)
+                        .foregroundColor(.blue)
+                        .frame(width: 32)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Bluetooth")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                        Text("Direct BLE connection to your Meshtastic device")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: "wifi")
+                        .font(.title2)
+                        .foregroundColor(.green)
+                        .frame(width: 32)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("TCP/WiFi")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                        Text("Network connection via IP address (port 4403)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
             }
             .padding()
+            .background(Color(.systemGray6))
+            .cornerRadius(8)
 
             Button(action: { showingDevicePicker = true }) {
                 HStack {

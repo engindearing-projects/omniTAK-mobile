@@ -2,7 +2,7 @@
 //  MeshtasticManager.swift
 //  OmniTAK Mobile
 //
-//  Meshtastic mesh network manager - supports TCP and Bluetooth connections
+//  Meshtastic mesh network manager - TCP and Bluetooth connections
 //
 
 import Foundation
@@ -13,11 +13,6 @@ import CoreBluetooth
 @MainActor
 public class MeshtasticManager: ObservableObject {
 
-    // MARK: - Singleton
-
-    /// Shared instance for app-wide Meshtastic management
-    public static let shared = MeshtasticManager()
-
     // MARK: - Published Properties
 
     @Published public var connectedDevice: MeshtasticDevice?
@@ -27,15 +22,15 @@ public class MeshtasticManager: ObservableObject {
     @Published public var myNodeNum: UInt32 = 0
     @Published public var firmwareVersion: String = ""
 
-    // BLE-specific published properties
+    // BLE-specific properties
     @Published public var isScanning: Bool = false
-    @Published public var discoveredBLEDevices: [MeshtasticBLEDevice] = []
+    @Published public var discoveredBLEDevices: [DiscoveredBLEDevice] = []
+    @Published public var bluetoothState: CBManagerState = .unknown
 
     // MARK: - Private Properties
 
     private var _tcpClient: Any? = nil
     private var _bleClient: Any? = nil
-    private var activeConnectionType: MeshtasticConnectionType?
 
     @available(iOS 13.0, *)
     private var tcpClient: MeshtasticTCPClient {
@@ -65,14 +60,6 @@ public class MeshtasticManager: ObservableObject {
 
     public init() {
         // TCP client is lazily initialized when needed
-        // Configure COT bridge to convert mesh nodes to map markers
-        configureCOTBridge()
-    }
-
-    /// Configure the COT bridge for converting Meshtastic data to TAK format
-    private func configureCOTBridge() {
-        MeshtasticCOTBridge.shared.configure(meshtasticManager: self)
-        print("MeshtasticManager: COT bridge configured")
     }
 
     // MARK: - TCP Client Setup
@@ -131,7 +118,6 @@ public class MeshtasticManager: ObservableObject {
             device.isConnected = false
             connectedDevice = device
         }
-        activeConnectionType = nil
     }
 
     // MARK: - BLE Client Setup
@@ -143,8 +129,17 @@ public class MeshtasticManager: ObservableObject {
         client.$isConnected
             .receive(on: DispatchQueue.main)
             .sink { [weak self] (connected: Bool) in
-                if !connected {
+                if connected {
+                    // Enable auto map updates when connected
+                    self?.enableAutoMapUpdates()
+                    // Update device connection status
+                    if var device = self?.connectedDevice {
+                        device.isConnected = true
+                        self?.connectedDevice = device
+                    }
+                } else {
                     self?.handleDisconnection()
+                    self?.disableAutoMapUpdates()
                 }
             }
             .store(in: &bleClientCancellables)
@@ -153,20 +148,6 @@ public class MeshtasticManager: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] (state: MeshtasticBLEClient.ConnectionState) in
                 self?.connectionState = state.rawValue
-            }
-            .store(in: &bleClientCancellables)
-
-        client.$isScanning
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] (scanning: Bool) in
-                self?.isScanning = scanning
-            }
-            .store(in: &bleClientCancellables)
-
-        client.$discoveredDevices
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] (devices: [MeshtasticBLEDevice]) in
-                self?.discoveredBLEDevices = devices
             }
             .store(in: &bleClientCancellables)
 
@@ -195,6 +176,27 @@ public class MeshtasticManager: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] (error: String?) in
                 self?.lastError = error
+            }
+            .store(in: &bleClientCancellables)
+
+        client.$isScanning
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] (scanning: Bool) in
+                self?.isScanning = scanning
+            }
+            .store(in: &bleClientCancellables)
+
+        client.$discoveredDevices
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] (devices: [DiscoveredBLEDevice]) in
+                self?.discoveredBLEDevices = devices
+            }
+            .store(in: &bleClientCancellables)
+
+        client.$bluetoothState
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] (state: CBManagerState) in
+                self?.bluetoothState = state
             }
             .store(in: &bleClientCancellables)
     }
@@ -233,23 +235,66 @@ public class MeshtasticManager: ObservableObject {
         savedHosts.removeAll { $0.host == host && $0.port == port }
     }
 
+    // MARK: - BLE Scanning
+
+    /// Start scanning for Bluetooth Meshtastic devices
+    public func startBLEScanning() {
+        guard #available(iOS 13.0, *) else {
+            lastError = "Bluetooth requires iOS 13.0 or later"
+            return
+        }
+
+        lastError = nil
+        bleClient.startScanning()
+    }
+
+    /// Stop BLE scanning
+    public func stopBLEScanning() {
+        guard #available(iOS 13.0, *) else { return }
+        bleClient.stopScanning()
+    }
+
+    /// Connect to a discovered BLE device
+    public func connectBLE(device: DiscoveredBLEDevice) {
+        guard #available(iOS 13.0, *) else {
+            lastError = "Bluetooth requires iOS 13.0 or later"
+            return
+        }
+
+        lastError = nil
+
+        // Create a MeshtasticDevice for the BLE device
+        let meshtasticDevice = MeshtasticDevice(
+            id: device.id.uuidString,
+            name: device.name,
+            connectionType: .bluetooth,
+            devicePath: device.id.uuidString,
+            isConnected: false,
+            signalStrength: device.rssi,
+            nodeId: nil,
+            lastSeen: Date()
+        )
+
+        connectedDevice = meshtasticDevice
+        bleClient.connect(to: device)
+
+        print("Connecting to BLE device: \(device.name)")
+    }
+
     // MARK: - Connection Management
 
-    /// Connect to a Meshtastic device (supports TCP and Bluetooth)
+    /// Connect to a Meshtastic device
     public func connect(to device: MeshtasticDevice) {
         lastError = nil
 
         switch device.connectionType {
+        case .bluetooth:
+            // For BLE, need to scan and find the device first
+            lastError = "Use connectBLE() with a discovered device for Bluetooth connections"
+
         case .tcp:
             let port = UInt16(device.nodeId ?? "4403") ?? 4403
             connectTCP(host: device.devicePath, port: port, device: device)
-        case .bluetooth:
-            // For BLE devices, devicePath contains the peripheral UUID
-            if let bleDevice = discoveredBLEDevices.first(where: { $0.id.uuidString == device.devicePath }) {
-                connectBLE(device: bleDevice)
-            } else {
-                lastError = "Bluetooth device not found. Try scanning again."
-            }
         }
     }
 
@@ -261,7 +306,6 @@ public class MeshtasticManager: ObservableObject {
         }
 
         lastError = nil
-        activeConnectionType = .tcp
 
         // Create or use provided device
         var targetDevice = device ?? MeshtasticDevice(
@@ -287,81 +331,30 @@ public class MeshtasticManager: ObservableObject {
         print("Connecting to Meshtastic TCP: \(host):\(port)")
     }
 
-    // MARK: - Bluetooth Connection
-
-    /// Start scanning for Bluetooth Meshtastic devices
-    public func startBluetoothScan() {
-        guard #available(iOS 13.0, *) else {
-            lastError = "Bluetooth requires iOS 13.0 or later"
-            return
-        }
-
-        lastError = nil
-        bleClient.startScanning()
-        print("MeshtasticManager: Started Bluetooth scanning")
-    }
-
-    /// Stop scanning for Bluetooth devices
-    public func stopBluetoothScan() {
-        guard #available(iOS 13.0, *) else { return }
-        bleClient.stopScanning()
-        print("MeshtasticManager: Stopped Bluetooth scanning")
-    }
-
-    /// Connect to a discovered Bluetooth device
-    public func connectBLE(device: MeshtasticBLEDevice) {
-        guard #available(iOS 13.0, *) else {
-            lastError = "Bluetooth requires iOS 13.0 or later"
-            return
-        }
-
-        lastError = nil
-        activeConnectionType = .bluetooth
-        stopBluetoothScan()
-
-        // Create MeshtasticDevice from BLE device
-        var targetDevice = MeshtasticDevice(
-            id: "ble-\(device.id.uuidString)",
-            name: device.name,
-            connectionType: .bluetooth,
-            devicePath: device.id.uuidString,
-            isConnected: false,
-            signalStrength: device.rssi
-        )
-
-        bleClient.connect(to: device)
-
-        // Update device state optimistically
-        targetDevice.lastSeen = Date()
-        connectedDevice = targetDevice
-
-        print("MeshtasticManager: Connecting to Bluetooth device: \(device.name)")
-    }
-
     /// Disconnect from current device
     public func disconnect() {
         guard #available(iOS 13.0, *) else { return }
 
-        switch activeConnectionType {
-        case .tcp:
-            tcpClient.disconnect()
-        case .bluetooth:
-            bleClient.disconnect()
-        case .none:
-            tcpClient.disconnect()
-            bleClient.disconnect()
+        // Only disconnect the client type we're actually using
+        if let device = connectedDevice {
+            switch device.connectionType {
+            case .bluetooth:
+                if let client = _bleClient as? MeshtasticBLEClient {
+                    client.disconnect()
+                }
+            case .tcp:
+                if let client = _tcpClient as? MeshtasticTCPClient {
+                    client.disconnect()
+                }
+            }
         }
-
-        if var device = connectedDevice {
-            device.isConnected = false
-        }
+        // Don't disconnect "just in case" - this causes issues during connection
 
         connectedDevice = nil
         meshNodes.removeAll()
         myNodeNum = 0
         firmwareVersion = ""
         connectionState = "Disconnected"
-        activeConnectionType = nil
 
         print("Disconnected from Meshtastic")
     }
@@ -373,13 +366,13 @@ public class MeshtasticManager: ObservableObject {
             return
         }
 
-        switch activeConnectionType {
-        case .tcp:
-            tcpClient.sendTextMessage(text, to: destination)
-        case .bluetooth:
-            bleClient.sendTextMessage(text, to: destination)
-        case .none:
-            lastError = "Not connected"
+        if let device = connectedDevice {
+            switch device.connectionType {
+            case .bluetooth:
+                bleClient.sendTextMessage(text, to: destination)
+            case .tcp:
+                tcpClient.sendTextMessage(text, to: destination)
+            }
         }
     }
 
@@ -396,5 +389,86 @@ public class MeshtasticManager: ObservableObject {
             return "Connected: \(device.name)"
         }
         return "Not Connected"
+    }
+
+    // MARK: - TAK Map Integration
+
+    /// Callback for when CoT events are generated from mesh nodes (XML format)
+    public var onCoTGenerated: ((String) -> Void)?
+
+    /// Whether automatic map updates are enabled
+    @Published public var autoMapUpdateEnabled: Bool = true
+
+    private var mapUpdateCancellable: AnyCancellable?
+
+    /// Publish all mesh nodes with positions to the TAK map
+    public func publishMeshNodesToMap() {
+        let cotEvents = MeshtasticCoTConverter.toCoTEvents(nodes: meshNodes, ownNodeId: myNodeNum)
+        for event in cotEvents {
+            TAKService.shared.updateEnhancedMarker(from: event)
+        }
+        print("📍 Published \(cotEvents.count) mesh nodes to TAK map")
+    }
+
+    /// Publish a single node to the TAK map
+    public func publishNodeToMap(_ node: MeshNode) {
+        let isOwn = node.id == myNodeNum
+        if let event = MeshtasticCoTConverter.toCoTEvent(node: node, isOwnNode: isOwn) {
+            TAKService.shared.updateEnhancedMarker(from: event)
+            print("📍 Published node \(node.shortName) to TAK map")
+        }
+    }
+
+    /// Generate CoT XML for all mesh nodes with positions
+    public func publishMeshNodesToCoT() {
+        let cotEvents = MeshtasticCoTConverter.generateCoTForAllNodes(meshNodes)
+        for cotXML in cotEvents {
+            onCoTGenerated?(cotXML)
+        }
+        print("Published \(cotEvents.count) mesh nodes as CoT XML")
+    }
+
+    /// Generate CoT XML for a specific node
+    public func generateCoT(for node: MeshNode) -> String? {
+        return MeshtasticCoTConverter.generateCoT(for: node)
+    }
+
+    /// Get nodes with valid positions
+    public var nodesWithPositions: [MeshNode] {
+        meshNodes.filter { $0.position != nil }
+    }
+
+    /// Enable automatic publishing of mesh nodes to TAK map when nodes are updated
+    public func enableAutoMapUpdates() {
+        guard autoMapUpdateEnabled else { return }
+
+        mapUpdateCancellable?.cancel()
+
+        // Subscribe to node changes and publish to map
+        mapUpdateCancellable = $meshNodes
+            .receive(on: DispatchQueue.main)
+            .debounce(for: .seconds(2), scheduler: DispatchQueue.main)
+            .sink { [weak self] nodes in
+                guard let self = self, self.autoMapUpdateEnabled else { return }
+                if !nodes.isEmpty {
+                    self.publishMeshNodesToMap()
+                }
+            }
+        print("🗺️ Auto map updates enabled for Meshtastic nodes")
+    }
+
+    /// Disable automatic map updates
+    public func disableAutoMapUpdates() {
+        mapUpdateCancellable?.cancel()
+        mapUpdateCancellable = nil
+        print("🗺️ Auto map updates disabled")
+    }
+
+    /// Remove all Meshtastic markers from TAK map
+    public func clearMeshMarkersFromMap() {
+        // TAKService uses enhancedMarkers dictionary with UID as key
+        // We'd need TAKService to expose a remove method, but for now just let them expire
+        // meshNodes count: \(meshNodes.count) markers will expire
+        print("🗺️ Mesh markers will expire from map")
     }
 }

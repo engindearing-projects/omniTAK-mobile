@@ -15,6 +15,7 @@ struct ATAKMapView: View {
     @StateObject private var overlayCoordinator = MapOverlayCoordinator()
     @StateObject private var mapStateManager = MapStateManager()
     @StateObject private var measurementManager = MeasurementManager()
+    @ObservedObject private var adsbService = ADSBTrafficService.shared
 
     @State private var mapRegion = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 38.8977, longitude: -77.0365), // Default: DC
@@ -164,6 +165,7 @@ struct ATAKMapView: View {
             mapType: $mapType,
             trackingMode: $trackingMode,
             markers: cotMarkers,
+            aircraft: adsbService.settings.isEnabled ? adsbService.aircraft : [],
             showsUserLocation: true,
             drawingStore: drawingStore,
             drawingManager: drawingManager,
@@ -268,6 +270,7 @@ struct ATAKMapView: View {
                     showCoordinates: $showCoordinates,
                     showScaleBar: $showScaleBar,
                     showGrid: $showGrid,
+                    adsbService: ADSBTrafficService.shared,
                     onLayerToggle: { layer in
                         toggleLayer(layer)
                     },
@@ -899,18 +902,8 @@ struct ATAKMapView: View {
     // MARK: - Actions
 
     private func setupTAKConnection() {
-        // Auto-connect to active server from ServerManager
-        let serverManager = ServerManager.shared
-        if let activeServer = serverManager.activeServer {
-            takService.connect(
-                host: activeServer.host,
-                port: activeServer.port,
-                protocolType: activeServer.protocolType,
-                useTLS: activeServer.useTLS,
-                certificateName: activeServer.certificateName,
-                certificatePassword: activeServer.certificatePassword
-            )
-        }
+        // Connect to all enabled servers (respects user's toggle state)
+        ServerManager.shared.connectToEnabledServers()
     }
 
     private func startLocationUpdates() {
@@ -1341,6 +1334,7 @@ struct ATAKSidePanel: View {
     @Binding var showCoordinates: Bool
     @Binding var showScaleBar: Bool
     @Binding var showGrid: Bool
+    @ObservedObject var adsbService: ADSBTrafficService
     let onLayerToggle: (String) -> Void
     let onOverlayToggle: (String) -> Void
     let onMapOverlayToggle: (String) -> Void
@@ -1416,6 +1410,36 @@ struct ATAKSidePanel: View {
                 }
                 LayerButton(icon: "ruler", title: "Scale Bar", isActive: showScaleBar, compact: true) {
                     onMapOverlayToggle("scale")
+                }
+
+                Divider()
+                    .background(Color.white.opacity(0.3))
+                    .padding(.vertical, 4)
+
+                Text("DATA FEEDS")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 10)
+
+                LayerButton(
+                    icon: "airplane.circle.fill",
+                    title: "ADS-B",
+                    isActive: adsbService.settings.isEnabled,
+                    compact: true
+                ) {
+                    var settings = adsbService.settings
+                    settings.isEnabled.toggle()
+                    adsbService.settings = settings
+                }
+
+                if adsbService.settings.isEnabled {
+                    HStack {
+                        Text("\(adsbService.aircraft.count) aircraft")
+                            .font(.system(size: 10))
+                            .foregroundColor(.gray)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 10)
                 }
             }
             .frame(width: 160)
@@ -1570,6 +1594,7 @@ struct TacticalMapView: UIViewRepresentable {
     @Binding var mapType: MKMapType
     @Binding var trackingMode: MapUserTrackingMode
     let markers: [CoTMarker]
+    let aircraft: [Aircraft]
     let showsUserLocation: Bool
     @ObservedObject var drawingStore: DrawingStore
     @ObservedObject var drawingManager: DrawingToolsManager
@@ -1639,8 +1664,8 @@ struct TacticalMapView: UIViewRepresentable {
             }
         }
 
-        // Update markers
-        updateAnnotations(mapView: mapView, markers: markers, context: context)
+        // Update markers and aircraft
+        updateAnnotations(mapView: mapView, markers: markers, aircraft: aircraft, context: context)
 
         // Update overlays
         updateOverlays(mapView: mapView, context: context)
@@ -1661,8 +1686,8 @@ struct TacticalMapView: UIViewRepresentable {
         Coordinator(self)
     }
 
-    private func updateAnnotations(mapView: MKMapView, markers: [CoTMarker], context: Context) {
-        // Remove old CoT annotations (but keep drawing annotations)
+    private func updateAnnotations(mapView: MKMapView, markers: [CoTMarker], aircraft: [Aircraft], context: Context) {
+        // Remove old CoT and aircraft annotations (but keep drawing annotations)
         let oldAnnotations = mapView.annotations.filter { annotation in
             !(annotation is MKUserLocation) &&
             !context.coordinator.isDrawingAnnotation(annotation)
@@ -1670,14 +1695,18 @@ struct TacticalMapView: UIViewRepresentable {
         mapView.removeAnnotations(oldAnnotations)
 
         // Add new CoT annotations
-        let annotations = markers.map { marker -> MKPointAnnotation in
+        let cotAnnotations = markers.map { marker -> MKPointAnnotation in
             let annotation = MKPointAnnotation()
             annotation.coordinate = marker.coordinate
             annotation.title = marker.callsign
             annotation.subtitle = marker.type
             return annotation
         }
-        mapView.addAnnotations(annotations)
+        mapView.addAnnotations(cotAnnotations)
+
+        // Add aircraft annotations
+        let aircraftAnnotations = aircraft.map { AircraftAnnotation(aircraft: $0) }
+        mapView.addAnnotations(aircraftAnnotations)
 
         // Update drawing annotations
         updateDrawingAnnotations(mapView: mapView, context: context)
@@ -2290,6 +2319,20 @@ struct TacticalMapView: UIViewRepresentable {
                 }
 
                 annotationView?.image = image
+
+                return annotationView
+            }
+
+            // Handle aircraft annotations
+            if annotation is AircraftAnnotation {
+                let identifier = AircraftAnnotationView.reuseIdentifier
+                var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier) as? AircraftAnnotationView
+
+                if annotationView == nil {
+                    annotationView = AircraftAnnotationView(annotation: annotation, reuseIdentifier: identifier)
+                } else {
+                    annotationView?.annotation = annotation
+                }
 
                 return annotationView
             }

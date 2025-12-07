@@ -2,20 +2,21 @@
 //  MeshtasticDevicePickerView.swift
 //  OmniTAK Mobile
 //
-//  Device picker with connection type selection (Bluetooth or TCP)
+//  Device picker for Meshtastic - supports Bluetooth and TCP connections
 //
 
 import SwiftUI
+import CoreBluetooth
 
 struct MeshtasticDevicePickerView: View {
-    @ObservedObject var manager: MeshtasticManager = MeshtasticManager.shared
+    @ObservedObject var manager: MeshtasticManager
     @Environment(\.dismiss) var dismiss
 
-    @State private var selectedConnectionType: ConnectionTab = .bluetooth
+    @State private var selectedTab: ConnectionTab = .bluetooth
 
     enum ConnectionTab: String, CaseIterable {
         case bluetooth = "Bluetooth"
-        case tcp = "TCP/WiFi"
+        case tcp = "TCP/IP"
 
         var icon: String {
             switch self {
@@ -29,7 +30,7 @@ struct MeshtasticDevicePickerView: View {
         NavigationView {
             VStack(spacing: 0) {
                 // Connection Type Picker
-                Picker("Connection Type", selection: $selectedConnectionType) {
+                Picker("Connection Type", selection: $selectedTab) {
                     ForEach(ConnectionTab.allCases, id: \.self) { tab in
                         Label(tab.rawValue, systemImage: tab.icon)
                             .tag(tab)
@@ -38,15 +39,13 @@ struct MeshtasticDevicePickerView: View {
                 .pickerStyle(.segmented)
                 .padding()
 
-                // Content based on selection
-                switch selectedConnectionType {
+                // Tab Content
+                switch selectedTab {
                 case .bluetooth:
-                    MeshtasticBLEContentView(manager: manager)
+                    BluetoothConnectionView(manager: manager, dismiss: dismiss)
                 case .tcp:
-                    MeshtasticTCPContentView(manager: manager)
+                    TCPConnectionView(manager: manager, dismiss: dismiss)
                 }
-
-                Spacer()
             }
             .background(Color(UIColor.systemGroupedBackground))
             .navigationTitle("Connect Device")
@@ -60,201 +59,154 @@ struct MeshtasticDevicePickerView: View {
     }
 }
 
-// MARK: - Bluetooth Content View
+// MARK: - Bluetooth Connection View
 
-private struct MeshtasticBLEContentView: View {
+private struct BluetoothConnectionView: View {
     @ObservedObject var manager: MeshtasticManager
+    let dismiss: DismissAction
 
     var body: some View {
-        List {
-            // Connected Device Section
-            if manager.isConnected && manager.connectedDevice?.connectionType == .bluetooth {
-                Section {
-                    ConnectedDeviceRow(manager: manager)
-                } header: {
-                    Text("Connected")
-                }
+        VStack(spacing: 0) {
+            // Bluetooth Status Banner
+            bluetoothStatusBanner
+
+            // Connected Device Card
+            if manager.isConnected, let device = manager.connectedDevice, device.connectionType == .bluetooth {
+                connectedDeviceCard
+                    .padding()
             }
 
-            // Discovered Devices Section
-            Section {
-                if manager.isScanning {
-                    HStack {
-                        ProgressView()
-                            .padding(.trailing, 8)
-                        Text("Scanning for Meshtastic devices...")
-                            .foregroundColor(.secondary)
-                    }
-                }
-
-                if manager.discoveredBLEDevices.isEmpty && !manager.isScanning {
-                    VStack(spacing: 12) {
-                        Image(systemName: "antenna.radiowaves.left.and.right")
-                            .font(.system(size: 36))
-                            .foregroundColor(.secondary)
-                        Text("No Devices Found")
-                            .font(.headline)
-                            .foregroundColor(.secondary)
-                        Button("Start Scanning") {
-                            manager.startBluetoothScan()
-                        }
-                        .buttonStyle(.borderedProminent)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 24)
-                    .listRowBackground(Color.clear)
-                }
-
-                ForEach(manager.discoveredBLEDevices, id: \.id) { device in
-                    Button {
-                        manager.connectBLE(device: device)
-                    } label: {
-                        BLEDeviceRowView(device: device, isConnected: isConnected(device))
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(isConnected(device))
-                }
-            } header: {
-                HStack {
-                    Text("Available Devices")
-                    Spacer()
+            // Device List
+            List {
+                // Scanning Section
+                Section {
                     if manager.isScanning {
-                        Button("Stop") { manager.stopBluetoothScan() }
-                            .font(.caption)
-                    } else {
-                        Button("Scan") { manager.startBluetoothScan() }
-                            .font(.caption)
-                    }
-                }
-            } footer: {
-                Text("Ensure Bluetooth is enabled on your Meshtastic device and it's in range.")
-            }
+                        HStack {
+                            ProgressView()
+                                .padding(.trailing, 8)
+                            Text("Scanning for Meshtastic devices...")
+                                .foregroundColor(.secondary)
+                        }
+                    } else if manager.discoveredBLEDevices.isEmpty {
+                        VStack(spacing: 12) {
+                            Image(systemName: "antenna.radiowaves.left.and.right")
+                                .font(.system(size: 36))
+                                .foregroundColor(.secondary)
+                            Text("No Devices Found")
+                                .font(.headline)
+                                .foregroundColor(.secondary)
+                            Text("Make sure your Meshtastic device is powered on and in range")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
 
-            // Error Section
-            if let error = manager.lastError {
-                Section {
-                    Label(error, systemImage: "exclamationmark.triangle.fill")
-                        .foregroundColor(.orange)
-                        .font(.caption)
+                            Button(action: { manager.startBLEScanning() }) {
+                                Label("Start Scanning", systemImage: "arrow.clockwise")
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .padding(.top, 8)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 32)
+                        .listRowBackground(Color.clear)
+                    }
+
+                    // Discovered Devices
+                    ForEach(manager.discoveredBLEDevices) { device in
+                        Button {
+                            manager.stopBLEScanning()
+                            manager.connectBLE(device: device)
+                        } label: {
+                            BLEDeviceRow(device: device)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                } header: {
+                    HStack {
+                        Text("Nearby Devices")
+                        Spacer()
+                        if manager.isScanning {
+                            Button("Stop") {
+                                manager.stopBLEScanning()
+                            }
+                            .font(.caption)
+                        } else {
+                            Button("Scan") {
+                                manager.startBLEScanning()
+                            }
+                            .font(.caption)
+                        }
+                    }
+                } footer: {
+                    Text("Ensure Bluetooth is enabled and your Meshtastic device is powered on. The device will appear when found.")
                 }
             }
+            .listStyle(.insetGrouped)
         }
-        .listStyle(.insetGrouped)
         .onAppear {
-            if !manager.isConnected {
-                manager.startBluetoothScan()
+            // Auto-start scanning if Bluetooth is available
+            if manager.bluetoothState == .poweredOn && !manager.isConnected {
+                manager.startBLEScanning()
             }
         }
         .onDisappear {
-            manager.stopBluetoothScan()
+            manager.stopBLEScanning()
         }
     }
 
-    private func isConnected(_ device: MeshtasticBLEDevice) -> Bool {
-        manager.connectedDevice?.devicePath == device.id.uuidString
-    }
-}
-
-// MARK: - TCP Content View
-
-private struct MeshtasticTCPContentView: View {
-    @ObservedObject var manager: MeshtasticManager
-    @State private var showingAddSheet = false
-
-    var body: some View {
-        List {
-            // Connected Device Section
-            if manager.isConnected && manager.connectedDevice?.connectionType == .tcp {
-                Section {
-                    ConnectedDeviceRow(manager: manager)
-                } header: {
-                    Text("Connected")
-                }
-            }
-
-            // Saved Hosts Section
-            Section {
-                ForEach(manager.savedHosts) { saved in
-                    let isCurrentlyConnected = manager.isConnected &&
-                        manager.connectedDevice?.devicePath == saved.host
-
-                    if !isCurrentlyConnected {
-                        Button {
-                            manager.connectTCP(host: saved.host, port: saved.port)
-                        } label: {
-                            TCPHostRow(host: saved)
-                        }
-                        .buttonStyle(.plain)
-                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                            Button(role: .destructive) {
-                                manager.removeHost(saved.host, port: saved.port)
-                            } label: {
-                                Label("Delete", systemImage: "trash")
-                            }
-                        }
-                    }
-                }
-
-                if manager.savedHosts.isEmpty && !manager.isConnected {
-                    VStack(spacing: 12) {
-                        Image(systemName: "wifi")
-                            .font(.system(size: 36))
-                            .foregroundColor(.secondary)
-                        Text("No Saved Devices")
-                            .font(.headline)
-                            .foregroundColor(.secondary)
-                        Button("Add Device") {
-                            showingAddSheet = true
-                        }
-                        .buttonStyle(.borderedProminent)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 24)
-                    .listRowBackground(Color.clear)
-                }
-            } header: {
+    private var bluetoothStatusBanner: some View {
+        Group {
+            switch manager.bluetoothState {
+            case .poweredOff:
                 HStack {
-                    Text("Saved Devices")
+                    Image(systemName: "bluetooth.slash")
+                    Text("Bluetooth is turned off")
                     Spacer()
-                    Button(action: { showingAddSheet = true }) {
-                        Image(systemName: "plus")
-                    }
-                }
-            } footer: {
-                Text("Enter the IP address of your Meshtastic device with TCP enabled (default port 4403).")
-            }
-
-            // Error Section
-            if let error = manager.lastError {
-                Section {
-                    Label(error, systemImage: "exclamationmark.triangle.fill")
-                        .foregroundColor(.orange)
+                    Text("Enable in Settings")
                         .font(.caption)
+                        .foregroundColor(.blue)
                 }
+                .padding()
+                .background(Color.orange.opacity(0.15))
+                .foregroundColor(.orange)
+
+            case .unauthorized:
+                HStack {
+                    Image(systemName: "lock.fill")
+                    Text("Bluetooth permission required")
+                    Spacer()
+                }
+                .padding()
+                .background(Color.red.opacity(0.15))
+                .foregroundColor(.red)
+
+            case .unsupported:
+                HStack {
+                    Image(systemName: "xmark.circle.fill")
+                    Text("Bluetooth not supported")
+                    Spacer()
+                }
+                .padding()
+                .background(Color.red.opacity(0.15))
+                .foregroundColor(.red)
+
+            default:
+                EmptyView()
             }
-        }
-        .listStyle(.insetGrouped)
-        .sheet(isPresented: $showingAddSheet) {
-            AddTCPDeviceSheet(manager: manager)
         }
     }
-}
 
-// MARK: - Supporting Views
-
-private struct ConnectedDeviceRow: View {
-    @ObservedObject var manager: MeshtasticManager
-
-    var body: some View {
+    private var connectedDeviceCard: some View {
         VStack(spacing: 12) {
-            HStack {
+            HStack(spacing: 12) {
                 Circle()
                     .fill(Color.green)
-                    .frame(width: 10, height: 10)
+                    .frame(width: 12, height: 12)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(manager.connectedDevice?.name ?? "Device")
+                    Text(manager.connectedDevice?.name ?? "Meshtastic Device")
                         .font(.headline)
+
                     if manager.myNodeNum > 0 {
                         Text("!\(String(format: "%08x", manager.myNodeNum))")
                             .font(.caption)
@@ -265,36 +217,297 @@ private struct ConnectedDeviceRow: View {
                 Spacer()
 
                 if !manager.meshNodes.isEmpty {
-                    Text("\(manager.meshNodes.count) nodes")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    VStack(alignment: .trailing) {
+                        Text("\(manager.meshNodes.count)")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                        Text("nodes")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
                 }
             }
 
             Button(action: { manager.disconnect() }) {
                 Text("Disconnect")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .background(Color.red)
+                    .cornerRadius(8)
             }
-            .buttonStyle(.bordered)
-            .tint(.red)
         }
+        .padding()
+        .background(Color(UIColor.secondarySystemGroupedBackground))
+        .cornerRadius(12)
     }
 }
 
-private struct BLEDeviceRowView: View {
-    let device: MeshtasticBLEDevice
-    let isConnected: Bool
+// MARK: - BLE Device Row
+
+private struct BLEDeviceRow: View {
+    let device: DiscoveredBLEDevice
 
     var body: some View {
         HStack(spacing: 12) {
+            // Signal strength indicator
             Image(systemName: signalIcon)
+                .font(.system(size: 20))
                 .foregroundColor(signalColor)
-                .frame(width: 24)
+                .frame(width: 32)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(device.name)
                     .font(.body)
-                Text("RSSI: \(device.rssi) dBm")
+
+                HStack(spacing: 8) {
+                    Text("RSSI: \(device.rssi) dBm")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+
+                    Text(device.signalStrength)
+                        .font(.caption)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(signalColor.opacity(0.15))
+                        .foregroundColor(signalColor)
+                        .cornerRadius(4)
+                }
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .contentShape(Rectangle())
+    }
+
+    private var signalIcon: String {
+        switch device.rssi {
+        case -50...0: return "antenna.radiowaves.left.and.right.circle.fill"
+        case -70..<(-50): return "antenna.radiowaves.left.and.right.circle"
+        case -90..<(-70): return "antenna.radiowaves.left.and.right"
+        default: return "wifi.exclamationmark"
+        }
+    }
+
+    private var signalColor: Color {
+        switch device.rssi {
+        case -50...0: return .green
+        case -70..<(-50): return .blue
+        case -90..<(-70): return .orange
+        default: return .red
+        }
+    }
+}
+
+// MARK: - TCP Connection View
+
+private struct TCPConnectionView: View {
+    @ObservedObject var manager: MeshtasticManager
+    let dismiss: DismissAction
+
+    @State private var hostAddress: String = ""
+    @State private var portString: String = "4403"
+    @State private var isConnecting: Bool = false
+    @State private var showingAddSheet: Bool = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Connected Device Card
+            if manager.isConnected, let device = manager.connectedDevice, device.connectionType == .tcp {
+                connectedDeviceCard
+                    .padding()
+            }
+
+            // Device List
+            List {
+                Section {
+                    // Show connected device first
+                    if manager.isConnected,
+                       let device = manager.connectedDevice,
+                       device.connectionType == .tcp {
+                        DeviceListRow(
+                            icon: "wifi",
+                            iconColor: .green,
+                            title: device.name,
+                            subtitle: device.devicePath,
+                            isConnected: true
+                        )
+                    }
+
+                    // Show saved hosts
+                    ForEach(manager.savedHosts) { saved in
+                        let isCurrentlyConnected = manager.isConnected &&
+                            manager.connectedDevice?.devicePath == saved.host &&
+                            manager.connectedDevice?.connectionType == .tcp
+
+                        if !isCurrentlyConnected {
+                            Button {
+                                connectTo(host: saved.host, port: saved.port, name: saved.name)
+                            } label: {
+                                DeviceListRow(
+                                    icon: "wifi",
+                                    iconColor: .blue,
+                                    title: saved.name.isEmpty ? saved.host : saved.name,
+                                    subtitle: "\(saved.host):\(saved.port)",
+                                    isConnected: false
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button(role: .destructive) {
+                                    manager.removeHost(saved.host, port: saved.port)
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            }
+                        }
+                    }
+
+                    // Empty state
+                    if manager.savedHosts.isEmpty && !manager.isConnected {
+                        VStack(spacing: 12) {
+                            Image(systemName: "wifi")
+                                .font(.system(size: 36))
+                                .foregroundColor(.secondary)
+                            Text("No Saved Devices")
+                                .font(.headline)
+                                .foregroundColor(.secondary)
+                            Text("Tap + to add a Meshtastic device")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+
+                            Button(action: { showingAddSheet = true }) {
+                                Label("Add Device", systemImage: "plus")
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .padding(.top, 8)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 32)
+                        .listRowBackground(Color.clear)
+                    }
+                } header: {
+                    HStack {
+                        Text("Saved Devices")
+                        Spacer()
+                        Button(action: { showingAddSheet = true }) {
+                            Image(systemName: "plus")
+                        }
+                    }
+                } footer: {
+                    Text("Enter the IP address of your Meshtastic device with TCP enabled. Default port is 4403.")
+                }
+            }
+            .listStyle(.insetGrouped)
+        }
+        .sheet(isPresented: $showingAddSheet) {
+            AddTCPDeviceSheet(
+                hostAddress: $hostAddress,
+                portString: $portString,
+                isConnecting: $isConnecting,
+                onConnect: { host, port, name in
+                    connectTo(host: host, port: port, name: name)
+                    showingAddSheet = false
+                }
+            )
+        }
+    }
+
+    private var connectedDeviceCard: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 12) {
+                Circle()
+                    .fill(Color.green)
+                    .frame(width: 12, height: 12)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(manager.connectedDevice?.name ?? "Meshtastic Device")
+                        .font(.headline)
+
+                    if manager.myNodeNum > 0 {
+                        Text("!\(String(format: "%08x", manager.myNodeNum))")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+
+                Spacer()
+
+                if !manager.meshNodes.isEmpty {
+                    VStack(alignment: .trailing) {
+                        Text("\(manager.meshNodes.count)")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                        Text("nodes")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+
+            Button(action: { manager.disconnect() }) {
+                Text("Disconnect")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .background(Color.red)
+                    .cornerRadius(8)
+            }
+        }
+        .padding()
+        .background(Color(UIColor.secondarySystemGroupedBackground))
+        .cornerRadius(12)
+    }
+
+    private func connectTo(host: String, port: UInt16, name: String) {
+        isConnecting = true
+
+        let device = MeshtasticDevice(
+            id: "tcp-\(host)-\(port)",
+            name: name.isEmpty ? host : name,
+            connectionType: .tcp,
+            devicePath: host,
+            isConnected: false,
+            nodeId: "\(port)"
+        )
+
+        manager.connect(to: device)
+        manager.saveHost(host, port: port, name: name)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            isConnecting = false
+        }
+    }
+}
+
+// MARK: - Device List Row
+
+private struct DeviceListRow: View {
+    let icon: String
+    let iconColor: Color
+    let title: String
+    let subtitle: String
+    let isConnected: Bool
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 20))
+                .foregroundColor(iconColor)
+                .frame(width: 32)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.body)
+                Text(subtitle)
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -306,88 +519,72 @@ private struct BLEDeviceRowView: View {
                     .foregroundColor(.green)
             } else {
                 Image(systemName: "chevron.right")
-                    .foregroundColor(.secondary)
-            }
-        }
-    }
-
-    private var signalIcon: String {
-        device.rssi > -70 ? "antenna.radiowaves.left.and.right" : "antenna.radiowaves.left.and.right.slash"
-    }
-
-    private var signalColor: Color {
-        if device.rssi > -60 { return .green }
-        if device.rssi > -80 { return .orange }
-        return .red
-    }
-}
-
-private struct TCPHostRow: View {
-    let host: MeshtasticManager.SavedHost
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "wifi")
-                .foregroundColor(.blue)
-                .frame(width: 24)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(host.name.isEmpty ? host.host : host.name)
-                    .font(.body)
-                Text("\(host.host):\(host.port)")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-
-            Spacer()
-
-            Image(systemName: "chevron.right")
-                .foregroundColor(.secondary)
         }
+        .contentShape(Rectangle())
     }
 }
 
+// MARK: - Add TCP Device Sheet
+
 private struct AddTCPDeviceSheet: View {
-    @ObservedObject var manager: MeshtasticManager
     @Environment(\.dismiss) var dismiss
 
-    @State private var host = ""
-    @State private var port = "4403"
-    @State private var name = ""
+    @Binding var hostAddress: String
+    @Binding var portString: String
+    @Binding var isConnecting: Bool
+    let onConnect: (String, UInt16, String) -> Void
+
+    @State private var deviceName: String = ""
 
     var body: some View {
         NavigationView {
             Form {
                 Section {
-                    TextField("IP Address (e.g. 192.168.1.100)", text: $host)
-                        .keyboardType(.decimalPad)
+                    TextField("IP Address (e.g. 192.168.1.100)", text: $hostAddress)
+                        .textContentType(.URL)
                         .autocapitalization(.none)
+                        .disableAutocorrection(true)
+                        .keyboardType(.decimalPad)
 
                     HStack {
                         Text("Port")
                         Spacer()
-                        TextField("4403", text: $port)
+                        TextField("4403", text: $portString)
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
                             .frame(width: 80)
                     }
 
-                    TextField("Name (optional)", text: $name)
+                    TextField("Name (optional)", text: $deviceName)
                 } header: {
                     Text("Device Address")
+                } footer: {
+                    Text("Enter the local IP address of your Meshtastic device. Ensure TCP is enabled on port 4403.")
                 }
 
                 Section {
-                    Button("Connect") {
-                        let portNum = UInt16(port) ?? 4403
-                        manager.connectTCP(host: host, port: portNum)
-                        dismiss()
+                    Button(action: {
+                        let port = UInt16(portString) ?? 4403
+                        onConnect(hostAddress, port, deviceName)
+                    }) {
+                        HStack {
+                            Spacer()
+                            if isConnecting {
+                                ProgressView()
+                                    .padding(.trailing, 8)
+                            }
+                            Text(isConnecting ? "Connecting..." : "Connect")
+                                .fontWeight(.semibold)
+                            Spacer()
+                        }
                     }
-                    .disabled(host.isEmpty)
-                    .frame(maxWidth: .infinity)
+                    .disabled(hostAddress.isEmpty || isConnecting)
                 }
             }
-            .navigationTitle("Add Device")
+            .navigationTitle("Add TCP Device")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -402,6 +599,6 @@ private struct AddTCPDeviceSheet: View {
 
 struct MeshtasticDevicePickerView_Previews: PreviewProvider {
     static var previews: some View {
-        MeshtasticDevicePickerView()
+        MeshtasticDevicePickerView(manager: MeshtasticManager())
     }
 }
