@@ -125,11 +125,19 @@ class MapOverlayCoordinator: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private var lastMGRSUpdateTime: Date = .distantPast
     private let mgrsUpdateThrottleInterval: TimeInterval = 0.1 // Update max once per 100ms
+    private var userDefaultsObserver: NSObjectProtocol?
 
     // MARK: - Initialization
 
     init() {
         setupObservers()
+        setupUserDefaultsObserver()
+    }
+
+    deinit {
+        if let observer = userDefaultsObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
     }
 
     private func setupObservers() {
@@ -148,6 +156,77 @@ class MapOverlayCoordinator: ObservableObject {
                 self?.updateMGRSGrid()
             }
             .store(in: &cancellables)
+    }
+
+    /// Observe UserDefaults changes from Settings view (AppStorage)
+    private func setupUserDefaultsObserver() {
+        userDefaultsObserver = NotificationCenter.default.addObserver(
+            forName: UserDefaults.didChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.syncWithUserDefaults()
+        }
+    }
+
+    /// Sync overlay states with UserDefaults keys used by Settings
+    private func syncWithUserDefaults() {
+        let defaults = UserDefaults.standard
+
+        // Sync breadcrumb trails from Settings toggle
+        let settingsBreadcrumbEnabled = defaults.bool(forKey: "breadcrumbTrailsEnabled")
+        let currentBreadcrumbEnabled = isOverlayVisible(.breadcrumbTrails)
+
+        if settingsBreadcrumbEnabled != currentBreadcrumbEnabled {
+            #if DEBUG
+            print("🗺️ [MapOverlayCoordinator] Syncing breadcrumbTrails: \(settingsBreadcrumbEnabled)")
+            #endif
+            if settingsBreadcrumbEnabled {
+                addOverlay(.breadcrumbTrails)
+            } else {
+                removeOverlay(.breadcrumbTrails)
+            }
+        }
+
+        // Sync trail settings
+        let settingsTrailMaxLength = defaults.integer(forKey: "trailMaxLength")
+        if settingsTrailMaxLength > 0 && settingsTrailMaxLength != trailMaxLength {
+            trailMaxLength = settingsTrailMaxLength
+        }
+
+        // Sync trail color
+        let settingsTrailColorName = defaults.string(forKey: "trailColorName") ?? "cyan"
+        let newTrailColor = colorFromName(settingsTrailColorName)
+        if newTrailColor != trailColor {
+            trailColor = newTrailColor
+        }
+
+        // Sync MGRS grid from Settings toggle
+        let settingsMGRSEnabled = defaults.bool(forKey: "mgrsGridEnabled")
+        let currentMGRSEnabled = isOverlayVisible(.mgrsGrid)
+
+        if settingsMGRSEnabled != currentMGRSEnabled {
+            #if DEBUG
+            print("🗺️ [MapOverlayCoordinator] Syncing mgrsGrid: \(settingsMGRSEnabled)")
+            #endif
+            if settingsMGRSEnabled {
+                addOverlay(.mgrsGrid)
+            } else {
+                removeOverlay(.mgrsGrid)
+            }
+        }
+    }
+
+    /// Convert color name to UIColor
+    private func colorFromName(_ name: String) -> UIColor {
+        switch name.lowercased() {
+        case "cyan": return .cyan
+        case "green": return .green
+        case "orange": return .orange
+        case "red": return .red
+        case "blue": return .blue
+        default: return .cyan
+        }
     }
 
     // MARK: - Public API
@@ -406,16 +485,19 @@ class MapOverlayCoordinator: ObservableObject {
     func saveSettings() {
         let defaults = UserDefaults.standard
 
-        // MGRS Grid settings
+        // MGRS Grid settings - save to both keys for compatibility
         defaults.set(mgrsGridDensity.rawValue, forKey: "mgrsGridDensity")
         defaults.set(showMGRSLabels, forKey: "showMGRSLabels")
         defaults.set(isOverlayVisible(.mgrsGrid), forKey: "mgrsGridEnabled")
 
-        // Trail settings
+        // Trail settings - save to Settings-compatible keys
         defaults.set(trailMaxLength, forKey: "trailMaxLength")
         defaults.set(Float(trailLineWidth), forKey: "trailLineWidth")
 
-        // Save overlay visibility
+        // Save breadcrumb state to Settings-compatible key
+        defaults.set(isOverlayVisible(.breadcrumbTrails), forKey: "breadcrumbTrailsEnabled")
+
+        // Save overlay visibility (legacy keys for other overlays)
         for (type, visible) in overlayVisibility {
             defaults.set(visible, forKey: "overlay_\(type.rawValue)_visible")
         }
@@ -436,7 +518,7 @@ class MapOverlayCoordinator: ObservableObject {
 
         showMGRSLabels = defaults.bool(forKey: "showMGRSLabels")
 
-        // Trail settings
+        // Trail settings from Settings view (AppStorage keys)
         let savedTrailLength = defaults.integer(forKey: "trailMaxLength")
         if savedTrailLength > 0 {
             trailMaxLength = savedTrailLength
@@ -447,11 +529,40 @@ class MapOverlayCoordinator: ObservableObject {
             trailLineWidth = CGFloat(savedTrailWidth)
         }
 
-        // Load overlay visibility and apply state
+        // Load trail color from Settings
+        let savedTrailColorName = defaults.string(forKey: "trailColorName") ?? "cyan"
+        trailColor = colorFromName(savedTrailColorName)
+
+        // Load overlay visibility from Settings view (AppStorage keys)
+        // These are the primary source of truth from the Settings screen
+        let breadcrumbEnabled = defaults.bool(forKey: "breadcrumbTrailsEnabled")
+        let mgrsEnabled = defaults.bool(forKey: "mgrsGridEnabled")
+
+        #if DEBUG
+        print("🗺️ [MapOverlayCoordinator] Settings breadcrumbTrailsEnabled: \(breadcrumbEnabled)")
+        print("🗺️ [MapOverlayCoordinator] Settings mgrsGridEnabled: \(mgrsEnabled)")
+        #endif
+
+        // Apply breadcrumb trails state
+        overlayVisibility[.breadcrumbTrails] = breadcrumbEnabled
+        if breadcrumbEnabled && mapView != nil {
+            DispatchQueue.main.async { [weak self] in
+                self?.addOverlay(.breadcrumbTrails)
+            }
+        }
+
+        // Apply MGRS grid state (but respect the "start disabled" behavior for grid)
+        // MGRS grid starts disabled to fix stuck grid issue, but we still sync the setting
+        overlayVisibility[.mgrsGrid] = false // Always start disabled
+
+        // Load other overlay visibility states
         for type in MapOverlayType.allCases {
-            // IMPORTANT: Always start with MGRS grid disabled to fix stuck grid issue
-            // User can manually enable it via the toggle button
-            let visible = type == .mgrsGrid ? false : defaults.bool(forKey: "overlay_\(type.rawValue)_visible")
+            // Skip breadcrumbs and MGRS - already handled above
+            if type == .breadcrumbTrails || type == .mgrsGrid {
+                continue
+            }
+
+            let visible = defaults.bool(forKey: "overlay_\(type.rawValue)_visible")
 
             #if DEBUG
             print("🗺️ [MapOverlayCoordinator] Loaded \(type.rawValue): \(visible)")
@@ -461,7 +572,6 @@ class MapOverlayCoordinator: ObservableObject {
 
             // Apply the loaded state to the map (if mapView is configured)
             if visible && mapView != nil {
-                // Delay adding overlays until next run loop to ensure map is ready
                 DispatchQueue.main.async { [weak self] in
                     self?.addOverlay(type)
                 }

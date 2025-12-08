@@ -111,6 +111,10 @@ class MeshtasticBLEClient: NSObject, ObservableObject {
     // Flag to prevent operations during shutdown
     private var isShuttingDown = false
 
+    // Track if we're in the middle of draining the message queue
+    private var isDrainingQueue = false
+    private var messagesReadInBatch = 0
+
     // MARK: - Initialization
 
     override init() {
@@ -341,37 +345,60 @@ class MeshtasticBLEClient: NSObject, ObservableObject {
 
             switch fieldNumber {
             case 5: // my_info
+                print("📦 Parsing my_info (field 5)")
                 if let (info, newIndex) = parseMyNodeInfo(data, from: index, wireType: wireType) {
                     index = newIndex
+                    print("✅ my_info: nodeNum=\(info.nodeNum), firmware=\(info.firmwareVersion)")
                     DispatchQueue.main.async {
                         self.myNodeNum = info.nodeNum
                         self.firmwareVersion = info.firmwareVersion
                     }
                     delegate?.bleClient(self, didUpdateMyInfo: info.nodeNum, firmwareVersion: info.firmwareVersion)
                 } else {
+                    print("⚠️ Failed to parse my_info")
                     index = skipField(data, from: index, wireType: wireType)
                 }
 
             case 6: // node_info
+                print("📦 Parsing node_info (field 6)")
                 if let (node, newIndex) = parseNodeInfo(data, from: index, wireType: wireType) {
                     index = newIndex
+                    let hasPos = node.position != nil
+                    print("✅ node_info: id=\(String(format: "0x%08X", node.id)), name='\(node.shortName)', hasPosition=\(hasPos)")
+                    if let pos = node.position {
+                        print("   📍 Position: lat=\(pos.latitude), lon=\(pos.longitude), alt=\(pos.altitude ?? 0)")
+                    }
                     DispatchQueue.main.async {
                         self.nodes[node.id] = node
+                        print("📊 Total nodes in store: \(self.nodes.count)")
                     }
                     delegate?.bleClient(self, didReceiveNodeInfo: node)
                 } else {
+                    print("⚠️ Failed to parse node_info")
                     index = skipField(data, from: index, wireType: wireType)
                 }
 
             case 2: // packet (MeshPacket)
+                print("📦 Parsing MeshPacket (field 2)")
                 if let (packet, newIndex) = parseMeshPacket(data, from: index, wireType: wireType) {
                     index = newIndex
+                    print("✅ MeshPacket: from=\(String(format: "0x%08X", packet.from)), portNum=\(packet.portNum)")
                     handleMeshPacket(packet)
                 } else {
+                    print("⚠️ Failed to parse MeshPacket")
                     index = skipField(data, from: index, wireType: wireType)
                 }
 
+            case 7: // config_complete_id
+                print("📦 config_complete_id received (field 7) - all node data sent")
+                index = skipField(data, from: index, wireType: wireType)
+
+            case 8: // rebooted
+                print("📦 rebooted notification (field 8)")
+                index = skipField(data, from: index, wireType: wireType)
+
             default:
+                print("📦 Unknown field \(fieldNumber), wire type \(wireType)")
                 index = skipField(data, from: index, wireType: wireType)
             }
         }
@@ -530,6 +557,8 @@ class MeshtasticBLEClient: NSObject, ObservableObject {
         var lon: Double = 0
         var alt: Int? = nil
 
+        print("   🔍 Parsing position submessage, bytes \(start)-\(end)")
+
         var idx = start
         while idx < end {
             guard idx < data.count else { break }
@@ -543,21 +572,40 @@ class MeshtasticBLEClient: NSObject, ObservableObject {
                 if wire == 5 && idx + 4 <= data.count {
                     let bits = UInt32(data[idx]) | (UInt32(data[idx+1]) << 8) | (UInt32(data[idx+2]) << 16) | (UInt32(data[idx+3]) << 24)
                     lat = Double(Int32(bitPattern: bits)) / 1e7
+                    print("   🔍 latitude_i (sfixed32): raw=\(bits), lat=\(lat)")
                     idx += 4
+                } else if wire == 0, let (val, newIdx) = readVarint(data, from: idx) {
+                    // Handle as sint32/varint (zigzag encoded)
+                    let zigzag = UInt32(val)
+                    let decoded = Int32(bitPattern: (zigzag >> 1) ^ (0 &- (zigzag & 1)))
+                    lat = Double(decoded) / 1e7
+                    print("   🔍 latitude_i (varint/zigzag): raw=\(val), decoded=\(decoded), lat=\(lat)")
+                    idx = newIdx
                 } else {
+                    print("   ⚠️ latitude_i: unexpected wire type \(wire)")
                     idx = skipField(data, from: idx, wireType: wire)
                 }
             case 2: // longitude_i (sfixed32)
                 if wire == 5 && idx + 4 <= data.count {
                     let bits = UInt32(data[idx]) | (UInt32(data[idx+1]) << 8) | (UInt32(data[idx+2]) << 16) | (UInt32(data[idx+3]) << 24)
                     lon = Double(Int32(bitPattern: bits)) / 1e7
+                    print("   🔍 longitude_i (sfixed32): raw=\(bits), lon=\(lon)")
                     idx += 4
+                } else if wire == 0, let (val, newIdx) = readVarint(data, from: idx) {
+                    // Handle as sint32/varint (zigzag encoded)
+                    let zigzag = UInt32(val)
+                    let decoded = Int32(bitPattern: (zigzag >> 1) ^ (0 &- (zigzag & 1)))
+                    lon = Double(decoded) / 1e7
+                    print("   🔍 longitude_i (varint/zigzag): raw=\(val), decoded=\(decoded), lon=\(lon)")
+                    idx = newIdx
                 } else {
+                    print("   ⚠️ longitude_i: unexpected wire type \(wire)")
                     idx = skipField(data, from: idx, wireType: wire)
                 }
             case 3: // altitude
                 if wire == 0, let (val, newIdx) = readVarint(data, from: idx) {
                     alt = Int(Int32(bitPattern: UInt32(val)))
+                    print("   🔍 altitude: \(alt ?? 0)")
                     idx = newIdx
                 } else {
                     idx = skipField(data, from: idx, wireType: wire)
@@ -567,7 +615,12 @@ class MeshtasticBLEClient: NSObject, ObservableObject {
             }
         }
 
-        guard lat != 0 || lon != 0 else { return nil }
+        if lat == 0 && lon == 0 {
+            print("   ⚠️ Position is 0,0 - skipping (no valid position)")
+            return nil
+        }
+
+        print("   ✅ Parsed position: lat=\(lat), lon=\(lon), alt=\(alt ?? 0)")
         return MeshPosition(latitude: lat, longitude: lon, altitude: alt)
     }
 
@@ -654,33 +707,66 @@ class MeshtasticBLEClient: NSObject, ObservableObject {
         // 1 = TEXT_MESSAGE_APP
         // 3 = POSITION_APP
         // 4 = NODEINFO_APP
+        // 67 = TELEMETRY_APP
         // 72 = ATAK_PLUGIN
         // 257 = ATAK_FORWARDER
 
         switch packet.portNum {
         case 1: // Text message
             if let text = String(data: packet.payload, encoding: .utf8) {
+                print("   💬 Text message from \(String(format: "0x%08X", packet.from)): \(text)")
                 delegate?.bleClient(self, didReceiveMessage: packet.from, text: text)
             }
 
         case 3: // Position
+            print("   📍 Position update from \(String(format: "0x%08X", packet.from))")
             if let position = parsePositionPayload(packet.payload) {
                 DispatchQueue.main.async {
                     if var node = self.nodes[packet.from] {
                         node.position = position
                         self.nodes[packet.from] = node
+                        print("   ✅ Updated position for existing node \(node.shortName)")
+                    } else {
+                        // Create a basic node entry if we don't have one yet
+                        let newNode = MeshNode(
+                            id: packet.from,
+                            shortName: String(format: "%04X", packet.from & 0xFFFF),
+                            longName: "Node \(String(format: "%08X", packet.from))",
+                            position: position,
+                            lastHeard: Date(),
+                            snr: nil,
+                            hopDistance: nil,
+                            batteryLevel: nil
+                        )
+                        self.nodes[packet.from] = newNode
+                        print("   ✅ Created new node entry with position for \(String(format: "0x%08X", packet.from))")
                     }
+                    print("📊 Total nodes in store: \(self.nodes.count)")
                 }
                 delegate?.bleClient(self, didReceivePosition: packet.from, position: position)
             }
 
+        case 4: // NodeInfo
+            print("   ℹ️ NodeInfo packet from \(String(format: "0x%08X", packet.from)) - handled via FromRadio field 6")
+
+        case 67: // Telemetry
+            print("   📊 Telemetry from \(String(format: "0x%08X", packet.from))")
+
+        case 72: // ATAK Plugin
+            print("   🎯 ATAK Plugin message from \(String(format: "0x%08X", packet.from))")
+
+        case 257: // ATAK Forwarder
+            print("   🎯 ATAK Forwarder message from \(String(format: "0x%08X", packet.from))")
+
         default:
-            break
+            print("   ❓ Unknown portNum \(packet.portNum) from \(String(format: "0x%08X", packet.from))")
         }
     }
 
     private func parsePositionPayload(_ data: Data) -> MeshPosition? {
         guard !data.isEmpty else { return nil }
+
+        print("   🔍 Parsing position payload, \(data.count) bytes")
 
         var lat: Double = 0
         var lon: Double = 0
@@ -695,25 +781,44 @@ class MeshtasticBLEClient: NSObject, ObservableObject {
             idx += 1
 
             switch field {
-            case 1: // latitude_i (sfixed32)
+            case 1: // latitude_i (sfixed32 or sint32)
                 if wire == 5 && idx + 4 <= data.count {
                     let bits = UInt32(data[idx]) | (UInt32(data[idx+1]) << 8) | (UInt32(data[idx+2]) << 16) | (UInt32(data[idx+3]) << 24)
                     lat = Double(Int32(bitPattern: bits)) / 1e7
+                    print("   🔍 latitude_i (sfixed32): \(lat)")
                     idx += 4
+                } else if wire == 0, let (val, newIdx) = readVarint(data, from: idx) {
+                    // Handle as sint32/varint (zigzag encoded)
+                    let zigzag = UInt32(val)
+                    let decoded = Int32(bitPattern: (zigzag >> 1) ^ (0 &- (zigzag & 1)))
+                    lat = Double(decoded) / 1e7
+                    print("   🔍 latitude_i (varint/zigzag): \(lat)")
+                    idx = newIdx
                 } else {
+                    print("   ⚠️ latitude_i: unexpected wire type \(wire)")
                     idx = skipField(data, from: idx, wireType: wire)
                 }
-            case 2: // longitude_i (sfixed32)
+            case 2: // longitude_i (sfixed32 or sint32)
                 if wire == 5 && idx + 4 <= data.count {
                     let bits = UInt32(data[idx]) | (UInt32(data[idx+1]) << 8) | (UInt32(data[idx+2]) << 16) | (UInt32(data[idx+3]) << 24)
                     lon = Double(Int32(bitPattern: bits)) / 1e7
+                    print("   🔍 longitude_i (sfixed32): \(lon)")
                     idx += 4
+                } else if wire == 0, let (val, newIdx) = readVarint(data, from: idx) {
+                    // Handle as sint32/varint (zigzag encoded)
+                    let zigzag = UInt32(val)
+                    let decoded = Int32(bitPattern: (zigzag >> 1) ^ (0 &- (zigzag & 1)))
+                    lon = Double(decoded) / 1e7
+                    print("   🔍 longitude_i (varint/zigzag): \(lon)")
+                    idx = newIdx
                 } else {
+                    print("   ⚠️ longitude_i: unexpected wire type \(wire)")
                     idx = skipField(data, from: idx, wireType: wire)
                 }
             case 3: // altitude
                 if wire == 0, let (val, newIdx) = readVarint(data, from: idx) {
                     alt = Int(Int32(bitPattern: UInt32(val)))
+                    print("   🔍 altitude: \(alt ?? 0)")
                     idx = newIdx
                 } else {
                     idx = skipField(data, from: idx, wireType: wire)
@@ -723,7 +828,12 @@ class MeshtasticBLEClient: NSObject, ObservableObject {
             }
         }
 
-        guard lat != 0 || lon != 0 else { return nil }
+        if lat == 0 && lon == 0 {
+            print("   ⚠️ Position is 0,0 - no valid position")
+            return nil
+        }
+
+        print("   ✅ Position update: lat=\(lat), lon=\(lon), alt=\(alt ?? 0)")
         return MeshPosition(latitude: lat, longitude: lon, altitude: alt)
     }
 
@@ -1010,21 +1120,38 @@ extension MeshtasticBLEClient: CBPeripheralDelegate {
     func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
         if let error = error {
             print("❌ Error reading characteristic \(characteristic.uuid): \(error.localizedDescription)")
-            return
-        }
-
-        guard let data = characteristic.value, !data.isEmpty else {
-            // Empty data is normal - just means no messages waiting
+            isDrainingQueue = false
             return
         }
 
         if characteristic.uuid == MeshtasticBLEUUID.fromRadio {
-            print("📥 Received \(data.count) bytes from fromRadio")
+            guard let data = characteristic.value, !data.isEmpty else {
+                // Empty data means queue is drained
+                if isDrainingQueue {
+                    print("📥 Queue drained after \(messagesReadInBatch) messages")
+                    isDrainingQueue = false
+                    messagesReadInBatch = 0
+                }
+                return
+            }
+
+            messagesReadInBatch += 1
+            print("📥 Received \(data.count) bytes from fromRadio (message #\(messagesReadInBatch))")
             parseFromRadio(data)
+
+            // Keep reading - there may be more messages queued
+            // Meshtastic queues multiple messages and we need to drain them all
+            if peripheral.state == .connected, let fromRadio = fromRadioCharacteristic {
+                isDrainingQueue = true
+                peripheral.readValue(for: fromRadio)
+            }
+
         } else if characteristic.uuid == MeshtasticBLEUUID.fromNum {
-            print("📥 fromNum notification received")
-            // fromNum notified us there's data to read
+            print("📥 fromNum notification received - starting queue drain")
+            // fromNum notified us there's data to read - start draining queue
             if let fromRadio = fromRadioCharacteristic, peripheral.state == .connected {
+                messagesReadInBatch = 0
+                isDrainingQueue = true
                 peripheral.readValue(for: fromRadio)
             }
         }
