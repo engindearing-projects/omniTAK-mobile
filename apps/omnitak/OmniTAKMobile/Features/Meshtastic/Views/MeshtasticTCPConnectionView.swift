@@ -256,7 +256,7 @@ private struct AddDeviceSheet: View {
                         .textContentType(.URL)
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
-                        .keyboardType(.decimalPad)
+                        .keyboardType(.URL)
 
                     HStack {
                         Text("Port")

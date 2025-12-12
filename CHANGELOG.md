@@ -5,6 +5,15 @@ All notable changes to OmniTAK Mobile will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.1] - 2025-12-11
+
+### Fixed
+- **Meshtastic IP Input Localization**: Fixed IP address input showing commas instead of periods in non-English locales
+  - Changed keyboard type from `.decimalPad` to `.URL` for IP address fields
+  - Affects MeshtasticTCPConnectionView and MeshtasticDevicePickerView
+  - Users can now properly enter IP addresses like `192.168.1.100` regardless of device language
+  - Resolves issue #35
+
 ## [2.5.2] - 2025-12-01
 
 ### Fixed
