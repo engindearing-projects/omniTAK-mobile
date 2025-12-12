@@ -58,7 +58,7 @@ struct SimpleEnrollView: View {
     @State private var showAdvanced = false
     @State private var streamingPort = "8089"
     @State private var enrollmentPort = "8446"  // TAK Server standard CSR enrollment port
-    @State private var allowLegacyTLS = false
+    @State private var trustSelfSignedCerts = true  // true = accept any cert, false = require valid CA (Let's Encrypt, etc.)
 
     // UI state
     @State private var enrollmentState: EnrollmentState = .idle
@@ -366,47 +366,19 @@ struct SimpleEnrollView: View {
                         }
                     }
 
-                    // Checkboxes (ATAK-style with cyan)
-                    VStack(spacing: 12) {
-                        // Use Authentication checkbox
-                        HStack(spacing: 8) {
-                            Image(systemName: "checkmark.square.fill")
-                                .font(.system(size: 18))
-                                .foregroundColor(Color(hex: "#00BCD4"))
-
-                            Text("Use Authentication")
-                                .font(.system(size: 13))
+                    // SSL Certificate Trust Toggle
+                    Toggle(isOn: $trustSelfSignedCerts) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Trust Self-Signed Certificates")
+                                .font(.system(size: 14))
                                 .foregroundColor(.white)
 
-                            Spacer()
-                        }
-
-                        // Enroll for Client Certificate checkbox
-                        HStack(spacing: 8) {
-                            Image(systemName: "checkmark.square.fill")
-                                .font(.system(size: 18))
-                                .foregroundColor(Color(hex: "#00BCD4"))
-
-                            Text("Enroll for Client Certificate")
-                                .font(.system(size: 13))
-                                .foregroundColor(.white)
-
-                            Spacer()
-                        }
-
-                        // Use default SSL/TLS Certificates checkbox
-                        HStack(spacing: 8) {
-                            Image(systemName: "checkmark.square.fill")
-                                .font(.system(size: 18))
-                                .foregroundColor(Color(hex: "#00BCD4"))
-
-                            Text("Use default SSL/TLS Certificates")
-                                .font(.system(size: 13))
-                                .foregroundColor(.white)
-
-                            Spacer()
+                            Text("Disable for Let's Encrypt or other CA-signed servers")
+                                .font(.system(size: 11))
+                                .foregroundColor(Color(hex: "#999999"))
                         }
                     }
+                    .tint(Color(hex: "#00BCD4"))
                 }
                 .padding(16)
                 .background(Color(white: 0.08))
@@ -657,7 +629,8 @@ struct SimpleEnrollView: View {
                 port: port,
                 enrollmentPort: enrollPort,
                 username: username,
-                password: password
+                password: password,
+                trustSelfSignedCerts: trustSelfSignedCerts
             )
 
             await MainActor.run { enrollmentState = .storingCertificate }
@@ -769,7 +742,7 @@ struct SimpleEnrollViewContent: View {
     @State private var showAdvanced = false
     @State private var streamingPort = "8089"
     @State private var enrollmentPort = "8446"  // TAK Server standard CSR enrollment port
-    @State private var allowLegacyTLS = false
+    @State private var trustSelfSignedCerts = true  // true = accept any cert, false = require valid CA (Let's Encrypt, etc.)
 
     // UI state
     @State private var enrollmentState: EnrollmentState = .idle
@@ -924,23 +897,18 @@ struct SimpleEnrollViewContent: View {
                         FormField(label: "Enrollment Port", text: $enrollmentPort, placeholder: "8446", keyboardType: .numberPad)
                     }
 
-                    Toggle(isOn: $allowLegacyTLS) {
-                        HStack {
-                            Image(systemName: "exclamationmark.shield.fill")
-                                .foregroundColor(allowLegacyTLS ? Color(hex: "#FF6B6B") : Color(hex: "#666666"))
+                    Toggle(isOn: $trustSelfSignedCerts) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Trust Self-Signed Certificates")
+                                .font(.system(size: 14))
+                                .foregroundColor(.white)
 
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Allow Legacy TLS")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.white)
-
-                                Text("For old servers (less secure)")
-                                    .font(.system(size: 11))
-                                    .foregroundColor(Color(hex: "#999999"))
-                            }
+                            Text("Disable for Let's Encrypt or other CA-signed servers")
+                                .font(.system(size: 11))
+                                .foregroundColor(Color(hex: "#999999"))
                         }
                     }
-                    .tint(Color(hex: "#FF6B6B"))
+                    .tint(Color(hex: "#00BCD4"))
                 }
                 .padding(16)
                 .background(Color(white: 0.08))
@@ -1085,7 +1053,8 @@ struct SimpleEnrollViewContent: View {
                 port: port,
                 enrollmentPort: enrollPort,
                 username: username,
-                password: password
+                password: password,
+                trustSelfSignedCerts: trustSelfSignedCerts
             )
 
             await MainActor.run { enrollmentState = .storingCertificate }

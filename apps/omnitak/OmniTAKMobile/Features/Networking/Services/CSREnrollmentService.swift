@@ -49,6 +49,7 @@ struct CSREnrollmentConfiguration {
     let username: String
     let password: String
     let useSSL: Bool
+    let trustSelfSignedCerts: Bool      // When false, use system CA validation (for Let's Encrypt, etc.)
 
     // Paths (TAK standard endpoints)
     let configPath: String = "/Marti/api/tls/config"
@@ -96,17 +97,18 @@ struct EnrollmentResponse {
 class CSREnrollmentService {
 
     private let csrGenerator = CSRGenerator()
-    private let urlSession: URLSession
 
-    init() {
-        // Configure URLSession to accept self-signed certificates (common in TAK deployments)
+    init() {}
+
+    /// Create URLSession with appropriate certificate trust settings
+    private func createURLSession(trustSelfSigned: Bool) -> URLSession {
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 30
         configuration.timeoutIntervalForResource = 60
 
-        self.urlSession = URLSession(
+        return URLSession(
             configuration: configuration,
-            delegate: CSRSelfSignedCertificateDelegate(),
+            delegate: CSRSelfSignedCertificateDelegate(trustSelfSigned: trustSelfSigned),
             delegateQueue: nil
         )
     }
@@ -118,6 +120,10 @@ class CSREnrollmentService {
     /// - Returns: TAKServer configuration with enrolled certificates
     func enrollWithCSR(config: CSREnrollmentConfiguration) async throws -> TAKServer {
         print("[CSREnroll] Starting CSR-based enrollment for user: \(config.username)")
+        print("[CSREnroll] Trust self-signed certs: \(config.trustSelfSignedCerts)")
+
+        // Create URLSession with appropriate certificate trust settings
+        let urlSession = createURLSession(trustSelfSigned: config.trustSelfSignedCerts)
 
         // Validate configuration before attempting enrollment
         let validator = ServerValidator.shared
@@ -140,7 +146,7 @@ class CSREnrollmentService {
 
         // Step 1: Get CA configuration from server (provides DN components)
         print("[CSREnroll] Fetching CA configuration from server...")
-        let caConfig = try await fetchCAConfiguration(config: config)
+        let caConfig = try await fetchCAConfiguration(config: config, session: urlSession)
         print("[CSREnroll] CA configuration retrieved: O=\(caConfig.organizationNames), OU=\(caConfig.organizationalUnitNames)")
 
         // TAKaware approach: Use consistent label for both private key and certificate
@@ -161,7 +167,8 @@ class CSREnrollmentService {
         print("[CSREnroll] Submitting CSR to server...")
         let enrollmentResponse = try await submitCSR(
             csrBase64: csrResult.csrBase64,
-            config: config
+            config: config,
+            session: urlSession
         )
         print("[CSREnroll] Received signed certificate from server")
 
@@ -199,7 +206,7 @@ class CSREnrollmentService {
 
     // MARK: - CA Configuration Retrieval
 
-    private func fetchCAConfiguration(config: CSREnrollmentConfiguration) async throws -> CAConfiguration {
+    private func fetchCAConfiguration(config: CSREnrollmentConfiguration, session urlSession: URLSession) async throws -> CAConfiguration {
         guard let url = config.configURL else {
             throw CSREnrollmentError.invalidServerURL
         }
@@ -302,7 +309,8 @@ class CSREnrollmentService {
 
     private func submitCSR(
         csrBase64: String,
-        config: CSREnrollmentConfiguration
+        config: CSREnrollmentConfiguration,
+        session urlSession: URLSession
     ) async throws -> EnrollmentResponse {
         guard let url = config.csrURL else {
             throw CSREnrollmentError.invalidServerURL
@@ -658,18 +666,32 @@ class CSREnrollmentService {
 
 // MARK: - Self-Signed Certificate Delegate
 
-/// URLSession delegate for CSR enrollment that accepts self-signed certificates
+/// URLSession delegate for CSR enrollment that can accept self-signed certificates
+/// or use system CA validation for Let's Encrypt and other trusted CAs
 private class CSRSelfSignedCertificateDelegate: NSObject, URLSessionDelegate {
+    let trustSelfSigned: Bool
+
+    init(trustSelfSigned: Bool = true) {
+        self.trustSelfSigned = trustSelfSigned
+        super.init()
+    }
+
     func urlSession(
         _ session: URLSession,
         didReceive challenge: URLAuthenticationChallenge,
         completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
     ) {
-        // Accept self-signed certificates for HTTPS (common in TAK deployments)
         if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust {
-            if let serverTrust = challenge.protectionSpace.serverTrust {
-                let credential = URLCredential(trust: serverTrust)
-                completionHandler(.useCredential, credential)
+            if trustSelfSigned {
+                // Accept self-signed certificates (common in TAK deployments)
+                if let serverTrust = challenge.protectionSpace.serverTrust {
+                    let credential = URLCredential(trust: serverTrust)
+                    completionHandler(.useCredential, credential)
+                    return
+                }
+            } else {
+                // Use system CA validation (for Let's Encrypt, etc.)
+                completionHandler(.performDefaultHandling, nil)
                 return
             }
         }
@@ -683,12 +705,21 @@ private class CSRSelfSignedCertificateDelegate: NSObject, URLSessionDelegate {
 extension CSREnrollmentService {
 
     /// Quick enrollment with common defaults
+    /// - Parameters:
+    ///   - server: Server hostname
+    ///   - port: Streaming port (default 8089)
+    ///   - enrollmentPort: Enrollment API port (default 8446)
+    ///   - username: Username for authentication
+    ///   - password: Password for authentication
+    ///   - trustSelfSignedCerts: When true (default), accepts self-signed certificates.
+    ///                           Set to false for servers with Let's Encrypt or other trusted CA certificates.
     func enroll(
         server: String,
         port: Int = 8089,
         enrollmentPort: Int = 8446,
         username: String,
-        password: String
+        password: String,
+        trustSelfSignedCerts: Bool = true
     ) async throws -> TAKServer {
         let config = CSREnrollmentConfiguration(
             serverHost: server,
@@ -696,7 +727,8 @@ extension CSREnrollmentService {
             enrollmentPort: enrollmentPort,
             username: username,
             password: password,
-            useSSL: true
+            useSSL: true,
+            trustSelfSignedCerts: trustSelfSignedCerts
         )
 
         return try await enrollWithCSR(config: config)
