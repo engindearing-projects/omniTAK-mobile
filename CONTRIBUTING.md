@@ -22,14 +22,14 @@ Done. We'll review it and merge it. Easy.
 1. Download [GitHub Desktop](https://desktop.github.com/)
 2. Install and sign in with your GitHub account
 3. Click "Clone Repository from the Internet..."
-4. Search for `omni-BASE` and click "Clone"
+4. Search for `omniTAK-mobile` and click "Clone"
 5. Choose where to save it on your computer
 
 **Option B: Using Command Line**
 
 ```bash
-git clone https://gitlab.com/engindearing/omni-BASE.git
-cd omni-BASE
+git clone https://github.com/engindearing-projects/omniTAK-mobile.git
+cd omniTAK-mobile
 ```
 
 ### Step 2: Make Your Change

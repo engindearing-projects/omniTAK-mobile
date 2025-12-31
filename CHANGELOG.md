@@ -5,14 +5,29 @@ All notable changes to OmniTAK Mobile will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.2] - 2025-12-24
+
+### Added
+- **Meshtastic Integration**: Connect to Meshtastic devices via Bluetooth for off-grid mesh networking
+  - Share location and messages through LoRa mesh networks without cellular or internet connectivity
+  - Perfect for backcountry SAR, remote field operations, or communications-denied environments
+
+### Fixed
+- **Meshtastic IP Input Localization**: Fixed IP address input keyboard on non-English locales (German, French, etc.)
+  - Changed keyboard type from `.URL` to `.numbersAndPunctuation` for locale-independent dot input
+  - Changed textContentType from `.URL` to `.none` to prevent locale-specific formatting
+  - Users can now properly enter IP addresses like `192.168.1.100` regardless of device language
+  - Resolves issue #35
+
+- **Certificate Connectivity**: Fixed server connection for Let's Encrypt and CA-signed certificates
+  - Added "Trust Self-Signed Certificates" toggle in Advanced Options
+  - Users with trusted CA certificates can now disable self-signed trust for proper validation
+
 ## [2.7.1] - 2025-12-11
 
 ### Fixed
-- **Meshtastic IP Input Localization**: Fixed IP address input showing commas instead of periods in non-English locales
-  - Changed keyboard type from `.decimalPad` to `.URL` for IP address fields
-  - Affects MeshtasticTCPConnectionView and MeshtasticDevicePickerView
-  - Users can now properly enter IP addresses like `192.168.1.100` regardless of device language
-  - Resolves issue #35
+- **Meshtastic IP Input Localization** (partial fix): Changed keyboard type from `.decimalPad` to `.URL`
+  - Note: This fix was incomplete; see 2.7.2 for full resolution
 
 ## [2.5.2] - 2025-12-01
 

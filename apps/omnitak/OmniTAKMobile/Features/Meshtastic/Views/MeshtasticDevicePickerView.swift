@@ -544,10 +544,10 @@ private struct AddTCPDeviceSheet: View {
             Form {
                 Section {
                     TextField("IP Address (e.g. 192.168.1.100)", text: $hostAddress)
-                        .textContentType(.URL)
+                        .textContentType(.none)
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
-                        .keyboardType(.URL)
+                        .keyboardType(.numbersAndPunctuation)
 
                     HStack {
                         Text("Port")

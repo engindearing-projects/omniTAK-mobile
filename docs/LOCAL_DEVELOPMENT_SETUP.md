@@ -74,12 +74,12 @@ For serious development or distribution:
 
 ```bash
 # Clone the main repo
-git clone https://gitlab.com/engindearing/omni-BASE.git
-cd omni-BASE
+git clone https://github.com/engindearing-projects/omniTAK-mobile.git
+cd omniTAK-mobile
 
 # Or clone just the plugin template
-git clone https://gitlab.com/engindearing/omni-BASE.git
-cd omni-BASE/plugin-template
+git clone https://github.com/engindearing-projects/omniTAK-mobile.git
+cd omniTAK-mobile/plugin-template
 ```
 
 ### 2. Configure Code Signing
@@ -385,7 +385,7 @@ bazel clean
 ## Support
 
 - **Documentation**: https://docs.omnitak.io
-- **Issues**: https://gitlab.com/engindearing/omni-BASE/issues
+- **Issues**: https://github.com/engindearing-projects/omniTAK-mobile/issues
 - **Discord**: https://discord.gg/VSUjDddRt3
 - **Email**: plugins@omnitak.io
 

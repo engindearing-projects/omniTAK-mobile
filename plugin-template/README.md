@@ -21,8 +21,8 @@ This is the official template for creating OmniTAK plugins. Use this template to
 ### 1. Clone this repository
 
 ```bash
-git clone https://gitlab.com/engindearing/omni-BASE.git
-cd omni-BASE/plugin-template
+git clone https://github.com/engindearing-projects/omniTAK-mobile.git
+cd omniTAK-mobile/plugin-template
 ```
 
 ### 2. Customize your plugin

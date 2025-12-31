@@ -50,3 +50,34 @@ takserver/
 *.key
 *-do-not-share.*
 .env.local
+
+# Test results and artifacts
+*.xcresult/
+TestResults/
+TestResults.xcresult/
+
+# App Store screenshots/previews (generated)
+AppStore/Screenshots/
+AppStore/Previews/
+AppStore/TestResults/
+AppStore/TestResults.xcresult/
+
+# Development scripts (one-off)
+*.rb
+
+# Log files
+*.log
+
+# Brain dump / working docs
+apps/*/docs/
+
+# Temporary files
+*.tmp
+*.bak
+*~
+
+# Claude code artifacts
+.claude/
+
+# Separate backend projects
+trakbridge-assets/

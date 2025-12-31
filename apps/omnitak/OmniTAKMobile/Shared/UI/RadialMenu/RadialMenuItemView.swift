@@ -16,12 +16,25 @@ struct RadialMenuItemView: View {
     let size: CGFloat
     let showLabel: Bool
     let animationDelay: Double
+    let angle: Double  // Angle in radians from top (0 = top, π = bottom)
 
     @State private var scale: CGFloat = 0
     @State private var opacity: Double = 0
 
+    /// Determines if label should be above the icon (for items in bottom half of circle)
+    private var labelAbove: Bool {
+        // Items in the bottom half (angle between π/2 and 3π/2, adjusted for starting at top)
+        // Angle 0 = top, π/2 = right, π = bottom, 3π/2 = left
+        return angle > Double.pi * 0.4 && angle < Double.pi * 1.6
+    }
+
     var body: some View {
         VStack(spacing: 4) {
+            // Label above (for bottom items)
+            if showLabel && labelAbove {
+                labelView
+            }
+
             // Icon Circle
             ZStack {
                 // Background circle
@@ -53,14 +66,9 @@ struct RadialMenuItemView: View {
             .frame(width: size + 10, height: size + 10)
             .scaleEffect(isSelected ? 1.15 : 1.0)
 
-            // Label
-            if showLabel {
-                Text(item.label)
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(isSelected ? item.color : .white)
-                    .lineLimit(1)
-                    .frame(width: size + 20)
-                    .minimumScaleFactor(0.7)
+            // Label below (for top items)
+            if showLabel && !labelAbove {
+                labelView
             }
         }
         .scaleEffect(scale)
@@ -71,6 +79,15 @@ struct RadialMenuItemView: View {
                 opacity = 1.0
             }
         }
+    }
+
+    private var labelView: some View {
+        Text(item.label)
+            .font(.system(size: 11, weight: .medium))
+            .foregroundColor(isSelected ? item.color : .white)
+            .lineLimit(1)
+            .frame(width: size + 30)
+            .minimumScaleFactor(0.8)
     }
 }
 
@@ -95,48 +112,70 @@ struct RadialMenuItemView_Previews: PreviewProvider {
             Color(hex: "#1E1E1E")
                 .ignoresSafeArea()
 
-            HStack(spacing: 40) {
-                // Normal state
-                RadialMenuItemView(
-                    item: RadialMenuItem(
-                        icon: "exclamationmark.triangle.fill",
-                        label: "Hostile",
-                        color: .red,
-                        action: .dropMarker(.hostile)
-                    ),
-                    isSelected: false,
-                    size: 50,
-                    showLabel: true,
-                    animationDelay: 0
-                )
+            VStack(spacing: 40) {
+                HStack(spacing: 40) {
+                    // Top position (label below)
+                    RadialMenuItemView(
+                        item: RadialMenuItem(
+                            icon: "exclamationmark.triangle.fill",
+                            label: "Hostile",
+                            color: .red,
+                            action: .dropMarker(.hostile)
+                        ),
+                        isSelected: false,
+                        size: 50,
+                        showLabel: true,
+                        animationDelay: 0,
+                        angle: 0  // Top
+                    )
 
-                // Selected state
-                RadialMenuItemView(
-                    item: RadialMenuItem(
-                        icon: "shield.fill",
-                        label: "Friendly",
-                        color: .cyan,
-                        action: .dropMarker(.friendly)
-                    ),
-                    isSelected: true,
-                    size: 50,
-                    showLabel: true,
-                    animationDelay: 0
-                )
+                    // Selected state
+                    RadialMenuItemView(
+                        item: RadialMenuItem(
+                            icon: "shield.fill",
+                            label: "Friendly",
+                            color: .cyan,
+                            action: .dropMarker(.friendly)
+                        ),
+                        isSelected: true,
+                        size: 50,
+                        showLabel: true,
+                        animationDelay: 0,
+                        angle: Double.pi / 3  // Upper right
+                    )
+                }
 
-                // Without label
-                RadialMenuItemView(
-                    item: RadialMenuItem(
-                        icon: "ruler",
-                        label: "Measure",
-                        color: Color(hex: "#FFFC00"),
-                        action: .measure
-                    ),
-                    isSelected: false,
-                    size: 50,
-                    showLabel: false,
-                    animationDelay: 0
-                )
+                HStack(spacing: 40) {
+                    // Bottom position (label above)
+                    RadialMenuItemView(
+                        item: RadialMenuItem(
+                            icon: "ruler",
+                            label: "Measure",
+                            color: Color(hex: "#FFFC00"),
+                            action: .measure
+                        ),
+                        isSelected: false,
+                        size: 50,
+                        showLabel: true,
+                        animationDelay: 0,
+                        angle: Double.pi  // Bottom
+                    )
+
+                    // Without label
+                    RadialMenuItemView(
+                        item: RadialMenuItem(
+                            icon: "mappin.and.ellipse",
+                            label: "Waypoint",
+                            color: .orange,
+                            action: .addWaypoint
+                        ),
+                        isSelected: false,
+                        size: 50,
+                        showLabel: false,
+                        animationDelay: 0,
+                        angle: 0
+                    )
+                }
             }
         }
         .previewLayout(.sizeThatFits)

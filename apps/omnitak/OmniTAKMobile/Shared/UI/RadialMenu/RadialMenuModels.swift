@@ -314,6 +314,20 @@ struct RadialMenuConfiguration {
         return CGPoint(x: x, y: y)
     }
 
+    /// Calculate the angle of an item at a given index (0 = top, π = bottom)
+    func itemAngle(at index: Int) -> Double {
+        guard items.count > 0 else { return 0 }
+
+        let angleStep = (2 * Double.pi) / Double(items.count)
+        var angle = Double(index) * angleStep  // Normalized angle from top
+
+        // Ensure angle is in 0 to 2π range
+        if angle < 0 {
+            angle += 2 * Double.pi
+        }
+        return angle
+    }
+
     /// Calculate which item index is closest to a given point
     func closestItemIndex(to point: CGPoint, center: CGPoint) -> Int? {
         guard items.count > 0 else { return nil }

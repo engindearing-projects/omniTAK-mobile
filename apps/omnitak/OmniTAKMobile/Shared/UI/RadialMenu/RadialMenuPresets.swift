@@ -56,7 +56,7 @@ enum RadialMenuPresets {
                     action: .addWaypoint
                 )
             ],
-            radius: 110,
+            radius: 130,
             itemSize: 48,
             hapticFeedback: true,
             showLabels: true

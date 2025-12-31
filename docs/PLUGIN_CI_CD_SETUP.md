@@ -26,7 +26,7 @@ The OmniTAK plugin system uses GitLab CI/CD to automatically:
 
 ```bash
 # Clone template
-git clone https://gitlab.com/omnitak/plugin-template.git my-plugin
+git clone https://github.com/engindearing-projects/omniTAK-mobile/tree/main/plugin-template.git my-plugin
 cd my-plugin
 
 # Update remote
@@ -438,5 +438,5 @@ build_ios:
 
 - **GitLab CI/CD Docs**: https://docs.gitlab.com/ee/ci/
 - **OmniTAK Plugin Docs**: https://docs.omnitak.io/plugins
-- **Issues**: https://gitlab.com/omnitak/plugin-template/issues
+- **Issues**: https://github.com/engindearing-projects/omniTAK-mobile/tree/main/plugin-template/issues
 - **Email**: plugins@omnitak.io

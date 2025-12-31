@@ -299,7 +299,7 @@ MyPlugin.omniplugin/
 ### 1. Clone Template
 
 ```bash
-git clone https://gitlab.com/omnitak/plugin-template.git my-plugin
+git clone https://github.com/engindearing-projects/omniTAK-mobile/tree/main/plugin-template.git my-plugin
 cd my-plugin
 ```
 
@@ -392,7 +392,7 @@ git push origin v1.0.0
 
 ## References
 
-- Bazel iOS build: `/home/user/omni-BASE/.bazelrc.ios`
+- Bazel iOS build: `/path/to/omniTAK-mobile/.bazelrc.ios`
 - Main app bundle ID: `com.engindearing.omnitak.mobile`
-- Build scripts: `/home/user/omni-BASE/scripts/build_ios.sh`
-- Native bridge: `/home/user/omni-BASE/modules/omnitak_mobile/ios/native/`
+- Build scripts: `/path/to/omniTAK-mobile/scripts/build_ios.sh`
+- Native bridge: `/path/to/omniTAK-mobile/modules/omnitak_mobile/ios/native/`
