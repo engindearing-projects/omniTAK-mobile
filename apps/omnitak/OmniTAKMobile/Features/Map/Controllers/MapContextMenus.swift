@@ -24,13 +24,13 @@ extension RadialMenuConfiguration {
             // Top - Drop Point (primary action)
             RadialMenuItem(
                 icon: "mappin.circle.fill",
-                label: "Drop Point",
+                label: "Point",
                 action: .addWaypoint
             ),
             // Top-right - Route/Navigate
             RadialMenuItem(
                 icon: "arrow.triangle.turn.up.right.diamond.fill",
-                label: "Route Here",
+                label: "Route",
                 action: .navigate
             ),
             // Right - Measure
@@ -54,7 +54,7 @@ extension RadialMenuConfiguration {
             // Bottom-left - Drawings list
             RadialMenuItem(
                 icon: "list.bullet.rectangle.fill",
-                label: "Drawings",
+                label: "Drawn",
                 action: .openDrawingsList
             ),
             // Left - Layers

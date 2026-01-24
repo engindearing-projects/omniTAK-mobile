@@ -149,7 +149,7 @@ struct RadialMenuView: View {
                     let isDestructive = item.action == .deleteMarker || item.action == .deleteDrawing
 
                     Image(systemName: item.icon)
-                        .font(.system(size: configuration.itemSize * 0.45, weight: .medium))
+                        .font(.system(size: configuration.itemSize * 0.55, weight: .medium))
                         .foregroundColor(isDestructive ? .red : iconColor)
                         .scaleEffect(selectedIndex == index ? 1.15 : 1.0)
                         .animation(.easeInOut(duration: 0.15), value: selectedIndex)
@@ -160,11 +160,11 @@ struct RadialMenuView: View {
                 if showLabels {
                     ForEach(Array(configuration.items.enumerated()), id: \.element.id) { index, item in
                         Text(item.label)
-                            .font(.system(size: 11, weight: .medium))
+                            .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(.white)
-                            .shadow(color: .black.opacity(0.8), radius: 2, x: 0, y: 1)
+                            .shadow(color: .black.opacity(0.9), radius: 3, x: 0, y: 1)
                             .offset(labelOffset(at: index))
-                            .opacity(selectedIndex == index ? 1.0 : 0.85)
+                            .opacity(selectedIndex == index ? 1.0 : 0.9)
                             .animation(.easeInOut(duration: 0.15), value: selectedIndex)
                     }
                 }
@@ -201,9 +201,9 @@ struct RadialMenuView: View {
 
     // MARK: - Layout Calculations
 
-    /// Effective radius - larger when labels are shown to make room
+    /// Effective radius - same size regardless of labels (labels go outside)
     private var effectiveRadius: CGFloat {
-        showLabels ? configuration.radius * 1.15 : configuration.radius
+        configuration.radius
     }
 
     private var outerRingRadius: CGFloat {
@@ -229,7 +229,7 @@ struct RadialMenuView: View {
 
     /// Total diameter including space for labels
     private var totalMenuDiameter: CGFloat {
-        showLabels ? outerRingDiameter + 80 : outerRingDiameter  // Extra space for labels
+        showLabels ? outerRingDiameter + 100 : outerRingDiameter  // Extra space for labels
     }
 
     /// Calculate icon offset within the wedge (centered between inner and outer radius)
@@ -247,14 +247,14 @@ struct RadialMenuView: View {
         return CGSize(width: x, height: y)
     }
 
-    /// Calculate label offset - positioned outside the menu ring
+    /// Calculate label offset - positioned just outside the menu ring
     private func labelOffset(at index: Int) -> CGSize {
         let itemCount = configuration.items.count
         let angleStep = (2 * Double.pi) / Double(itemCount)
         let angle = Double(index) * angleStep - (Double.pi / 2)  // Start from top
 
-        // Position label outside the outer ring
-        let labelDistanceFromCenter = outerRingRadius + 18
+        // Position label just outside the outer ring
+        let labelDistanceFromCenter = outerRingRadius + 20
 
         let x = labelDistanceFromCenter * CGFloat(cos(angle))
         let y = labelDistanceFromCenter * CGFloat(sin(angle))
