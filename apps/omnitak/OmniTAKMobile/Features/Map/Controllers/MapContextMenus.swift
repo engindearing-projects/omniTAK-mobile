@@ -3,7 +3,7 @@
 //  OmniTAKMobile
 //
 //  Context-specific menu configurations for different map interactions
-//  ATAK-style radial menus with pie wedge design
+//  Mode-aware radial menus that adapt to Tactical/Fire/SAR/Civilian modes
 //
 
 import Foundation
@@ -15,47 +15,64 @@ import MapKit
 
 extension RadialMenuConfiguration {
 
-    // MARK: - Empty Map Context Menu
+    // MARK: - Mode-Aware Map Context Menu
 
-    /// Menu for long-press on empty map area - ATAK-style 8-item radial menu
-    /// Matches ATAK's standard map context menu layout
+    /// Returns the appropriate radial menu based on current app mode
     static func mapContextMenu(at coordinate: CLLocationCoordinate2D) -> RadialMenuConfiguration {
+        let currentMode = AppModeManager.shared.currentMode
+
+        switch currentMode {
+        case .tactical:
+            return tacticalMapMenu(at: coordinate)
+        case .fireRescue:
+            return fireRescueMapMenu(at: coordinate)
+        case .sar:
+            return sarMapMenu(at: coordinate)
+        case .civilian:
+            return civilianMapMenu(at: coordinate)
+        }
+    }
+
+    // MARK: - Tactical Mode Menu
+
+    /// Military/Law Enforcement focused menu
+    private static func tacticalMapMenu(at coordinate: CLLocationCoordinate2D) -> RadialMenuConfiguration {
         let items = [
-            // Top - Drop Point (primary action)
+            // Top - Hostile marker (primary threat marking)
+            RadialMenuItem(
+                icon: "scope",
+                label: "Hostile",
+                action: .dropMarker(.hostile)
+            ),
+            // Top-right - Friendly marker
+            RadialMenuItem(
+                icon: "shield.fill",
+                label: "Friendly",
+                action: .dropMarker(.friendly)
+            ),
+            // Right - Waypoint
             RadialMenuItem(
                 icon: "mappin.circle.fill",
                 label: "Point",
                 action: .addWaypoint
             ),
-            // Top-right - Route/Navigate
+            // Bottom-right - Route/Navigate
             RadialMenuItem(
                 icon: "arrow.triangle.turn.up.right.diamond.fill",
                 label: "Route",
                 action: .navigate
             ),
-            // Right - Measure
+            // Bottom - Measure
             RadialMenuItem(
                 icon: "ruler.fill",
                 label: "Meas",
                 action: .measure
             ),
-            // Bottom-right - Mode toggle (Mil/Civ)
+            // Bottom-left - Copy coordinates
             RadialMenuItem(
-                icon: "figure.wave",
-                label: "Mode",
-                action: .custom("toggle_app_mode")
-            ),
-            // Bottom - Draw
-            RadialMenuItem(
-                icon: "pencil.tip.crop.circle",
-                label: "Draw",
-                action: .openDrawingTools
-            ),
-            // Bottom-left - Drawings list
-            RadialMenuItem(
-                icon: "list.bullet.rectangle.fill",
-                label: "Drawn",
-                action: .openDrawingsList
+                icon: "doc.on.clipboard",
+                label: "Copy",
+                action: .copyCoordinates
             ),
             // Left - Layers
             RadialMenuItem(
@@ -63,11 +80,11 @@ extension RadialMenuConfiguration {
                 label: "Layers",
                 action: .custom("show_layers")
             ),
-            // Top-left - Copy coordinates
+            // Top-left - Mode switch
             RadialMenuItem(
-                icon: "doc.on.clipboard",
-                label: "Copy Loc",
-                action: .copyCoordinates
+                icon: "shield.checkered",
+                label: "Mode",
+                action: .custom("toggle_app_mode")
             )
         ]
 
@@ -76,7 +93,199 @@ extension RadialMenuConfiguration {
             radius: 120,
             itemSize: 48,
             hapticFeedback: true,
-            showLabels: false  // ATAK style: icons only
+            showLabels: false
+        )
+    }
+
+    // MARK: - Fire/Rescue Mode Menu
+
+    /// Firefighting and EMS focused menu
+    private static func fireRescueMapMenu(at coordinate: CLLocationCoordinate2D) -> RadialMenuConfiguration {
+        let items = [
+            // Top - Hazard marker (fire, chemical, etc.)
+            RadialMenuItem(
+                icon: "flame.fill",
+                label: "Hazard",
+                action: .dropMarker(.hostile)
+            ),
+            // Top-right - Crew/Unit marker
+            RadialMenuItem(
+                icon: "person.3.fill",
+                label: "Crew",
+                action: .dropMarker(.friendly)
+            ),
+            // Right - Resource (equipment, water source)
+            RadialMenuItem(
+                icon: "wrench.and.screwdriver.fill",
+                label: "Resource",
+                action: .dropMarker(.neutral)
+            ),
+            // Bottom-right - ICP (Incident Command Post)
+            RadialMenuItem(
+                icon: "building.2.fill",
+                label: "ICP",
+                action: .addWaypoint
+            ),
+            // Bottom - Measure
+            RadialMenuItem(
+                icon: "ruler.fill",
+                label: "Meas",
+                action: .measure
+            ),
+            // Bottom-left - Route
+            RadialMenuItem(
+                icon: "arrow.triangle.turn.up.right.diamond.fill",
+                label: "Route",
+                action: .navigate
+            ),
+            // Left - Draw (perimeters, staging)
+            RadialMenuItem(
+                icon: "pencil.tip.crop.circle",
+                label: "Draw",
+                action: .openDrawingTools
+            ),
+            // Top-left - Mode switch
+            RadialMenuItem(
+                icon: "flame.fill",
+                label: "Mode",
+                action: .custom("toggle_app_mode")
+            )
+        ]
+
+        return RadialMenuConfiguration(
+            items: items,
+            radius: 120,
+            itemSize: 48,
+            hapticFeedback: true,
+            showLabels: false
+        )
+    }
+
+    // MARK: - SAR Mode Menu
+
+    /// Search and Rescue focused menu
+    private static func sarMapMenu(at coordinate: CLLocationCoordinate2D) -> RadialMenuConfiguration {
+        let items = [
+            // Top - Clue marker (evidence, sighting)
+            RadialMenuItem(
+                icon: "eye.fill",
+                label: "Clue",
+                action: .dropMarker(.unknown)
+            ),
+            // Top-right - Searcher/Team position
+            RadialMenuItem(
+                icon: "figure.walk",
+                label: "Searcher",
+                action: .dropMarker(.friendly)
+            ),
+            // Right - POI (Point of Interest)
+            RadialMenuItem(
+                icon: "star.fill",
+                label: "POI",
+                action: .addWaypoint
+            ),
+            // Bottom-right - Hazard
+            RadialMenuItem(
+                icon: "exclamationmark.triangle.fill",
+                label: "Hazard",
+                action: .dropMarker(.hostile)
+            ),
+            // Bottom - Draw (search areas)
+            RadialMenuItem(
+                icon: "pencil.tip.crop.circle",
+                label: "Area",
+                action: .openDrawingTools
+            ),
+            // Bottom-left - Measure
+            RadialMenuItem(
+                icon: "ruler.fill",
+                label: "Meas",
+                action: .measure
+            ),
+            // Left - Route
+            RadialMenuItem(
+                icon: "arrow.triangle.turn.up.right.diamond.fill",
+                label: "Route",
+                action: .navigate
+            ),
+            // Top-left - Mode switch
+            RadialMenuItem(
+                icon: "binoculars.fill",
+                label: "Mode",
+                action: .custom("toggle_app_mode")
+            )
+        ]
+
+        return RadialMenuConfiguration(
+            items: items,
+            radius: 120,
+            itemSize: 48,
+            hapticFeedback: true,
+            showLabels: false
+        )
+    }
+
+    // MARK: - Civilian Mode Menu
+
+    /// General use / consumer focused menu
+    private static func civilianMapMenu(at coordinate: CLLocationCoordinate2D) -> RadialMenuConfiguration {
+        let items = [
+            // Top - Drop pin (primary action)
+            RadialMenuItem(
+                icon: "mappin.circle.fill",
+                label: "Pin",
+                action: .addWaypoint
+            ),
+            // Top-right - Navigate
+            RadialMenuItem(
+                icon: "location.fill",
+                label: "Go Here",
+                action: .navigate
+            ),
+            // Right - Share location
+            RadialMenuItem(
+                icon: "square.and.arrow.up",
+                label: "Share",
+                action: .copyCoordinates
+            ),
+            // Bottom-right - Measure
+            RadialMenuItem(
+                icon: "ruler.fill",
+                label: "Meas",
+                action: .measure
+            ),
+            // Bottom - Layers
+            RadialMenuItem(
+                icon: "map.fill",
+                label: "Map",
+                action: .custom("show_layers")
+            ),
+            // Bottom-left - Draw
+            RadialMenuItem(
+                icon: "pencil.tip.crop.circle",
+                label: "Draw",
+                action: .openDrawingTools
+            ),
+            // Left - Saved places
+            RadialMenuItem(
+                icon: "heart.fill",
+                label: "Save",
+                action: .custom("save_location")
+            ),
+            // Top-left - Mode switch
+            RadialMenuItem(
+                icon: "figure.wave",
+                label: "Mode",
+                action: .custom("toggle_app_mode")
+            )
+        ]
+
+        return RadialMenuConfiguration(
+            items: items,
+            radius: 120,
+            itemSize: 48,
+            hapticFeedback: true,
+            showLabels: false
         )
     }
 
