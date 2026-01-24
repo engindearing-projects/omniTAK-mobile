@@ -26,6 +26,9 @@ struct RadialMenuView: View {
     @State private var backgroundOpacity: Double = 0
     @State private var dragLocation: CGPoint? = nil
 
+    /// Persistent preference for showing labels - toggle via center button
+    @AppStorage("radialMenuShowLabels") private var showLabels: Bool = true
+
     // Haptic feedback generators
     private let impactGenerator = UIImpactFeedbackGenerator(style: .medium)
     private let selectionGenerator = UISelectionFeedbackGenerator()
@@ -100,24 +103,46 @@ struct RadialMenuView: View {
                     .strokeBorder(dividerColor, lineWidth: 1)
                     .frame(width: centerCircleDiameter, height: centerCircleDiameter)
 
-                // Center content (context label or icon)
-                if let label = centerLabel {
-                    VStack(spacing: 2) {
-                        Image(systemName: "mappin.circle.fill")
-                            .font(.system(size: 16))
-                            .foregroundColor(.white)
-                        Text(label)
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(.white)
-                            .lineLimit(1)
-                            .frame(maxWidth: centerCircleDiameter - 8)
+                // Center content - tappable to toggle labels
+                Button(action: {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        showLabels.toggle()
                     }
-                } else {
-                    // Default center icon
-                    Image(systemName: "plus")
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(.white.opacity(0.6))
+                    // Haptic feedback for toggle
+                    if configuration.hapticFeedback {
+                        let generator = UIImpactFeedbackGenerator(style: .light)
+                        generator.impactOccurred()
+                    }
+                }) {
+                    ZStack {
+                        if let label = centerLabel {
+                            VStack(spacing: 2) {
+                                Image(systemName: "mappin.circle.fill")
+                                    .font(.system(size: 16))
+                                    .foregroundColor(.white)
+                                Text(label)
+                                    .font(.system(size: 10, weight: .medium))
+                                    .foregroundColor(.white)
+                                    .lineLimit(1)
+                                    .frame(maxWidth: centerCircleDiameter - 8)
+                            }
+                        } else {
+                            // Toggle indicator: "Aa" when labels hidden, dot when shown
+                            if showLabels {
+                                Circle()
+                                    .fill(Color(hex: "#FFFC00"))
+                                    .frame(width: 12, height: 12)
+                            } else {
+                                Text("Aa")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(.white.opacity(0.7))
+                            }
+                        }
+                    }
+                    .frame(width: centerCircleDiameter, height: centerCircleDiameter)
+                    .contentShape(Circle())
                 }
+                .buttonStyle(.plain)
 
                 // Radial menu item icons
                 ForEach(Array(configuration.items.enumerated()), id: \.element.id) { index, item in
@@ -131,11 +156,24 @@ struct RadialMenuView: View {
                         .offset(iconOffset(at: index))
                 }
 
+                // Radial menu item labels (when enabled)
+                if showLabels {
+                    ForEach(Array(configuration.items.enumerated()), id: \.element.id) { index, item in
+                        Text(item.label)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(.white)
+                            .shadow(color: .black.opacity(0.8), radius: 2, x: 0, y: 1)
+                            .offset(labelOffset(at: index))
+                            .opacity(selectedIndex == index ? 1.0 : 0.85)
+                            .animation(.easeInOut(duration: 0.15), value: selectedIndex)
+                    }
+                }
+
                 // Outer ring border
                 Circle()
                     .strokeBorder(dividerColor, lineWidth: 1.5)
             }
-            .frame(width: outerRingDiameter, height: outerRingDiameter)
+            .frame(width: totalMenuDiameter, height: totalMenuDiameter)
             .position(centerPoint)
             .scaleEffect(scale)
 
@@ -163,20 +201,35 @@ struct RadialMenuView: View {
 
     // MARK: - Layout Calculations
 
+    /// Effective radius - larger when labels are shown to make room
+    private var effectiveRadius: CGFloat {
+        showLabels ? configuration.radius * 1.15 : configuration.radius
+    }
+
     private var outerRingRadius: CGFloat {
-        configuration.radius
+        effectiveRadius
     }
 
     private var outerRingDiameter: CGFloat {
-        configuration.radius * 2
+        effectiveRadius * 2
     }
 
     private var centerCircleRadius: CGFloat {
-        configuration.radius * 0.38  // ~38% of outer radius for center circle
+        effectiveRadius * 0.38  // ~38% of outer radius for center circle
     }
 
     private var centerCircleDiameter: CGFloat {
         centerCircleRadius * 2
+    }
+
+    /// Radius for label text positioning (outside the icon ring)
+    private var labelRadius: CGFloat {
+        effectiveRadius * 0.72  // Position labels between center and edge
+    }
+
+    /// Total diameter including space for labels
+    private var totalMenuDiameter: CGFloat {
+        showLabels ? outerRingDiameter + 80 : outerRingDiameter  // Extra space for labels
     }
 
     /// Calculate icon offset within the wedge (centered between inner and outer radius)
@@ -190,6 +243,21 @@ struct RadialMenuView: View {
 
         let x = iconRadius * CGFloat(cos(angle))
         let y = iconRadius * CGFloat(sin(angle))
+
+        return CGSize(width: x, height: y)
+    }
+
+    /// Calculate label offset - positioned outside the menu ring
+    private func labelOffset(at index: Int) -> CGSize {
+        let itemCount = configuration.items.count
+        let angleStep = (2 * Double.pi) / Double(itemCount)
+        let angle = Double(index) * angleStep - (Double.pi / 2)  // Start from top
+
+        // Position label outside the outer ring
+        let labelDistanceFromCenter = outerRingRadius + 18
+
+        let x = labelDistanceFromCenter * CGFloat(cos(angle))
+        let y = labelDistanceFromCenter * CGFloat(sin(angle))
 
         return CGSize(width: x, height: y)
     }
