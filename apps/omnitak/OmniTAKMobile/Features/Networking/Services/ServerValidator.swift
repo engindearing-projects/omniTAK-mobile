@@ -153,30 +153,41 @@ class ServerValidator {
         let isHTML = htmlIndicators.contains { text.contains($0) }
 
         if isHTML {
-            // Try to extract error message from HTML
-            var errorMessage = "Server returned an HTML error page"
+            // Try to extract error message from HTML title tag
+            var pageTitle: String? = nil
 
-            if let titleMatch = text.range(of: "<title>([^<]+)</title>", options: .regularExpression) {
-                let title = String(text[titleMatch])
-                    .replacingOccurrences(of: "<title>", with: "")
-                    .replacingOccurrences(of: "</title>", with: "")
-                errorMessage = title
+            // Use NSRegularExpression for reliable extraction
+            if let regex = try? NSRegularExpression(pattern: "<title[^>]*>([^<]+)</title>", options: .caseInsensitive),
+               let match = regex.firstMatch(in: text, options: [], range: NSRange(text.startIndex..., in: text)),
+               let titleRange = Range(match.range(at: 1), in: text) {
+                let extractedTitle = String(text[titleRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                if !extractedTitle.isEmpty && extractedTitle.count < 100 {
+                    pageTitle = extractedTitle
+                }
+            }
+
+            let errorMessage: String
+            if let title = pageTitle {
+                errorMessage = "Server returned web page: \"\(title)\""
+            } else {
+                errorMessage = "Server returned a web page instead of expected data"
             }
 
             return ValidationIssue(
                 code: .htmlResponseDetected,
                 message: errorMessage,
                 troubleshooting: [
-                    "You may be connecting to the wrong port:",
-                    "• Port 8089 - Streaming CoT (TLS, binary protocol)",
-                    "• Port 8446 - Certificate enrollment (HTTPS API)",
-                    "• Port 8443 - Web interface (not for app connections)",
+                    "This usually means you're connecting to the wrong port.",
                     "",
-                    "Try these steps:",
-                    "1. Verify the correct port with your server admin",
-                    "2. For enrollment, use port 8446",
-                    "3. For streaming, use port 8089 with TLS enabled",
-                    "4. Check if the server's enrollment API is enabled"
+                    "TAK Server Ports:",
+                    "• Port 8089 - CoT Streaming (TLS) - use for connections",
+                    "• Port 8446 - Certificate Enrollment API",
+                    "• Port 8443 - Web Interface (browsers only, not for apps)",
+                    "",
+                    "Common fixes:",
+                    "1. For enrollment: ensure you're using port 8446",
+                    "2. For streaming: use port 8089 with TLS enabled",
+                    "3. Verify with your server administrator"
                 ]
             )
         }
@@ -196,12 +207,18 @@ class ServerValidator {
         case 401:
             return ValidationIssue(
                 code: .missingCredentials,
-                message: "Authentication failed",
+                message: "Authentication failed (401)",
                 troubleshooting: [
-                    "Your username or password is incorrect",
-                    "Verify your credentials with the server administrator",
-                    "Some servers require specific user permissions",
-                    "Check if your account is active on the TAK server"
+                    "Possible causes:",
+                    "• Username or password is incorrect",
+                    "• Account is not active or not authorized for enrollment",
+                    "• Server requires different authentication method",
+                    "",
+                    "Try these steps:",
+                    "1. Double-check your username and password",
+                    "2. Verify your account is active on the TAK server",
+                    "3. Ask your admin if your account has enrollment permissions",
+                    "4. Try scanning a QR code or importing a Data Package instead"
                 ]
             )
 

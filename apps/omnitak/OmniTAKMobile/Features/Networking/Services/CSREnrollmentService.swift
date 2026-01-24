@@ -249,7 +249,43 @@ class CSREnrollmentService {
 
         } catch let error as CSREnrollmentError {
             throw error
-        } catch {
+        } catch let error as NSError {
+            // Check for SSL certificate errors
+            if error.domain == NSURLErrorDomain {
+                switch error.code {
+                case NSURLErrorSecureConnectionFailed,
+                     NSURLErrorServerCertificateHasBadDate,
+                     NSURLErrorServerCertificateUntrusted,
+                     NSURLErrorServerCertificateHasUnknownRoot,
+                     NSURLErrorServerCertificateNotYetValid,
+                     NSURLErrorClientCertificateRejected:
+                    // SSL certificate issue - provide helpful guidance
+                    let sslMessage = """
+                    SSL Certificate Error
+
+                    The server's certificate could not be verified.
+
+                    If your server uses Let's Encrypt or another trusted CA:
+                    • Go to Advanced Options
+                    • DISABLE "Trust Self-Signed Certificates"
+                    • Try connecting again
+
+                    If your server uses a self-signed certificate:
+                    • Ensure "Trust Self-Signed Certificates" is ENABLED
+                    • Verify the certificate is valid and not expired
+                    """
+                    throw CSREnrollmentError.configurationError(sslMessage)
+
+                case NSURLErrorCannotConnectToHost, NSURLErrorNetworkConnectionLost:
+                    throw CSREnrollmentError.configurationError("Cannot connect to server. Check the hostname and port, and verify the server is online.")
+
+                case NSURLErrorTimedOut:
+                    throw CSREnrollmentError.configurationError("Connection timed out. The server may be slow or unreachable.")
+
+                default:
+                    throw CSREnrollmentError.networkError(error)
+                }
+            }
             throw CSREnrollmentError.networkError(error)
         }
     }
@@ -358,7 +394,35 @@ class CSREnrollmentService {
 
         } catch let error as CSREnrollmentError {
             throw error
-        } catch {
+        } catch let error as NSError {
+            // Check for SSL certificate errors
+            if error.domain == NSURLErrorDomain {
+                switch error.code {
+                case NSURLErrorSecureConnectionFailed,
+                     NSURLErrorServerCertificateHasBadDate,
+                     NSURLErrorServerCertificateUntrusted,
+                     NSURLErrorServerCertificateHasUnknownRoot,
+                     NSURLErrorServerCertificateNotYetValid,
+                     NSURLErrorClientCertificateRejected:
+                    let sslMessage = """
+                    SSL Certificate Error
+
+                    The server's certificate could not be verified.
+
+                    If your server uses Let's Encrypt or another trusted CA:
+                    • Go to Advanced Options
+                    • DISABLE "Trust Self-Signed Certificates"
+                    • Try connecting again
+
+                    If your server uses a self-signed certificate:
+                    • Ensure "Trust Self-Signed Certificates" is ENABLED
+                    """
+                    throw CSREnrollmentError.configurationError(sslMessage)
+
+                default:
+                    throw CSREnrollmentError.networkError(error)
+                }
+            }
             throw CSREnrollmentError.networkError(error)
         }
     }

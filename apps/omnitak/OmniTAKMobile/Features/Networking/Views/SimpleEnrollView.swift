@@ -373,12 +373,30 @@ struct SimpleEnrollView: View {
                                 .font(.system(size: 14))
                                 .foregroundColor(.white)
 
-                            Text("Disable for Let's Encrypt or other CA-signed servers")
+                            Text(trustSelfSignedCerts
+                                ? "ON: Accepts any certificate (self-signed servers)"
+                                : "OFF: Requires valid CA certificate (Let's Encrypt, etc.)")
                                 .font(.system(size: 11))
-                                .foregroundColor(Color(hex: "#999999"))
+                                .foregroundColor(trustSelfSignedCerts ? Color(hex: "#00BCD4") : Color(hex: "#00FF00"))
                         }
                     }
                     .tint(Color(hex: "#00BCD4"))
+
+                    // Let's Encrypt hint
+                    if trustSelfSignedCerts {
+                        HStack(spacing: 8) {
+                            Image(systemName: "info.circle.fill")
+                                .foregroundColor(Color(hex: "#FFFC00"))
+                                .font(.system(size: 12))
+                            Text("Using Let's Encrypt? Turn this OFF")
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(Color(hex: "#FFFC00"))
+                            Spacer()
+                        }
+                        .padding(8)
+                        .background(Color(hex: "#FFFC00").opacity(0.1))
+                        .cornerRadius(6)
+                    }
                 }
                 .padding(16)
                 .background(Color(white: 0.08))
@@ -903,12 +921,30 @@ struct SimpleEnrollViewContent: View {
                                 .font(.system(size: 14))
                                 .foregroundColor(.white)
 
-                            Text("Disable for Let's Encrypt or other CA-signed servers")
+                            Text(trustSelfSignedCerts
+                                ? "ON: Accepts any certificate (self-signed servers)"
+                                : "OFF: Requires valid CA certificate (Let's Encrypt, etc.)")
                                 .font(.system(size: 11))
-                                .foregroundColor(Color(hex: "#999999"))
+                                .foregroundColor(trustSelfSignedCerts ? Color(hex: "#00BCD4") : Color(hex: "#00FF00"))
                         }
                     }
                     .tint(Color(hex: "#00BCD4"))
+
+                    // Let's Encrypt hint
+                    if trustSelfSignedCerts {
+                        HStack(spacing: 8) {
+                            Image(systemName: "info.circle.fill")
+                                .foregroundColor(Color(hex: "#FFFC00"))
+                                .font(.system(size: 12))
+                            Text("Using Let's Encrypt? Turn this OFF")
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(Color(hex: "#FFFC00"))
+                            Spacer()
+                        }
+                        .padding(8)
+                        .background(Color(hex: "#FFFC00").opacity(0.1))
+                        .cornerRadius(6)
+                    }
                 }
                 .padding(16)
                 .background(Color(white: 0.08))
