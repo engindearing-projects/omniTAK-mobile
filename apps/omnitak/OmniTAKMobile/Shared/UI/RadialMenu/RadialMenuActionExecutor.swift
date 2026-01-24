@@ -478,12 +478,32 @@ class RadialMenuActionExecutor {
         context: RadialMenuContext,
         services: RadialMenuServices
     ) -> Bool {
-        NotificationCenter.default.post(
-            name: .radialMenuCustomAction,
-            object: nil,
-            userInfo: ["identifier": identifier, "context": context]
-        )
-        return true
+        // Handle known custom actions with specific notifications
+        switch identifier {
+        case "toggle_app_mode":
+            NotificationCenter.default.post(
+                name: .radialMenuShowAppModePicker,
+                object: nil,
+                userInfo: [:]
+            )
+            return true
+
+        case "show_layers":
+            NotificationCenter.default.post(
+                name: .radialMenuShowLayers,
+                object: nil,
+                userInfo: [:]
+            )
+            return true
+
+        default:
+            NotificationCenter.default.post(
+                name: .radialMenuCustomAction,
+                object: nil,
+                userInfo: ["identifier": identifier, "context": context]
+            )
+            return true
+        }
     }
 
     // MARK: - Helper Methods
@@ -564,4 +584,7 @@ extension Notification.Name {
     static let radialMenuDrawCircle = Notification.Name("radialMenuDrawCircle")
     static let radialMenuDrawPolygon = Notification.Name("radialMenuDrawPolygon")
     static let radialMenuEditDrawing = Notification.Name("radialMenuEditDrawing")
+    // App mode & layers
+    static let radialMenuShowAppModePicker = Notification.Name("radialMenuShowAppModePicker")
+    static let radialMenuShowLayers = Notification.Name("radialMenuShowLayers")
 }

@@ -57,6 +57,7 @@ struct ATAKMapView: View {
     @State private var showMissionSync = false
     @State private var showMeshtastic = false
     @State private var showMeasurement = false
+    @State private var showAppModePicker = false
 
     // Position broadcasting service
     @ObservedObject private var positionBroadcastService = PositionBroadcastService.shared
@@ -846,6 +847,13 @@ struct ATAKMapView: View {
                     showDrawingPanel = false
                     showLayersPanel = false
                 }
+            }
+            // App mode picker from radial menu
+            .onReceive(NotificationCenter.default.publisher(for: .radialMenuShowAppModePicker)) { _ in
+                showAppModePicker = true
+            }
+            .sheet(isPresented: $showAppModePicker) {
+                AppModePickerView()
             }
     }
 

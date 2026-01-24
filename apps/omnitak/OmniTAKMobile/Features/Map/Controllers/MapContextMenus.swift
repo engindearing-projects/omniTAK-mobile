@@ -36,14 +36,14 @@ extension RadialMenuConfiguration {
             // Right - Measure
             RadialMenuItem(
                 icon: "ruler.fill",
-                label: "Measure",
+                label: "Meas",
                 action: .measure
             ),
-            // Bottom-right - R&B Line (Range & Bearing)
+            // Bottom-right - Mode toggle (Mil/Civ)
             RadialMenuItem(
-                icon: "line.diagonal",
-                label: "R&B Line",
-                action: .measureBearing
+                icon: "figure.wave",
+                label: "Mode",
+                action: .custom("toggle_app_mode")
             ),
             // Bottom - Draw
             RadialMenuItem(

@@ -259,6 +259,8 @@
 		FD9A668D450BCB86426AEBE1 /* LineOfSightModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD181F0D87FB0E91D14DFE79 /* LineOfSightModels.swift */; };
 		FE237DBC028333E6D711283B /* RangeBearingOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 843EB86D341D86B368711751 /* RangeBearingOverlay.swift */; };
 		FFEC4BF9EF64D1B8B6811551 /* CoTFilterCriteria.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E512BE47CF1BD2AFEFB2097 /* CoTFilterCriteria.swift */; };
+		247A9FAC7C300DD219A5A332 /* AppModePreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F863C9B3920784C32F6416D /* AppModePreferences.swift */; };
+		28984A5B7C8381564F544D7E /* AppModePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 603244D50064B2F54B4A1041 /* AppModePickerView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -530,6 +532,8 @@
 		FE5ADEAC186F3A6CC4CB7055 /* DeepLinkHandler.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DeepLinkHandler.swift; path = OmniTAKMobile/Features/Networking/Services/DeepLinkHandler.swift; sourceTree = "<group>"; };
 		FE75C0779B00B1302E9BBE3A /* cot_types.yaml */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.yaml; name = cot_types.yaml; path = OmniTAKMobile/Shared/Resources/cot_types.yaml; sourceTree = "<group>"; };
 		FE87E15631B845393B2BA5AD /* SPOTREPModels.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SPOTREPModels.swift; path = OmniTAKMobile/Features/Military/Models/SPOTREPModels.swift; sourceTree = "<group>"; };
+		2F863C9B3920784C32F6416D /* AppModePreferences.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AppModePreferences.swift; path = OmniTAKMobile/Utilities/Preferences/AppModePreferences.swift; sourceTree = "<group>"; };
+		603244D50064B2F54B4A1041 /* AppModePickerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AppModePickerView.swift; path = OmniTAKMobile/Features/Settings/Views/AppModePickerView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -852,6 +856,8 @@
 			isa = PBXGroup;
 			children = (
 				56AC5271E9592B701917920E /* UnitPreferences.swift */,
+				603244D50064B2F54B4A1041 /* AppModePickerView.swift */,
+				2F863C9B3920784C32F6416D /* AppModePreferences.swift */,
 			);
 			name = Preferences;
 			sourceTree = "<group>";
@@ -2152,6 +2158,8 @@
 				67D3B55F33075F852EB28D49 /* TeamStorageManager.swift in Sources */,
 				C8503B442D6A99449B3FE8C4 /* MeasurementCalculator.swift in Sources */,
 				C8503B452D6A99449B3FE8C5 /* UnitPreferences.swift in Sources */,
+				28984A5B7C8381564F544D7E /* AppModePickerView.swift in Sources */,
+				247A9FAC7C300DD219A5A332 /* AppModePreferences.swift in Sources */,
 				DE33389B8145869804340112 /* BNGConverter.swift in Sources */,
 				237C2BDF074F98E2885EF3E3 /* MGRSConverter.swift in Sources */,
 				ECE27C88B19B7B65F0247E79 /* KMLMapIntegration.swift in Sources */,
