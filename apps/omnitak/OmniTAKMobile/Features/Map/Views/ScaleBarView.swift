@@ -140,11 +140,25 @@ struct ScaleBarView: View {
     }
 
     private func calculateScale(from meters: Double) -> (Double, String) {
-        if meters >= 1000 {
-            let km = meters / 1000
-            return (getNiceNumber(km), "km")
-        } else {
-            return (getNiceNumber(meters), "m")
+        let unitSystem = UnitPreferences.shared.unitSystem
+
+        switch unitSystem {
+        case .metric:
+            if meters >= 1000 {
+                let km = meters / 1000
+                return (getNiceNumber(km), "km")
+            } else {
+                return (getNiceNumber(meters), "m")
+            }
+        case .imperial:
+            let feet = meters * 3.28084
+            let miles = meters / 1609.344
+
+            if miles >= 0.1 {
+                return (getNiceNumber(miles), "mi")
+            } else {
+                return (getNiceNumber(feet), "ft")
+            }
         }
     }
 

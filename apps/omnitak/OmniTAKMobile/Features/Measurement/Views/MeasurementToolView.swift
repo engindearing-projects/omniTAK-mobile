@@ -267,10 +267,16 @@ struct MeasurementToolView: View {
     private var distanceResultsView: some View {
         VStack(spacing: 6) {
             if let meters = manager.liveResult.distanceMeters {
-                resultRow(label: "Distance", value: MeasurementCalculator.formatDistance(meters))
-                resultRow(label: "Miles", value: String(format: "%.3f mi", manager.liveResult.distanceMiles ?? 0))
+                resultRow(label: "Distance", value: UnitFormatter.distance(meters))
+                // Show alternate units based on preference
+                if UnitPreferences.shared.unitSystem == .metric {
+                    resultRow(label: "Miles", value: String(format: "%.3f mi", manager.liveResult.distanceMiles ?? 0))
+                    resultRow(label: "Feet", value: String(format: "%.1f ft", manager.liveResult.distanceFeet ?? 0))
+                } else {
+                    resultRow(label: "Kilometers", value: String(format: "%.3f km", manager.liveResult.distanceKilometers ?? 0))
+                    resultRow(label: "Meters", value: String(format: "%.1f m", meters))
+                }
                 resultRow(label: "Nautical Miles", value: String(format: "%.3f NM", manager.liveResult.distanceNauticalMiles ?? 0))
-                resultRow(label: "Feet", value: String(format: "%.1f ft", manager.liveResult.distanceFeet ?? 0))
             }
 
             if let segments = manager.liveResult.segmentDistances, segments.count > 1 {
@@ -289,14 +295,14 @@ struct MeasurementToolView: View {
             if let degrees = manager.liveResult.bearingDegrees {
                 resultRow(label: "Bearing", value: MeasurementCalculator.formatBearing(degrees))
                 resultRow(label: "Mils (NATO)", value: String(format: "%.0f mil", manager.liveResult.bearingMils ?? 0))
-                resultRow(label: "Back Bearing", value: String(format: "%.1f\u{00B0}", manager.liveResult.backBearingDegrees ?? 0))
+                resultRow(label: "Back Bearing", value: String(format: "%.1f°", manager.liveResult.backBearingDegrees ?? 0))
             }
 
             if let meters = manager.liveResult.distanceMeters {
                 Divider()
                     .background(Color(hex: "#444444"))
 
-                resultRow(label: "Distance", value: MeasurementCalculator.formatDistance(meters))
+                resultRow(label: "Distance", value: UnitFormatter.distance(meters))
             }
         }
     }
@@ -304,17 +310,22 @@ struct MeasurementToolView: View {
     private var areaResultsView: some View {
         VStack(spacing: 6) {
             if let sqMeters = manager.liveResult.areaSquareMeters {
-                resultRow(label: "Area", value: MeasurementCalculator.formatArea(sqMeters))
-                resultRow(label: "Acres", value: String(format: "%.3f ac", manager.liveResult.areaAcres ?? 0))
-                resultRow(label: "Hectares", value: String(format: "%.3f ha", manager.liveResult.areaHectares ?? 0))
-                resultRow(label: "Square Miles", value: String(format: "%.6f mi\u{00B2}", manager.liveResult.areaSquareMiles ?? 0))
+                resultRow(label: "Area", value: UnitFormatter.area(sqMeters))
+                // Show alternate units based on preference
+                if UnitPreferences.shared.unitSystem == .metric {
+                    resultRow(label: "Acres", value: String(format: "%.3f ac", manager.liveResult.areaAcres ?? 0))
+                    resultRow(label: "Square Miles", value: String(format: "%.6f mi²", manager.liveResult.areaSquareMiles ?? 0))
+                } else {
+                    resultRow(label: "Hectares", value: String(format: "%.3f ha", manager.liveResult.areaHectares ?? 0))
+                    resultRow(label: "Square Km", value: String(format: "%.6f km²", sqMeters / 1000000.0))
+                }
             }
 
             if let perimeter = manager.liveResult.perimeterMeters {
                 Divider()
                     .background(Color(hex: "#444444"))
 
-                resultRow(label: "Perimeter", value: MeasurementCalculator.formatDistance(perimeter))
+                resultRow(label: "Perimeter", value: UnitFormatter.distance(perimeter))
             }
         }
     }
@@ -334,7 +345,7 @@ struct MeasurementToolView: View {
                     .foregroundColor(Color(hex: "#888888"))
 
                 ForEach(manager.rangeRingConfiguration.distances, id: \.self) { distance in
-                    Text(MeasurementCalculator.formatDistance(distance))
+                    Text(UnitFormatter.distance(distance))
                         .font(.system(size: 12))
                         .foregroundColor(Color(hex: "#FFFC00"))
                 }
@@ -514,7 +525,7 @@ struct MeasurementListView: View {
             switch measurement.type {
             case .distance:
                 if let meters = measurement.result.distanceMeters {
-                    Text(MeasurementCalculator.formatDistance(meters))
+                    Text(UnitFormatter.distance(meters))
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
@@ -528,7 +539,7 @@ struct MeasurementListView: View {
 
             case .area:
                 if let area = measurement.result.areaSquareMeters {
-                    Text(MeasurementCalculator.formatArea(area))
+                    Text(UnitFormatter.area(area))
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
@@ -556,7 +567,7 @@ struct MeasurementListView: View {
                     .font(.headline)
             }
 
-            Text("Radius: \(MeasurementCalculator.formatDistance(ring.radiusMeters))")
+            Text("Radius: \(UnitFormatter.distance(ring.radiusMeters))")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
 
@@ -836,13 +847,20 @@ struct CompactMeasurementOverlay: View {
     private var compactDistanceResults: some View {
         VStack(alignment: .trailing, spacing: 4) {
             if let meters = manager.liveResult.distanceMeters {
-                Text(MeasurementCalculator.formatDistance(meters))
+                Text(UnitFormatter.distance(meters))
                     .font(.system(size: 18, weight: .bold, design: .monospaced))
                     .foregroundColor(Color(hex: "#FFFC00"))
 
-                Text(String(format: "%.2f mi", manager.liveResult.distanceMiles ?? 0))
-                    .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.8))
+                // Show alternate unit
+                if UnitPreferences.shared.unitSystem == .metric {
+                    Text(String(format: "%.2f mi", manager.liveResult.distanceMiles ?? 0))
+                        .font(.system(size: 12))
+                        .foregroundColor(.white.opacity(0.8))
+                } else {
+                    Text(String(format: "%.2f km", manager.liveResult.distanceKilometers ?? 0))
+                        .font(.system(size: 12))
+                        .foregroundColor(.white.opacity(0.8))
+                }
             }
         }
     }
@@ -855,7 +873,7 @@ struct CompactMeasurementOverlay: View {
                     .foregroundColor(Color(hex: "#FFFC00"))
 
                 if let meters = manager.liveResult.distanceMeters {
-                    Text(MeasurementCalculator.formatDistance(meters))
+                    Text(UnitFormatter.distance(meters))
                         .font(.system(size: 12))
                         .foregroundColor(.white.opacity(0.8))
                 }
@@ -866,13 +884,20 @@ struct CompactMeasurementOverlay: View {
     private var compactAreaResults: some View {
         VStack(alignment: .trailing, spacing: 4) {
             if let sqMeters = manager.liveResult.areaSquareMeters {
-                Text(MeasurementCalculator.formatArea(sqMeters))
+                Text(UnitFormatter.area(sqMeters))
                     .font(.system(size: 16, weight: .bold, design: .monospaced))
                     .foregroundColor(Color(hex: "#FFFC00"))
 
-                Text(String(format: "%.2f ac", manager.liveResult.areaAcres ?? 0))
-                    .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.8))
+                // Show alternate unit
+                if UnitPreferences.shared.unitSystem == .metric {
+                    Text(String(format: "%.2f ac", manager.liveResult.areaAcres ?? 0))
+                        .font(.system(size: 12))
+                        .foregroundColor(.white.opacity(0.8))
+                } else {
+                    Text(String(format: "%.2f ha", manager.liveResult.areaHectares ?? 0))
+                        .font(.system(size: 12))
+                        .foregroundColor(.white.opacity(0.8))
+                }
             }
         }
     }
@@ -884,7 +909,7 @@ struct CompactMeasurementOverlay: View {
                 .foregroundColor(Color(hex: "#FFFC00"))
 
             ForEach(manager.rangeRingConfiguration.distances.prefix(3), id: \.self) { distance in
-                Text(MeasurementCalculator.formatDistance(distance))
+                Text(UnitFormatter.distance(distance))
                     .font(.system(size: 11))
                     .foregroundColor(.white.opacity(0.8))
             }

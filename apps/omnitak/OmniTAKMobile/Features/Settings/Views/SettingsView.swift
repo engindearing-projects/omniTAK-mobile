@@ -18,6 +18,7 @@ struct SettingsView: View {
     @AppStorage("showTrafficOverlay") private var showTrafficOverlay = false
     @AppStorage("enableLocationSharing") private var enableLocationSharing = true
     @AppStorage("batteryOptimization") private var batteryOptimization = false
+    @AppStorage("unitSystem") private var unitSystemString = "Metric"
 
     // Map Overlay Settings
     @AppStorage("mgrsGridEnabled") private var mgrsGridEnabled = false
@@ -165,6 +166,12 @@ struct SettingsView: View {
 
                 // Display Settings
                 Section("DISPLAY") {
+                    // Unit System Picker
+                    Picker("Unit System", selection: $unitSystemString) {
+                        Text("Metric (km, m, km/h)").tag("Metric")
+                        Text("Imperial (mi, ft, mph)").tag("Imperial")
+                    }
+
                     Toggle("Dark Mode", isOn: $darkMode)
                     Toggle("Show Traffic Overlay", isOn: $showTrafficOverlay)
                     Toggle("Enable Haptic Feedback", isOn: $enableHaptics)
@@ -203,6 +210,7 @@ struct SettingsView: View {
                         showTrafficOverlay = false
                         enableLocationSharing = true
                         batteryOptimization = false
+                        unitSystemString = "Metric"
                         // Map overlay defaults
                         mgrsGridEnabled = false
                         mgrsGridDensityString = "1km"

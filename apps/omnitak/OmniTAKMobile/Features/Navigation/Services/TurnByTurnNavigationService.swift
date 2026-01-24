@@ -979,7 +979,14 @@ class TurnByTurnNavigationService: NSObject, ObservableObject {
 
     /// Get formatted speed
     var formattedSpeed: String {
-        String(format: "%.1f km/h", speedKmh)
+        let prefs = UnitPreferences.shared
+        switch prefs.unitSystem {
+        case .metric:
+            return String(format: "%.1f km/h", speedKmh)
+        case .imperial:
+            let mph = speedKmh * 0.621371
+            return String(format: "%.1f mph", mph)
+        }
     }
 
     /// Get current maneuver icon

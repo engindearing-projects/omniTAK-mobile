@@ -193,17 +193,36 @@ struct NavigationInstructionCard: View {
     }
 
     private func formatDistance(_ distance: CLLocationDistance) -> String {
-        if distance < 100 {
-            return "\(Int(distance))m"
-        } else if distance < 1000 {
-            let rounded = Int(round(distance / 10) * 10)
-            return "\(rounded)m"
-        } else {
-            let km = distance / 1000
-            if km < 10 {
-                return String(format: "%.1fkm", km)
+        let prefs = UnitPreferences.shared
+
+        switch prefs.unitSystem {
+        case .metric:
+            if distance < 100 {
+                return "\(Int(distance))m"
+            } else if distance < 1000 {
+                let rounded = Int(round(distance / 10) * 10)
+                return "\(rounded)m"
             } else {
-                return "\(Int(km))km"
+                let km = distance / 1000
+                if km < 10 {
+                    return String(format: "%.1fkm", km)
+                } else {
+                    return "\(Int(km))km"
+                }
+            }
+        case .imperial:
+            let feet = distance * 3.28084
+            let miles = distance / 1609.344
+
+            if feet < 500 {
+                return "\(Int(feet))ft"
+            } else if miles < 0.1 {
+                let rounded = Int(round(feet / 50) * 50)
+                return "\(rounded)ft"
+            } else if miles < 10 {
+                return String(format: "%.1fmi", miles)
+            } else {
+                return "\(Int(miles))mi"
             }
         }
     }

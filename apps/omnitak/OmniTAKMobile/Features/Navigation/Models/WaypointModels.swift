@@ -360,12 +360,28 @@ struct CompassData: Equatable {
 // MARK: - Distance Formatting Extensions
 
 extension Double {
-    /// Format distance in meters to human-readable string
+    /// Format distance in meters to human-readable string based on unit preferences
     var formattedDistance: String {
-        if self < 1000 {
-            return String(format: "%.0f m", self)
-        } else {
-            return String(format: "%.2f km", self / 1000)
+        let prefs = UnitPreferences.shared
+
+        switch prefs.unitSystem {
+        case .metric:
+            if self < 1000 {
+                return String(format: "%.0f m", self)
+            } else {
+                return String(format: "%.2f km", self / 1000)
+            }
+        case .imperial:
+            let feet = self * 3.28084
+            let miles = self / 1609.344
+
+            if feet < 1000 {
+                return String(format: "%.0f ft", feet)
+            } else if miles < 10 {
+                return String(format: "%.2f mi", miles)
+            } else {
+                return String(format: "%.1f mi", miles)
+            }
         }
     }
 

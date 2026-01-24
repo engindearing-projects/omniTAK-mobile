@@ -126,8 +126,8 @@ struct BloodhoundView: View {
 
                 StatCard(
                     title: "AVG SPEED",
-                    value: String(format: "%.1f", bloodhoundService.statistics.averageNetworkSpeed * 3.6),
-                    subtitle: "km/h",
+                    value: String(format: "%.1f", UnitPreferences.shared.speedValue(bloodhoundService.statistics.averageNetworkSpeed)),
+                    subtitle: UnitPreferences.shared.speedUnit,
                     icon: "speedometer",
                     color: .purple
                 )
@@ -471,7 +471,7 @@ struct TrackRow: View {
                             HStack(spacing: 4) {
                                 Image(systemName: "speedometer")
                                     .font(.system(size: 10))
-                                Text(String(format: "%.1f km/h", speed * 3.6))
+                                Text(UnitFormatter.speed(speed))
                                     .font(.system(size: 11, weight: .medium))
                             }
                             .foregroundColor(.cyan)
@@ -714,7 +714,7 @@ struct BloodhoundTrackDetailView: View {
             if let position = track.currentPosition {
                 DetailRowView(label: "Latitude", value: String(format: "%.6f°", position.coordinate.latitude))
                 DetailRowView(label: "Longitude", value: String(format: "%.6f°", position.coordinate.longitude))
-                DetailRowView(label: "Altitude", value: String(format: "%.1f m (%.1f ft)", position.altitude, position.altitude * 3.28084))
+                DetailRowView(label: "Altitude", value: UnitFormatter.altitudeDual(position.altitude))
                 DetailRowView(label: "Updated", value: position.timestamp.formatted())
             } else {
                 Text("No position data")
@@ -734,14 +734,14 @@ struct BloodhoundTrackDetailView: View {
                 .foregroundColor(accentColor)
 
             if let speed = track.currentSpeed {
-                DetailRowView(label: "Current Speed", value: String(format: "%.2f m/s (%.1f km/h)", speed, speed * 3.6))
+                DetailRowView(label: "Current Speed", value: UnitFormatter.speedDual(speed))
             }
 
             if let heading = track.currentHeading {
                 DetailRowView(label: "Heading", value: String(format: "%.0f°", heading))
             }
 
-            DetailRowView(label: "Average Speed", value: String(format: "%.2f m/s (%.1f km/h)", track.averageSpeed, track.averageSpeed * 3.6))
+            DetailRowView(label: "Average Speed", value: UnitFormatter.speedDual(track.averageSpeed))
 
             // Predicted position
             if let predicted = track.predictPosition(secondsAhead: 60) {
@@ -821,7 +821,7 @@ struct BloodhoundTrackDetailView: View {
 
                         HStack(spacing: 8) {
                             if let speed = position.speed {
-                                Text(String(format: "%.1f km/h", speed * 3.6))
+                                Text(UnitFormatter.speed(speed))
                                     .font(.system(size: 10))
                                     .foregroundColor(.cyan)
                             }

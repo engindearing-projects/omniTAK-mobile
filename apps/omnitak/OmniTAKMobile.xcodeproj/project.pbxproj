@@ -203,6 +203,7 @@
 		C5F04FC952F95D148C499140 /* DataPackageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFD0915DECF434E22D068531 /* DataPackageView.swift */; };
 		C834B4EAB8F038DE7CB99099 /* DataPackageImportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9BD8FABAF37BB1D8BCFEBCB /* DataPackageImportView.swift */; };
 		C8503B442D6A99449B3FE8C4 /* MeasurementCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55AC5270E9592B701917919E /* MeasurementCalculator.swift */; };
+		C8503B452D6A99449B3FE8C5 /* UnitPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56AC5271E9592B701917920E /* UnitPreferences.swift */; };
 		C95BA93B7F34632A04308763 /* OfflineTileOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 289955DF0DAF10AE302D05FD /* OfflineTileOverlay.swift */; };
 		C9797C0F3D1C2B8868AC829C /* AircraftAnnotation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82B1BDBE2D53CC66D15249CB /* AircraftAnnotation.swift */; };
 		C99AFFDB7E5BE24FA45DE78A /* CASRequestModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 250C3BCC832BAF93AF02580F /* CASRequestModels.swift */; };
@@ -351,6 +352,7 @@
 		53D5A42ABFBE8EF268B187D8 /* EchelonModels.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = EchelonModels.swift; path = OmniTAKMobile/Features/Teams/Models/EchelonModels.swift; sourceTree = "<group>"; };
 		54CA9186E268A8145FB69667 /* ATAKToolsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ATAKToolsView.swift; path = OmniTAKMobile/Shared/UI/Components/ATAKToolsView.swift; sourceTree = "<group>"; };
 		55AC5270E9592B701917919E /* MeasurementCalculator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MeasurementCalculator.swift; path = OmniTAKMobile/Utilities/Calculators/MeasurementCalculator.swift; sourceTree = "<group>"; };
+		56AC5271E9592B701917920E /* UnitPreferences.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = UnitPreferences.swift; path = OmniTAKMobile/Utilities/Preferences/UnitPreferences.swift; sourceTree = "<group>"; };
 		57D7BCCB87FE00A332286EAC /* ChatView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ChatView.swift; path = OmniTAKMobile/Features/Chat/Views/ChatView.swift; sourceTree = "<group>"; };
 		59B935421FA6C4E2152404D7 /* KMLMapIntegration.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = KMLMapIntegration.swift; path = OmniTAKMobile/Utilities/Integration/KMLMapIntegration.swift; sourceTree = "<group>"; };
 		5A8CE272F04D913277CBE179 /* RadialMenuButton.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RadialMenuButton.swift; path = OmniTAKMobile/Shared/UI/RadialMenu/RadialMenuButton.swift; sourceTree = "<group>"; };
@@ -846,6 +848,14 @@
 			name = Calculators;
 			sourceTree = "<group>";
 		};
+		2ABF28B5C0B444F56FCF87ED /* Preferences */ = {
+			isa = PBXGroup;
+			children = (
+				56AC5271E9592B701917920E /* UnitPreferences.swift */,
+			);
+			name = Preferences;
+			sourceTree = "<group>";
+		};
 		2B119A624C9A2913C24288D9 /* Services */ = {
 			isa = PBXGroup;
 			children = (
@@ -892,6 +902,7 @@
 				C238DD63AF8C7AB57BB9FFA2 /* Integration */,
 				720F6487A1D88E7C84127AE4 /* Network */,
 				4F600118ADEF753E79546145 /* Parsers */,
+				2ABF28B5C0B444F56FCF87ED /* Preferences */,
 			);
 			name = Utilities;
 			sourceTree = "<group>";
@@ -2140,6 +2151,7 @@
 				B291B307F238B64A5231A39B /* RouteStorageManager.swift in Sources */,
 				67D3B55F33075F852EB28D49 /* TeamStorageManager.swift in Sources */,
 				C8503B442D6A99449B3FE8C4 /* MeasurementCalculator.swift in Sources */,
+				C8503B452D6A99449B3FE8C5 /* UnitPreferences.swift in Sources */,
 				DE33389B8145869804340112 /* BNGConverter.swift in Sources */,
 				237C2BDF074F98E2885EF3E3 /* MGRSConverter.swift in Sources */,
 				ECE27C88B19B7B65F0247E79 /* KMLMapIntegration.swift in Sources */,
@@ -2396,7 +2408,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.7.3;
+				MARKETING_VERSION = 2.8.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.engindearing.omnitak.mobile;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -2443,7 +2455,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.7.3;
+				MARKETING_VERSION = 2.8.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.engindearing.omnitak.mobile;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

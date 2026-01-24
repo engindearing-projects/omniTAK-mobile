@@ -227,12 +227,7 @@ struct EnrichedCoTEvent: Identifiable, Equatable {
 
     var formattedDistance: String {
         guard let dist = distance else { return "N/A" }
-
-        if dist < 1000 {
-            return String(format: "%.0f m", dist)
-        } else {
-            return String(format: "%.2f km", dist / 1000.0)
-        }
+        return UnitFormatter.distance(dist)
     }
 
     var formattedBearing: String {
