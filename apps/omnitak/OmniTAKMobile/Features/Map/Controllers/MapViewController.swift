@@ -802,10 +802,6 @@ struct ATAKMapView: View {
                 }
 
                 switch identifier {
-                case "show_layers":
-                    withAnimation(.spring()) {
-                        showLayersPanel.toggle()
-                    }
                 case "draw_shape":
                     withAnimation(.spring()) {
                         showDrawingPanel.toggle()
@@ -851,6 +847,12 @@ struct ATAKMapView: View {
             // App mode picker from radial menu
             .onReceive(NotificationCenter.default.publisher(for: .radialMenuShowAppModePicker)) { _ in
                 showAppModePicker = true
+            }
+            // Layers panel from radial menu
+            .onReceive(NotificationCenter.default.publisher(for: .radialMenuShowLayers)) { _ in
+                withAnimation(.spring()) {
+                    showLayersPanel.toggle()
+                }
             }
             .sheet(isPresented: $showAppModePicker) {
                 AppModePickerView()

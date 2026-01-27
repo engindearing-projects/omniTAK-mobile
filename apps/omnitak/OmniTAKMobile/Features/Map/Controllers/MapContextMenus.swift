@@ -132,17 +132,17 @@ extension RadialMenuConfiguration {
                 label: "Meas",
                 action: .measure
             ),
-            // Bottom-left - Route
-            RadialMenuItem(
-                icon: "arrow.triangle.turn.up.right.diamond.fill",
-                label: "Route",
-                action: .navigate
-            ),
-            // Left - Draw (perimeters, staging)
+            // Bottom-left - Draw (perimeters, staging)
             RadialMenuItem(
                 icon: "pencil.tip.crop.circle",
                 label: "Draw",
                 action: .openDrawingTools
+            ),
+            // Left - Layers
+            RadialMenuItem(
+                icon: "square.stack.3d.up.fill",
+                label: "Layers",
+                action: .custom("show_layers")
             ),
             // Top-left - Mode switch
             RadialMenuItem(
@@ -202,11 +202,11 @@ extension RadialMenuConfiguration {
                 label: "Meas",
                 action: .measure
             ),
-            // Left - Route
+            // Left - Layers
             RadialMenuItem(
-                icon: "arrow.triangle.turn.up.right.diamond.fill",
-                label: "Route",
-                action: .navigate
+                icon: "square.stack.3d.up.fill",
+                label: "Layers",
+                action: .custom("show_layers")
             ),
             // Top-left - Mode switch
             RadialMenuItem(
