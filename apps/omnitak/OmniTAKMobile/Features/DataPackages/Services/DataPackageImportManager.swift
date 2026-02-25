@@ -365,6 +365,34 @@ class DataPackageImportManager: ObservableObject {
                     print("✅ Imported CA certificate: \(certLabel)")
                 }
             }
+        } else if let trust = firstItem[kSecImportItemTrust as String] {
+            // Fallback for cert-only P12 files (e.g. truststores) where kSecImportItemCertChain
+            // may not be populated. Extract certificates from the SecTrust object instead.
+            let trustRef = trust as! SecTrust
+            print("📜 Extracting certificates from trust object for: \(certificateLabel)")
+
+            if let certChain = SecTrustCopyCertificateChain(trustRef) as? [SecCertificate] {
+                for (index, certificate) in certChain.enumerated() {
+                    let certLabel = index == 0 ? certificateLabel : "\(certificateLabel)-\(index)"
+                    let certQuery: [String: Any] = [
+                        kSecClass as String: kSecClassCertificate,
+                        kSecValueRef as String: certificate,
+                        kSecAttrLabel as String: certLabel,
+                        kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock
+                    ]
+
+                    SecItemDelete(certQuery as CFDictionary)
+                    let addStatus = SecItemAdd(certQuery as CFDictionary, nil)
+
+                    if addStatus != errSecSuccess && addStatus != errSecDuplicateItem {
+                        print("⚠️ Failed to add certificate \(index) to keychain: \(addStatus)")
+                    } else {
+                        print("✅ Imported CA certificate (via trust): \(certLabel)")
+                    }
+                }
+            } else {
+                throw ImportError.certificateImportFailed("No certificates found in trust object")
+            }
         } else {
             throw ImportError.certificateImportFailed("No identity or certificates found in P12")
         }

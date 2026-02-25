@@ -17,7 +17,6 @@ struct DataPackageView: View {
     @State private var showDeleteConfirmation = false
     @State private var packageToDelete: UUID?
     @State private var selectedPackage: DataPackage?
-    @State private var showPackageDetail = false
     @State private var showCacheSettings = false
 
     @StateObject private var tileCacheManager = OfflineTileCacheManager.shared
@@ -92,10 +91,8 @@ struct DataPackageView: View {
         .sheet(isPresented: $showExportSheet) {
             ExportPackageSheet(packageManager: packageManager)
         }
-        .sheet(isPresented: $showPackageDetail) {
-            if let package = selectedPackage {
-                PackageDetailView(package: package, packageManager: packageManager)
-            }
+        .sheet(item: $selectedPackage) { package in
+            PackageDetailView(package: package, packageManager: packageManager)
         }
         .sheet(isPresented: $showCacheSettings) {
             CacheSettingsView(cacheManager: tileCacheManager)
@@ -267,7 +264,6 @@ struct DataPackageView: View {
                     package: package,
                     onTap: {
                         selectedPackage = package
-                        showPackageDetail = true
                     },
                     onDelete: {
                         packageToDelete = package.id

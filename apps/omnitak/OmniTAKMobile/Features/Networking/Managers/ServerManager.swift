@@ -19,14 +19,16 @@ struct TAKServer: Identifiable, Codable, Equatable {
     var useTLS: Bool
     var isDefault: Bool
     var enabled: Bool  // Whether server is enabled for connection (like ATAK checkbox)
-    var certificateName: String?  // Name of certificate file (e.g., "omnitak-mobile")
+    var certificateName: String?  // Name of client certificate file (e.g., "omnitak-mobile")
     var certificatePassword: String?  // Password for .p12 certificate
+    var caCertificateName: String?  // Name of CA/truststore certificate for server verification
+    var caCertificatePassword: String?  // Password for CA .p12 certificate
     var allowLegacyTLS: Bool  // Allow TLS 1.0/1.1 for extremely old servers (security risk)
     var username: String?  // Username for enrollment
     var password: String?  // Password for enrollment
     var enrollmentPort: UInt16?  // Enrollment API port (default 8446)
 
-    init(id: UUID = UUID(), name: String, host: String, port: UInt16, protocolType: String = "tcp", useTLS: Bool = false, isDefault: Bool = false, enabled: Bool = true, certificateName: String? = nil, certificatePassword: String? = nil, allowLegacyTLS: Bool = false, username: String? = nil, password: String? = nil, enrollmentPort: UInt16? = nil) {
+    init(id: UUID = UUID(), name: String, host: String, port: UInt16, protocolType: String = "tcp", useTLS: Bool = false, isDefault: Bool = false, enabled: Bool = true, certificateName: String? = nil, certificatePassword: String? = nil, caCertificateName: String? = nil, caCertificatePassword: String? = nil, allowLegacyTLS: Bool = false, username: String? = nil, password: String? = nil, enrollmentPort: UInt16? = nil) {
         self.id = id
         self.name = name
         self.host = host
@@ -37,6 +39,8 @@ struct TAKServer: Identifiable, Codable, Equatable {
         self.enabled = enabled
         self.certificateName = certificateName
         self.certificatePassword = certificatePassword
+        self.caCertificateName = caCertificateName
+        self.caCertificatePassword = caCertificatePassword
         self.allowLegacyTLS = allowLegacyTLS
         self.username = username
         self.password = password
@@ -202,6 +206,11 @@ class ServerManager: ObservableObject {
         #if DEBUG
         print("✅ Added server: \(server.displayName)")
         #endif
+
+        // Auto-connect if the server is enabled
+        if server.enabled {
+            TAKService.shared.connectToServer(server)
+        }
     }
 
     func updateServer(_ server: TAKServer) {
