@@ -15,6 +15,16 @@ struct DataPackageImportView: View {
     @State private var showFilePicker = false
     @State private var importStatus: ImportStatus = .idle
     @State private var showSuccessAlert = false
+    @State private var passwordInput = ""
+
+    private var importInProgress: Bool {
+        switch importStatus {
+        case .importing, .extracting, .configuring, .awaitingPassword:
+            return true
+        default:
+            return false
+        }
+    }
 
     var body: some View {
         NavigationView {
@@ -78,6 +88,25 @@ struct DataPackageImportView: View {
             }
         } message: {
             Text(importManager.successMessage)
+        }
+        .alert(
+            "Certificate Password Required",
+            isPresented: Binding(
+                get: { importManager.pendingPasswordRequest != nil },
+                set: { if !$0 { importManager.supplyPassword(nil) } }
+            )
+        ) {
+            SecureField("Password", text: $passwordInput)
+            Button("Import") {
+                importManager.supplyPassword(passwordInput)
+                passwordInput = ""
+            }
+            Button("Cancel", role: .cancel) {
+                importManager.supplyPassword(nil)
+                passwordInput = ""
+            }
+        } message: {
+            Text("Enter the password for \(importManager.pendingPasswordRequest ?? "certificate")")
         }
     }
 
@@ -148,6 +177,21 @@ struct DataPackageImportView: View {
                         .progressViewStyle(CircularProgressViewStyle(tint: Color(hex: "#4CAF50")))
 
                     Text("Configuring servers...")
+                        .font(.system(size: 15))
+                        .foregroundColor(.white)
+                }
+                .padding(16)
+                .frame(maxWidth: .infinity)
+                .background(Color(hex: "#1A1A1A"))
+                .cornerRadius(12)
+
+            case .awaitingPassword(let filename):
+                HStack(spacing: 12) {
+                    Image(systemName: "key.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(Color(hex: "#FFFC00"))
+
+                    Text("Waiting for password for \(filename)...")
                         .font(.system(size: 15))
                         .foregroundColor(.white)
                 }
@@ -267,8 +311,8 @@ struct DataPackageImportView: View {
             .background(Color(hex: "#00BCD4"))
             .cornerRadius(12)
         }
-        .disabled(importStatus == .importing || importStatus == .extracting || importStatus == .configuring)
-        .opacity((importStatus == .importing || importStatus == .extracting || importStatus == .configuring) ? 0.5 : 1.0)
+        .disabled(importInProgress)
+        .opacity(importInProgress ? 0.5 : 1.0)
     }
 
     // MARK: - Recent Imports
@@ -387,6 +431,7 @@ enum ImportStatus: Equatable {
     case importing
     case extracting
     case configuring
+    case awaitingPassword(String)
     case success(String)
     case error(String)
 }
