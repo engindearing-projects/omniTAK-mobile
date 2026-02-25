@@ -72,6 +72,13 @@ struct DataPackage: Codable, Identifiable {
         }.count
     }
 
+    var certificateCount: Int {
+        contents.filter {
+            if case .certificate = $0 { return true }
+            return false
+        }.count
+    }
+
     var contentsSummary: String {
         var parts: [String] = []
         if overlayCount > 0 {
@@ -83,6 +90,9 @@ struct DataPackage: Codable, Identifiable {
         if configCount > 0 {
             parts.append("\(configCount) config\(configCount == 1 ? "" : "s")")
         }
+        if certificateCount > 0 {
+            parts.append("\(certificateCount) cert\(certificateCount == 1 ? "" : "s")")
+        }
         if mapCacheCount > 0 {
             parts.append("\(mapCacheCount) cache\(mapCacheCount == 1 ? "" : "s")")
         }
@@ -93,10 +103,11 @@ struct DataPackage: Codable, Identifiable {
 // MARK: - Package Content Types
 
 enum PackageContent: Codable, Equatable {
-    case overlay(String)    // KML/KMZ files
-    case icon(String)       // Custom icons
-    case config(String)     // Configuration files
-    case mapCache(String)   // Offline tiles
+    case overlay(String)        // KML/KMZ files
+    case icon(String)           // Custom icons
+    case config(String)         // Configuration files
+    case mapCache(String)       // Offline tiles
+    case certificate(String)    // Certificate files (.p12, .pfx, .pem, .crt, .cer)
 
     private enum CodingKeys: String, CodingKey {
         case type, value
@@ -116,6 +127,8 @@ enum PackageContent: Codable, Equatable {
             self = .config(value)
         case "mapCache":
             self = .mapCache(value)
+        case "certificate":
+            self = .certificate(value)
         default:
             throw DecodingError.dataCorruptedError(
                 forKey: .type,
@@ -141,12 +154,15 @@ enum PackageContent: Codable, Equatable {
         case .mapCache(let value):
             try container.encode("mapCache", forKey: .type)
             try container.encode(value, forKey: .value)
+        case .certificate(let value):
+            try container.encode("certificate", forKey: .type)
+            try container.encode(value, forKey: .value)
         }
     }
 
     var fileName: String {
         switch self {
-        case .overlay(let name), .icon(let name), .config(let name), .mapCache(let name):
+        case .overlay(let name), .icon(let name), .config(let name), .mapCache(let name), .certificate(let name):
             return name
         }
     }
@@ -161,6 +177,8 @@ enum PackageContent: Codable, Equatable {
             return "Config"
         case .mapCache:
             return "Map Cache"
+        case .certificate:
+            return "Certificate"
         }
     }
 
@@ -174,6 +192,8 @@ enum PackageContent: Codable, Equatable {
             return "gearshape"
         case .mapCache:
             return "square.grid.3x3"
+        case .certificate:
+            return "lock.shield"
         }
     }
 }

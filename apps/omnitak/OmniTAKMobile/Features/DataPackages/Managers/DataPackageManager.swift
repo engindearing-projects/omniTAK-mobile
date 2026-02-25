@@ -127,7 +127,34 @@ class DataPackageManager: ObservableObject {
             }
         }
 
-        await MainActor.run { importProgress = 0.9 }
+        await MainActor.run { importProgress = 0.85 }
+
+        // If package contains TAK server files (certs, prefs, YAML configs),
+        // run the TAK-specific import to actually import certs to keychain
+        // and create server connections.
+        let hasTAKFiles = packageContents.contains { content in
+            switch content {
+            case .certificate: return true
+            case .config(let name):
+                let ext = (name as NSString).pathExtension.lowercased()
+                return ext == "pref" || ext == "yaml" || ext == "yml"
+            default: return false
+            }
+        }
+
+        if hasTAKFiles {
+            print("📦 TAK server files detected — running server/certificate import")
+            do {
+                let importManager = await DataPackageImportManager()
+                try await importManager.importPackage(from: url) { _ in }
+                print("✅ TAK import completed successfully")
+            } catch {
+                print("⚠️ TAK import had errors: \(error)")
+                warnings.append("Server config import: \(error.localizedDescription)")
+            }
+        }
+
+        await MainActor.run { importProgress = 0.95 }
 
         // Create package record
         let package = DataPackage(
@@ -193,47 +220,45 @@ class DataPackageManager: ObservableObject {
     }
 
     private func unzipFile(at source: URL, to destination: URL) throws -> [URL] {
-        // iOS 15+ compatible ZIP extraction
-        // Using FileManager to handle ZIP archives
+        // iOS 15+ compatible ZIP extraction using ZipArchive from KMZHandler
 
         var extractedFiles: [URL] = []
 
         // Read the ZIP file
-        guard let archive = try? Data(contentsOf: source) else {
+        guard let zipData = try? Data(contentsOf: source) else {
             throw DataPackageError.extractionFailed("Cannot read ZIP file")
         }
 
-        // Simple ZIP extraction - in production use proper ZIP library
-        // For this implementation, we'll handle common TAK package structure
-        // by looking for specific file patterns
-
-        // Copy the archive to destination for processing
-        let tempZip = destination.appendingPathComponent("package.zip")
-        try archive.write(to: tempZip)
-
-        // Use built-in unzip via Process if available, or use bundled library
-        // For iOS, we need to use a different approach
-
-        // Attempt to use NSFileCoordinator for decompression
-        let resourceValues = try source.resourceValues(forKeys: [.contentTypeKey])
-
-        if let type = resourceValues.contentType,
-           type.conforms(to: .archive) {
-            // It's a valid archive, try to list contents
-            // In a real implementation, you'd use a proper ZIP library here
-
-            // For now, return empty and mark for manual handling
-            print("Archive detected, extraction would occur here")
+        // Use ZipArchive for proper extraction
+        guard let archive = ZipArchive(data: zipData) else {
+            throw DataPackageError.extractionFailed("Invalid or corrupted ZIP archive")
         }
 
-        // List all files in destination
-        if let enumerator = fileManager.enumerator(at: destination, includingPropertiesForKeys: nil) {
-            for case let fileURL as URL in enumerator {
-                if !fileURL.hasDirectoryPath {
-                    extractedFiles.append(fileURL)
-                }
+        print("📦 Extracting ZIP archive with \(archive.entries.count) entries")
+
+        // Extract each entry
+        for entry in archive.entries {
+            // Skip macOS resource fork files
+            if entry.fileName.contains("__MACOSX") || entry.fileName.hasPrefix("._") {
+                continue
             }
+
+            let entryURL = destination.appendingPathComponent(entry.fileName)
+
+            // Create parent directories if needed
+            let parentDir = entryURL.deletingLastPathComponent()
+            if !fileManager.fileExists(atPath: parentDir.path) {
+                try fileManager.createDirectory(at: parentDir, withIntermediateDirectories: true)
+            }
+
+            // Write the file data
+            try entry.data.write(to: entryURL)
+            extractedFiles.append(entryURL)
+
+            print("   ✅ Extracted: \(entry.fileName) (\(entry.data.count) bytes)")
         }
+
+        print("📦 Extracted \(extractedFiles.count) files from ZIP")
 
         return extractedFiles
     }
@@ -305,6 +330,22 @@ class DataPackageManager: ObservableObject {
             try? applyConfiguration(from: destPath)
 
             return (.config(fileName), nil, false)
+
+        case "pref", "yaml", "yml":
+            // TAK server config / preference file
+            let configsDir = packageStorageDir.appendingPathComponent("configs")
+            try fileManager.createDirectory(at: configsDir, withIntermediateDirectories: true)
+            let destPath = configsDir.appendingPathComponent(fileName)
+            try fileManager.copyItem(at: file, to: destPath)
+            return (.config(fileName), nil, false)
+
+        case "p12", "pfx", "pem", "crt", "cer":
+            // Certificate file
+            let certsDir = packageStorageDir.appendingPathComponent("certs")
+            try fileManager.createDirectory(at: certsDir, withIntermediateDirectories: true)
+            let destPath = certsDir.appendingPathComponent(fileName)
+            try fileManager.copyItem(at: file, to: destPath)
+            return (.certificate(fileName), nil, false)
 
         case "mbtiles", "tiles":
             // Map cache file
