@@ -122,3 +122,65 @@ class NetworkUtilities {
         return address
     }
 }
+
+// MARK: - Reusable Form Components
+
+struct FeatureCard: View {
+    let icon: String
+    let title: String
+    let description: String
+    let color: Color
+
+    var body: some View {
+        HStack(spacing: 16) {
+            Image(systemName: icon)
+                .font(.system(size: 28))
+                .foregroundColor(color)
+                .frame(width: 56, height: 56)
+                .background(color.opacity(0.15))
+                .clipShape(Circle())
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(title)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(.white)
+
+                Text(description)
+                    .font(.system(size: 14))
+                    .foregroundColor(Color(hex: "#CCCCCC"))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(white: 0.1))
+        .cornerRadius(12)
+    }
+}
+
+struct FormField: View {
+    let label: String
+    @Binding var text: String
+    var placeholder: String = ""
+    var keyboardType: UIKeyboardType = .default
+    var isSecure: Bool = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(label)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(Color(hex: "#CCCCCC"))
+
+            if isSecure {
+                SecureField(placeholder, text: $text)
+                    .textFieldStyle(CustomTextFieldStyle())
+            } else {
+                TextField(placeholder, text: $text)
+                    .textFieldStyle(CustomTextFieldStyle())
+                    .keyboardType(keyboardType)
+                    .autocapitalization(.none)
+                    .disableAutocorrection(true)
+            }
+        }
+    }
+}

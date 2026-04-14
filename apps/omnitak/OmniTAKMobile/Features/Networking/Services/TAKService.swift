@@ -1483,7 +1483,7 @@ class TAKService: ObservableObject {
 
             guard let directTCP = directTCP, directTCP.isConnected else {
                 Logger.takNetwork.error("sendCoT failed: not connected to any server")
-                Logger.takNetwork.debug("isConnected=\(self.isConnected, privacy: .public) connectedServerIds=\(self.connectedServerIds.count, privacy: .public) serverConnections=\(self.totalConnections, privacy: .public)")
+                Logger.takNetwork.debug("isConnected=\(self.isConnected, privacy: .public) connectedServerIds=\(self.connectedServerIds.count, privacy: .public) serverConnections=\(self.serverConnections.count, privacy: .public)")
                 return false
             }
 
