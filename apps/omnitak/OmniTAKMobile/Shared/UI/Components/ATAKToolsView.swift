@@ -9,7 +9,6 @@ struct ATAKToolsView: View {
     @Binding var showMeasurement: Bool  // Shared measurement state from MapViewController
     @State private var showAlertDialog = false
     @State private var showBrightnessControl = false
-    @State private var selectedTool: ATAKTool?
 
     // Feature sheet states
     @State private var showTeamManagement = false
@@ -29,10 +28,16 @@ struct ATAKToolsView: View {
     @State private var showSPOTREP = false
     @State private var showBloodhound = false
     @State private var show3DView = false
-    @State private var showArcGISPortal = false
+    @State private var showDigitalPointer = false
     @State private var showTurnByTurnNav = false
     @State private var showMeshtastic = false
     @State private var showADSB = false
+    @State private var showContacts = false
+    @State private var showPositionBroadcast = false
+    @State private var showMissionSync = false
+    @State private var showElevationProfile = false
+    @State private var showLineOfSight = false
+    @State private var showEchelonHierarchy = false
 
     @ObservedObject private var chatManager = ChatManager.shared
     @StateObject private var trackRecordingService = TrackRecordingService()
@@ -82,9 +87,6 @@ struct ATAKToolsView: View {
                     .padding(.horizontal, 4)
                 }
             }
-        }
-        .sheet(item: $selectedTool) { tool in
-            ToolDetailView(tool: tool, isPresented: $selectedTool)
         }
         .sheet(isPresented: $showTeamManagement) {
             TeamListView()
@@ -138,8 +140,8 @@ struct ATAKToolsView: View {
             // Use new MapLibre-based 3D terrain view
             MapLibre3DSettingsView(service: MapLibreService.shared)
         }
-        .sheet(isPresented: $showArcGISPortal) {
-            ArcGISPortalView()
+        .sheet(isPresented: $showDigitalPointer) {
+            DigitalPointerControlPanel()
         }
         .sheet(isPresented: $showTurnByTurnNav) {
             TurnByTurnNavigationView()
@@ -149,6 +151,24 @@ struct ATAKToolsView: View {
         }
         .sheet(isPresented: $showADSB) {
             ADSBTrafficView()
+        }
+        .sheet(isPresented: $showContacts) {
+            ContactListView(chatManager: chatManager)
+        }
+        .sheet(isPresented: $showPositionBroadcast) {
+            PositionBroadcastView()
+        }
+        .sheet(isPresented: $showMissionSync) {
+            MissionPackageSyncView()
+        }
+        .sheet(isPresented: $showElevationProfile) {
+            ElevationProfileView()
+        }
+        .sheet(isPresented: $showLineOfSight) {
+            LineOfSightView()
+        }
+        .sheet(isPresented: $showEchelonHierarchy) {
+            EchelonHierarchyView()
         }
     }
 
@@ -174,7 +194,9 @@ struct ATAKToolsView: View {
         case "offline":
             showOfflineMaps = true
         case "drawing":
-            selectedTool = tool
+            // Reuse the existing radial-menu notification that opens the drawing tools panel
+            NotificationCenter.default.post(name: .radialMenuOpenDrawingTools, object: nil)
+            isPresented = false  // Dismiss tools menu so the drawing panel is visible
         case "measure":
             // Use the shared measurement overlay from MapViewController
             showMeasurement = true
@@ -197,8 +219,6 @@ struct ATAKToolsView: View {
         // Utilities
         case "3dview":
             show3DView = true
-        case "arcgis":
-            showArcGISPortal = true
         case "brightness":
             showBrightnessControl = true
         case "plugins":
@@ -212,8 +232,23 @@ struct ATAKToolsView: View {
         case "adsb":
             showADSB = true
 
+        // Drawer-absorbed map-driven destinations
+        case "contacts":
+            showContacts = true
+        case "selfsa":
+            showPositionBroadcast = true
+        case "missionsync":
+            showMissionSync = true
+        case "elevation":
+            showElevationProfile = true
+        case "los":
+            showLineOfSight = true
+        case "echelon":
+            showEchelonHierarchy = true
+
         default:
-            selectedTool = tool
+            // Unknown tool ids are a no-op — there is no fallback detail view.
+            break
         }
     }
 }
@@ -353,228 +388,19 @@ struct ATAKTool: Identifiable {
         ATAKTool(id: "turnbyturn", displayName: "Navigation", iconName: "location.north.line.fill", description: "Turn-by-turn voice navigation"),
         ATAKTool(id: "meshtastic", displayName: "Meshtastic", iconName: "dot.radiowaves.left.and.right", description: "Meshtastic mesh networking"),
 
-        // Row 5 - Additional Utilities
-        ATAKTool(id: "arcgis", displayName: "ArcGIS", iconName: "globe.americas.fill", description: "ArcGIS Portal (Beta - requires account)"),
+        // Row 5 - Map-driven destinations (absorbed from removed navigation drawer)
+        ATAKTool(id: "contacts", displayName: "Contacts", iconName: "person.2.fill", description: "Team contacts and presence"),
+        ATAKTool(id: "selfsa", displayName: "Self SA", iconName: "dot.radiowaves.up.forward", description: "Position broadcasting (PLI)"),
+        ATAKTool(id: "missionsync", displayName: "Mission Sync", iconName: "arrow.triangle.2.circlepath", description: "Mission package sync"),
+        ATAKTool(id: "elevation", displayName: "Elevation", iconName: "mountain.2.fill", description: "Elevation profile"),
+        ATAKTool(id: "los", displayName: "Line of Sight", iconName: "eye.fill", description: "Line of sight analysis"),
+
+        // Row 6 - Hierarchy & Utilities
+        ATAKTool(id: "echelon", displayName: "Hierarchy", iconName: "rectangle.connected.to.line.below", description: "Unit hierarchy / echelon"),
         ATAKTool(id: "adsb", displayName: "ADS-B", iconName: "airplane.circle.fill", description: "ADS-B aircraft tracking"),
         ATAKTool(id: "plugins", displayName: "Plugins", iconName: "puzzlepiece.extension.fill", description: "Manage plugins"),
         ATAKTool(id: "settings", displayName: "Settings", iconName: "gearshape.fill", description: "App settings")
     ]
-}
-
-// MARK: - Tool Detail View
-
-struct ToolDetailView: View {
-    let tool: ATAKTool
-    @Binding var isPresented: ATAKTool?
-
-    var body: some View {
-        NavigationView {
-            ZStack {
-                Color.black.ignoresSafeArea()
-
-                VStack(spacing: 20) {
-                    Image(systemName: tool.iconName)
-                        .font(.system(size: 80))
-                        .foregroundColor(Color(hex: "#FFFC00"))
-                        .padding(.top, 40)
-
-                    Text(tool.displayName)
-                        .font(.system(size: 28, weight: .bold))
-                        .foregroundColor(.white)
-
-                    Text(tool.description)
-                        .font(.system(size: 16))
-                        .foregroundColor(.gray)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 32)
-
-                    Spacer()
-
-                    // Tool-specific content would go here
-                    if tool.id == "geofence" {
-                        GeofenceToolContent()
-                    } else if tool.id == "chat" {
-                        ChatToolContent()
-                    } else if tool.id == "alert" {
-                        AlertToolContent()
-                    } else {
-                        Text("Coming Soon")
-                            .font(.system(size: 18))
-                            .foregroundColor(.gray)
-                            .padding()
-                    }
-
-                    Spacer()
-                }
-            }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        isPresented = nil
-                    }
-                    .foregroundColor(Color(hex: "#FFFC00"))
-                }
-            }
-        }
-    }
-}
-
-// MARK: - Geofence Tool Content
-
-struct GeofenceToolContent: View {
-    @State private var geofenceName = ""
-    @State private var radius = 100.0
-    @State private var showAlert = true
-
-    var body: some View {
-        VStack(spacing: 16) {
-            TextField("Geofence Name", text: $geofenceName)
-                .textFieldStyle(.roundedBorder)
-                .padding(.horizontal)
-
-            HStack {
-                Text("Radius:")
-                    .foregroundColor(.white)
-                Slider(value: $radius, in: 50...5000, step: 50)
-                Text("\(Int(radius))m")
-                    .foregroundColor(.white)
-                    .frame(width: 60)
-            }
-            .padding(.horizontal)
-
-            Toggle("Alert on Entry", isOn: $showAlert)
-                .foregroundColor(.white)
-                .padding(.horizontal)
-
-            Button(action: {}) {
-                Text("Create Geofence")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.black)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color(hex: "#FFFC00"))
-                    .cornerRadius(12)
-            }
-            .padding(.horizontal)
-        }
-        .padding()
-    }
-}
-
-// MARK: - Chat Tool Content
-
-struct ChatToolContent: View {
-    @State private var message = ""
-    @State private var messages: [SimpleChatMessage] = []
-
-    var body: some View {
-        VStack(spacing: 0) {
-            ScrollView {
-                LazyVStack(spacing: 12) {
-                    ForEach(messages) { msg in
-                        SimpleChatBubble(message: msg)
-                    }
-                }
-                .padding()
-            }
-
-            HStack(spacing: 12) {
-                TextField("Type message...", text: $message)
-                    .textFieldStyle(.roundedBorder)
-
-                Button(action: sendMessage) {
-                    Image(systemName: "paperplane.fill")
-                        .foregroundColor(Color(hex: "#FFFC00"))
-                        .font(.system(size: 20))
-                }
-            }
-            .padding()
-            .background(Color(white: 0.15))
-        }
-    }
-
-    private func sendMessage() {
-        guard !message.isEmpty else { return }
-        messages.append(SimpleChatMessage(text: message, sender: "You", timestamp: Date()))
-        message = ""
-    }
-}
-
-// Simple local message structs for tool demo (not the full ChatMessage from ChatModels.swift)
-struct SimpleChatMessage: Identifiable {
-    let id = UUID()
-    let text: String
-    let sender: String
-    let timestamp: Date
-}
-
-struct SimpleChatBubble: View {
-    let message: SimpleChatMessage
-
-    var body: some View {
-        HStack {
-            if message.sender == "You" {
-                Spacer()
-            }
-
-            VStack(alignment: message.sender == "You" ? .trailing : .leading, spacing: 4) {
-                Text(message.text)
-                    .padding(12)
-                    .background(message.sender == "You" ? Color(hex: "#FFFC00") : Color(white: 0.2))
-                    .foregroundColor(message.sender == "You" ? .black : .white)
-                    .cornerRadius(16)
-
-                Text(message.sender)
-                    .font(.system(size: 10))
-                    .foregroundColor(.gray)
-            }
-
-            if message.sender != "You" {
-                Spacer()
-            }
-        }
-    }
-}
-
-// MARK: - Alert Tool Content
-
-struct AlertToolContent: View {
-    @State private var alertType = "Emergency"
-    @State private var message = ""
-
-    let alertTypes = ["Emergency", "Warning", "Information", "Critical"]
-
-    var body: some View {
-        VStack(spacing: 16) {
-            Picker("Alert Type", selection: $alertType) {
-                ForEach(alertTypes, id: \.self) { type in
-                    Text(type).tag(type)
-                }
-            }
-            .pickerStyle(.segmented)
-            .padding(.horizontal)
-
-            TextEditor(text: $message)
-                .frame(height: 120)
-                .padding(4)
-                .background(Color(white: 0.2))
-                .cornerRadius(8)
-                .padding(.horizontal)
-
-            Button(action: {}) {
-                Text("Send Alert")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.black)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.red)
-                    .cornerRadius(12)
-            }
-            .padding(.horizontal)
-        }
-        .padding()
-    }
 }
 
 // MARK: - Sheet Wrapper Views
@@ -615,4 +441,4 @@ struct BloodhoundSheetView: View {
 }
 
 // MARK: - Color Extension
-// Color extension with hex initializer is defined in NavigationDrawer.swift
+// Color extension with hex initializer is defined in SharedUIComponents.swift
