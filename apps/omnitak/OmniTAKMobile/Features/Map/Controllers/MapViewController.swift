@@ -13,9 +13,12 @@ struct ATAKMapView: View {
     @ObservedObject private var chatManager = ChatManager.shared
     @StateObject private var trackRecordingService = TrackRecordingService()
     @StateObject private var overlayCoordinator = MapOverlayCoordinator()
+    @StateObject private var routeOverlayCoordinator = RouteOverlayCoordinator()
+    @ObservedObject private var routeService = RoutePlanningService.shared
     @StateObject private var mapStateManager = MapStateManager()
     @StateObject private var measurementManager = MeasurementManager()
     @ObservedObject private var adsbService = ADSBTrafficService.shared
+    @ObservedObject private var pointDropperService = PointDropperService.shared
 
     @State private var mapRegion = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 38.8977, longitude: -77.0365), // Default: DC
@@ -85,6 +88,7 @@ struct ATAKMapView: View {
     @State private var showBreadcrumbTrails = false
     @State private var showRBLines = false
     @State private var showCallsignPanel = true  // ATAK-style: Enabled by default in bottom-right
+    @State private var isNavigationPanelExpanded = false  // Route navigation panel state
 
     init() {
         let store = DrawingStore()
@@ -166,12 +170,14 @@ struct ATAKMapView: View {
             mapType: $mapType,
             trackingMode: $trackingMode,
             markers: cotMarkers,
+            pointMarkers: pointDropperService.markers,
             aircraft: adsbService.settings.isEnabled ? adsbService.aircraft : [],
             showsUserLocation: true,
             drawingStore: drawingStore,
             drawingManager: drawingManager,
             radialMenuCoordinator: radialMenuCoordinator,
             overlayCoordinator: overlayCoordinator,
+            routeOverlayCoordinator: routeOverlayCoordinator,
             mapStateManager: mapStateManager,
             measurementManager: measurementManager,
             onMapTap: handleMapTap
@@ -663,6 +669,22 @@ struct ATAKMapView: View {
                 CompactMeasurementOverlay(manager: measurementManager, isPresented: $showMeasurement)
                     .zIndex(1000)
             }
+
+            // Route Navigation Panel (ATAK-style, top-left position)
+            VStack {
+                HStack {
+                    RouteNavigationPanel(
+                        routeService: routeService,
+                        isExpanded: $isNavigationPanelExpanded
+                    )
+                    .frame(maxWidth: 320) // ATAK-style compact width
+                    .padding(.leading, 8)
+                    .padding(.top, 70) // Below status bar
+                    Spacer()
+                }
+                Spacer()
+            }
+            .zIndex(1100)
         }
         .background(modalSheets)
         .background(errorOverlays)
@@ -754,6 +776,17 @@ struct ATAKMapView: View {
                 overlayCoordinator.loadSettings()
                 mapStateManager.loadPreferences()
                 mapStateManager.updateMapRegion(mapRegion)
+
+                // Hook up self-healing route callback
+                routeService.onRouteOverlayUpdate = { [weak routeOverlayCoordinator] route, currentLocation, waypointIndex in
+                    DispatchQueue.main.async {
+                        routeOverlayCoordinator?.updateSelfHealingRoute(
+                            route: route,
+                            currentLocation: currentLocation,
+                            currentWaypointIndex: waypointIndex
+                        )
+                    }
+                }
             }
             .onChange(of: isCursorModeActive) { newValue in
                 DispatchQueue.main.async {
@@ -856,6 +889,30 @@ struct ATAKMapView: View {
             }
             .sheet(isPresented: $showAppModePicker) {
                 AppModePickerView()
+            }
+            // Route navigation changes
+            .onChange(of: routeService.activeRoute?.id) { newRouteId in
+                DispatchQueue.main.async {
+                    if let route = routeService.activeRoute {
+                        // Display the active route on the map
+                        routeOverlayCoordinator.displayRoute(route, isActive: routeService.isNavigating)
+                    } else {
+                        // Clear route overlays when navigation stops
+                        routeOverlayCoordinator.clearRouteOverlays()
+                    }
+                }
+            }
+            .onChange(of: routeService.isNavigating) { isNavigating in
+                DispatchQueue.main.async {
+                    if let route = routeService.activeRoute {
+                        // Update route display based on navigation state
+                        routeOverlayCoordinator.displayRoute(route, isActive: isNavigating)
+                    }
+                    // Collapse navigation panel when not navigating
+                    if !isNavigating {
+                        isNavigationPanelExpanded = false
+                    }
+                }
             }
     }
 
@@ -1067,13 +1124,11 @@ struct ATAKMapView: View {
     }
 
     private func formatAltitude(_ altitude: CLLocationDistance) -> String {
-        let altitudeFeet = altitude * 3.28084 // Convert meters to feet
-        return String(format: "%.0f ft MSL", altitudeFeet)
+        return UnitPreferences.shared.formatAltitude(altitude) + " MSL"
     }
 
     private func formatSpeed(_ speed: CLLocationSpeed) -> String {
-        let speedMPH = speed * 2.23694 // Convert m/s to MPH
-        return String(format: "%.0f MPH", max(0, speedMPH))
+        return UnitPreferences.shared.formatSpeed(max(0, speed))
     }
 
     private func formatHeading(_ heading: CLHeading?) -> String {
@@ -1246,6 +1301,8 @@ struct ATAKStatusBar: View {
                 }
                 .frame(width: 32, height: 32)
             }
+            .accessibilityIdentifier("mainMenuButton")
+            .accessibilityLabel("Main Menu")
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
@@ -1571,19 +1628,70 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var accuracy: Double = 0
     @Published var heading: CLHeading?
     @Published var course: Double = 0
+    @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
 
     override init() {
         super.init()
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyBest
-        manager.requestWhenInUseAuthorization()
+
+        // Enable background location updates for navigation and position tracking
+        manager.allowsBackgroundLocationUpdates = true
+        manager.pausesLocationUpdatesAutomatically = false
+        manager.showsBackgroundLocationIndicator = true
+
+        // Request authorization - start with when in use, then prompt for always
+        requestLocationAuthorization()
+
         manager.startUpdatingLocation()
         manager.startUpdatingHeading()
+    }
+
+    /// Request location authorization with escalation to Always
+    func requestLocationAuthorization() {
+        let status = manager.authorizationStatus
+        authorizationStatus = status
+
+        switch status {
+        case .notDetermined:
+            // First request when in use, then iOS will prompt for upgrade
+            manager.requestWhenInUseAuthorization()
+        case .authorizedWhenInUse:
+            // Request upgrade to Always for background operation
+            manager.requestAlwaysAuthorization()
+        case .authorizedAlways:
+            // Already have full access
+            break
+        case .denied, .restricted:
+            // User denied - they'll need to enable in Settings
+            print("[LocationManager] Location access denied or restricted")
+        @unknown default:
+            break
+        }
     }
 
     func startUpdating() {
         manager.startUpdatingLocation()
         manager.startUpdatingHeading()
+    }
+
+    func stopUpdating() {
+        manager.stopUpdatingLocation()
+        manager.stopUpdatingHeading()
+    }
+
+    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        DispatchQueue.main.async {
+            self.authorizationStatus = status
+
+            // If user just granted when-in-use, request always
+            if status == .authorizedWhenInUse {
+                // Slight delay before requesting upgrade
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    manager.requestAlwaysAuthorization()
+                }
+            }
+        }
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
@@ -1595,6 +1703,10 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
         heading = newHeading
     }
+
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("[LocationManager] Location error: \(error.localizedDescription)")
+    }
 }
 
 // MARK: - Tactical Map View (UIViewRepresentable for mapType support)
@@ -1604,12 +1716,14 @@ struct TacticalMapView: UIViewRepresentable {
     @Binding var mapType: MKMapType
     @Binding var trackingMode: MapUserTrackingMode
     let markers: [CoTMarker]
+    let pointMarkers: [PointMarker]  // Point markers from PointDropperService
     let aircraft: [Aircraft]
     let showsUserLocation: Bool
     @ObservedObject var drawingStore: DrawingStore
     @ObservedObject var drawingManager: DrawingToolsManager
     @ObservedObject var radialMenuCoordinator: RadialMenuMapCoordinator
     @ObservedObject var overlayCoordinator: MapOverlayCoordinator
+    @ObservedObject var routeOverlayCoordinator: RouteOverlayCoordinator
     @ObservedObject var mapStateManager: MapStateManager
     @ObservedObject var measurementManager: MeasurementManager
     let onMapTap: (CLLocationCoordinate2D) -> Void
@@ -1626,6 +1740,9 @@ struct TacticalMapView: UIViewRepresentable {
 
         // Configure overlay coordinator with map view
         overlayCoordinator.configure(with: mapView)
+
+        // Configure route overlay coordinator with map view
+        routeOverlayCoordinator.configure(with: mapView)
 
         // Enable all gestures - ensure map is fully interactive
         mapView.isScrollEnabled = true   // Always allow panning
@@ -1674,8 +1791,8 @@ struct TacticalMapView: UIViewRepresentable {
             }
         }
 
-        // Update markers and aircraft
-        updateAnnotations(mapView: mapView, markers: markers, aircraft: aircraft, context: context)
+        // Update markers, point markers, and aircraft
+        updateAnnotations(mapView: mapView, markers: markers, pointMarkers: pointMarkers, aircraft: aircraft, context: context)
 
         // Update overlays
         updateOverlays(mapView: mapView, context: context)
@@ -1696,13 +1813,14 @@ struct TacticalMapView: UIViewRepresentable {
         Coordinator(self)
     }
 
-    private func updateAnnotations(mapView: MKMapView, markers: [CoTMarker], aircraft: [Aircraft], context: Context) {
-        // Remove old CoT annotations only (not aircraft - they're updated incrementally)
+    private func updateAnnotations(mapView: MKMapView, markers: [CoTMarker], pointMarkers: [PointMarker], aircraft: [Aircraft], context: Context) {
+        // Remove old CoT annotations only (not aircraft or point markers - they're updated separately)
         let oldCotAnnotations = mapView.annotations.filter { annotation in
             annotation is MKPointAnnotation &&
             !(annotation is MKUserLocation) &&
             !context.coordinator.isDrawingAnnotation(annotation) &&
-            !(annotation is AircraftAnnotation)
+            !(annotation is AircraftAnnotation) &&
+            !(annotation is PointMarkerAnnotation)
         }
         mapView.removeAnnotations(oldCotAnnotations)
 
@@ -1716,11 +1834,52 @@ struct TacticalMapView: UIViewRepresentable {
         }
         mapView.addAnnotations(cotAnnotations)
 
+        // Update point marker annotations (hostile, friendly, etc. from radial menu)
+        updatePointMarkerAnnotations(mapView: mapView, pointMarkers: pointMarkers)
+
         // Update aircraft annotations incrementally (no flicker)
         updateAircraftAnnotations(mapView: mapView, aircraft: aircraft)
 
         // Update drawing annotations
         updateDrawingAnnotations(mapView: mapView, context: context)
+    }
+
+    private func updatePointMarkerAnnotations(mapView: MKMapView, pointMarkers: [PointMarker]) {
+        // Get existing point marker annotations
+        let existingPointAnnotations = mapView.annotations.compactMap { $0 as? PointMarkerAnnotation }
+        var existingById: [UUID: PointMarkerAnnotation] = [:]
+        for annotation in existingPointAnnotations {
+            existingById[annotation.marker.id] = annotation
+        }
+
+        // Track which ones we've seen
+        var seenIds: Set<UUID> = []
+
+        for marker in pointMarkers {
+            seenIds.insert(marker.id)
+
+            if let existingAnnotation = existingById[marker.id] {
+                // Update existing annotation position if it changed
+                if existingAnnotation.coordinate.latitude != marker.coordinate.latitude ||
+                   existingAnnotation.coordinate.longitude != marker.coordinate.longitude {
+                    // Remove and re-add to update position
+                    mapView.removeAnnotation(existingAnnotation)
+                    let newAnnotation = PointMarkerAnnotation(marker: marker)
+                    mapView.addAnnotation(newAnnotation)
+                }
+            } else {
+                // Add new annotation
+                let annotation = PointMarkerAnnotation(marker: marker)
+                mapView.addAnnotation(annotation)
+            }
+        }
+
+        // Remove annotations for markers that no longer exist
+        for (id, annotation) in existingById {
+            if !seenIds.contains(id) {
+                mapView.removeAnnotation(annotation)
+            }
+        }
     }
 
     private func updateAircraftAnnotations(mapView: MKMapView, aircraft: [Aircraft]) {
@@ -2173,18 +2332,28 @@ struct TacticalMapView: UIViewRepresentable {
                 }
             }
 
-            // Also check annotations (drawing markers)
+            // Also check annotations (drawing markers and point markers)
+            // Use coordinate-based hit testing which is more reliable than view bounds
             var hitAnnotation: MKAnnotation? = nil
+            var isPointMarker = false
+            let hitTestRadius: CGFloat = 44.0  // Standard touch target
+
             if hitOverlay == nil {
-                let annotationViews = mapView.annotations.compactMap { mapView.view(for: $0) }
-                for view in annotationViews {
-                    let viewPoint = gesture.location(in: view)
-                    if view.bounds.contains(viewPoint) {
-                        hitAnnotation = view.annotation
+                for annotation in mapView.annotations {
+                    if annotation is MKUserLocation { continue }
+
+                    let annotationPoint = mapView.convert(annotation.coordinate, toPointTo: mapView)
+                    let distance = hypot(point.x - annotationPoint.x, point.y - annotationPoint.y)
+
+                    if distance < hitTestRadius {
+                        hitAnnotation = annotation
                         // Check if it's a drawing marker
-                        if let drawingMarker = view.annotation as? DrawingMarkerAnnotation {
+                        if let drawingMarker = annotation as? DrawingMarkerAnnotation {
                             drawingId = drawingMarker.marker.id
                             drawingType = .marker
+                        } else if annotation is PointMarkerAnnotation {
+                            // This is a point marker - use the radial menu coordinator's handler
+                            isPointMarker = true
                         }
                         break
                     }
@@ -2194,8 +2363,12 @@ struct TacticalMapView: UIViewRepresentable {
             // Determine menu configuration based on what was tapped
             let screenPoint = gesture.location(in: mapView)
 
-            if hitOverlay != nil || hitAnnotation != nil {
-                // Long-press on a shape or marker - show marker context menu
+            if isPointMarker {
+                // Point marker - use the full radial menu coordinator handler
+                // which properly detects PointMarkerAnnotation and shows the marker menu
+                parent.radialMenuCoordinator.handleLongPress(at: screenPoint, on: mapView)
+            } else if hitOverlay != nil || hitAnnotation != nil {
+                // Long-press on a drawing shape or drawing marker - show marker context menu
                 parent.radialMenuCoordinator.showContextMenu(
                     at: screenPoint,
                     for: coordinate,
@@ -2205,11 +2378,7 @@ struct TacticalMapView: UIViewRepresentable {
                 )
             } else {
                 // Long-press on empty map - show map context menu
-                parent.radialMenuCoordinator.showContextMenu(
-                    at: screenPoint,
-                    for: coordinate,
-                    menuType: .mapContext
-                )
+                parent.radialMenuCoordinator.handleLongPress(at: screenPoint, on: mapView)
             }
         }
 
@@ -2217,6 +2386,34 @@ struct TacticalMapView: UIViewRepresentable {
             return annotation is DrawingMarkerAnnotation ||
                    annotation is DrawingLabelAnnotation ||
                    annotation.title == "Point"
+        }
+
+        // Handle info button tap on marker callout
+        func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
+            guard let annotation = view.annotation else { return }
+
+            // Get screen point for radial menu
+            let annotationPoint = mapView.convert(annotation.coordinate, toPointTo: mapView)
+
+            if annotation is PointMarkerAnnotation {
+                // Show radial menu for point marker with edit/delete options
+                parent.radialMenuCoordinator.handleLongPress(at: annotationPoint, on: mapView)
+            } else if let drawingMarker = annotation as? DrawingMarkerAnnotation {
+                // Show radial menu for drawing marker
+                parent.radialMenuCoordinator.showContextMenu(
+                    at: annotationPoint,
+                    for: annotation.coordinate,
+                    menuType: .markerContext,
+                    drawingId: drawingMarker.marker.id,
+                    drawingType: .marker
+                )
+            } else {
+                // Generic annotation - show info
+                parent.radialMenuCoordinator.handleLongPress(at: annotationPoint, on: mapView)
+            }
+
+            // Deselect to dismiss callout
+            mapView.deselectAnnotation(annotation, animated: true)
         }
 
         func mapView(_ mapView: MKMapView, regionWillChangeAnimated animated: Bool) {
@@ -2251,6 +2448,75 @@ struct TacticalMapView: UIViewRepresentable {
         func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
             if annotation is MKUserLocation {
                 return nil
+            }
+
+            // Handle point marker annotations (hostile, friendly, etc. from radial menu)
+            if let pointMarkerAnnotation = annotation as? PointMarkerAnnotation {
+                let identifier = "PointMarker"
+                var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: identifier)
+
+                if annotationView == nil {
+                    annotationView = MKAnnotationView(annotation: annotation, reuseIdentifier: identifier)
+                    annotationView?.canShowCallout = true
+                } else {
+                    annotationView?.annotation = annotation
+                }
+
+                let marker = pointMarkerAnnotation.marker
+                let size = CGSize(width: 36, height: 36)
+                let renderer = UIGraphicsImageRenderer(size: size)
+                let image = renderer.image { context in
+                    let rect = CGRect(origin: .zero, size: size)
+
+                    // Draw outer circle with affiliation color
+                    marker.affiliation.color.uiColor.setFill()
+                    let outerPath = UIBezierPath(ovalIn: rect.insetBy(dx: 2, dy: 2))
+                    outerPath.fill()
+
+                    // Draw white border
+                    UIColor.white.setStroke()
+                    outerPath.lineWidth = 2
+                    outerPath.stroke()
+
+                    // Draw affiliation icon in center
+                    let iconRect = rect.insetBy(dx: 8, dy: 8)
+                    let iconColor = UIColor.white
+                    iconColor.setFill()
+
+                    // Draw simple shape based on affiliation
+                    switch marker.affiliation {
+                    case .hostile:
+                        // Diamond shape for hostile
+                        let path = UIBezierPath()
+                        path.move(to: CGPoint(x: iconRect.midX, y: iconRect.minY))
+                        path.addLine(to: CGPoint(x: iconRect.maxX, y: iconRect.midY))
+                        path.addLine(to: CGPoint(x: iconRect.midX, y: iconRect.maxY))
+                        path.addLine(to: CGPoint(x: iconRect.minX, y: iconRect.midY))
+                        path.close()
+                        path.fill()
+                    case .friendly:
+                        // Circle for friendly
+                        let path = UIBezierPath(ovalIn: iconRect.insetBy(dx: 2, dy: 2))
+                        path.fill()
+                    case .unknown:
+                        // Question mark style for unknown
+                        let path = UIBezierPath(ovalIn: iconRect.insetBy(dx: 2, dy: 2))
+                        path.fill()
+                    case .neutral:
+                        // Square for neutral
+                        let path = UIBezierPath(rect: iconRect.insetBy(dx: 2, dy: 2))
+                        path.fill()
+                    }
+                }
+
+                annotationView?.image = image
+                annotationView?.centerOffset = CGPoint(x: 0, y: -size.height / 2)
+
+                // Add callout accessory
+                let detailButton = UIButton(type: .detailDisclosure)
+                annotationView?.rightCalloutAccessoryView = detailButton
+
+                return annotationView
             }
 
             // Handle drawing marker annotations
@@ -2332,6 +2598,11 @@ struct TacticalMapView: UIViewRepresentable {
                 customView.centerOffset = CGPoint(x: 0, y: 0)
 
                 return customView
+            }
+
+            // Handle route waypoint annotations
+            if let waypointAnnotation = annotation as? RouteWaypointAnnotation {
+                return parent.routeOverlayCoordinator.annotationView(for: waypointAnnotation, mapView: mapView)
             }
 
             // Handle temporary point annotations (measurement and drawing)
@@ -2416,6 +2687,11 @@ struct TacticalMapView: UIViewRepresentable {
         // MARK: - Overlay Renderers
 
         func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
+            // MARK: - RoutePolyline Renderer (Navigation Routes)
+            if let routePolyline = overlay as? RoutePolyline {
+                return RoutePolylineRenderer(polyline: routePolyline)
+            }
+
             // MARK: - BreadcrumbTrailPolyline Renderer
             if let breadcrumbPolyline = overlay as? BreadcrumbTrailPolyline {
                 let renderer = BreadcrumbTrailRenderer(polyline: breadcrumbPolyline)

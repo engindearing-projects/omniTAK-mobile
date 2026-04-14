@@ -26,6 +26,8 @@ build/
 *.perspectivev3
 *.xcuserstate
 *.xcodeproj/project.pbxproj.backup*
+project.pbxproj.*_backup
+apps/*/dSYMs/
 *.xcframework.zip
 
 # Rust build artifacts

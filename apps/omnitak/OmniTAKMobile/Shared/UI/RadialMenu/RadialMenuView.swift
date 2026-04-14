@@ -3,14 +3,14 @@
 //  OmniTAKMobile
 //
 //  Main radial menu view that displays items in a circular arrangement
-//  ATAK-style pie wedge design with monochrome icons
+//  Modern glass-morphism design with smooth animations
 //
 
 import SwiftUI
 
 // MARK: - Radial Menu View
 
-/// SwiftUI view that displays menu items in ATAK-style pie wedge arrangement
+/// SwiftUI view that displays menu items in a modern radial arrangement
 struct RadialMenuView: View {
     @Binding var isPresented: Bool
     let centerPoint: CGPoint
@@ -23,6 +23,7 @@ struct RadialMenuView: View {
 
     @State private var selectedIndex: Int? = nil
     @State private var scale: CGFloat = 0
+    @State private var itemsAppeared: Bool = false
     @State private var backgroundOpacity: Double = 0
     @State private var dragLocation: CGPoint? = nil
 
@@ -33,11 +34,11 @@ struct RadialMenuView: View {
     private let impactGenerator = UIImpactFeedbackGenerator(style: .medium)
     private let selectionGenerator = UISelectionFeedbackGenerator()
 
-    // ATAK-style colors
-    private let ringBackgroundColor = Color(hex: "#E8E4D9")  // Cream/off-white like ATAK
-    private let centerBackgroundColor = Color(hex: "#3A3A3A")  // Dark center
-    private let dividerColor = Color(hex: "#CCCCCC")  // Light gray dividers
-    private let iconColor = Color(hex: "#2A2A2A")  // Dark icons
+    // ATAK-style tactical colors
+    private let glassBgColor = Color(hex: "#1C1C1C").opacity(0.92)  // Dark charcoal
+    private let glassStrokeColor = Color(hex: "#3A3A3A")  // Subtle gray border
+    private let centerBgColor = Color(hex: "#2D2D2D")  // Slightly lighter center
+    private let accentColor = Color(hex: "#4A90D9")  // ATAK blue accent
 
     init(
         isPresented: Binding<Bool>,
@@ -57,9 +58,9 @@ struct RadialMenuView: View {
 
     var body: some View {
         ZStack {
-            // Dimming background
+            // Dimming background with blur effect
             Color.black
-                .opacity(backgroundOpacity * 0.4)
+                .opacity(backgroundOpacity * 0.5)
                 .ignoresSafeArea()
                 .onTapGesture {
                     dismissMenu()
@@ -67,48 +68,62 @@ struct RadialMenuView: View {
 
             // Main radial menu
             ZStack {
-                // Outer ring background (cream/white)
+                // Outer glass ring
                 Circle()
-                    .fill(ringBackgroundColor)
-
-                // Pie wedge dividers
-                ForEach(0..<configuration.items.count, id: \.self) { index in
-                    WedgeDivider(
-                        index: index,
-                        totalItems: configuration.items.count,
-                        innerRadius: centerCircleRadius,
-                        outerRadius: outerRingRadius
+                    .fill(glassBgColor)
+                    .overlay(
+                        Circle()
+                            .stroke(
+                                LinearGradient(
+                                    colors: [Color.white.opacity(0.3), Color.white.opacity(0.05)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1.5
+                            )
                     )
-                    .stroke(dividerColor, lineWidth: 1)
-                }
+                    .shadow(color: .black.opacity(0.5), radius: 20, x: 0, y: 10)
 
-                // Selection highlight wedge
+                // Selection highlight arc (subtle glow)
                 if let selected = selectedIndex {
-                    WedgeShape(
+                    SelectionArc(
                         index: selected,
                         totalItems: configuration.items.count,
-                        innerRadius: centerCircleRadius,
-                        outerRadius: outerRingRadius
+                        innerRadius: centerCircleRadius + 8,
+                        outerRadius: outerRingRadius - 4
                     )
-                    .fill(Color.black.opacity(0.1))
+                    .fill(
+                        RadialGradient(
+                            colors: [configuration.items[selected].color.opacity(0.4), Color.clear],
+                            center: .center,
+                            startRadius: centerCircleRadius,
+                            endRadius: outerRingRadius
+                        )
+                    )
+                    .animation(.easeOut(duration: 0.15), value: selected)
                 }
 
-                // Center dark circle
+                // Center circle with gradient
                 Circle()
-                    .fill(centerBackgroundColor)
+                    .fill(
+                        LinearGradient(
+                            colors: [Color(hex: "#2A2A2A"), centerBgColor],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
                     .frame(width: centerCircleDiameter, height: centerCircleDiameter)
-
-                // Center circle border
-                Circle()
-                    .strokeBorder(dividerColor, lineWidth: 1)
-                    .frame(width: centerCircleDiameter, height: centerCircleDiameter)
+                    .overlay(
+                        Circle()
+                            .stroke(glassStrokeColor, lineWidth: 1)
+                    )
+                    .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
 
                 // Center content - tappable to toggle labels
                 Button(action: {
                     withAnimation(.easeInOut(duration: 0.2)) {
                         showLabels.toggle()
                     }
-                    // Haptic feedback for toggle
                     if configuration.hapticFeedback {
                         let generator = UIImpactFeedbackGenerator(style: .light)
                         generator.impactOccurred()
@@ -118,24 +133,20 @@ struct RadialMenuView: View {
                         if let label = centerLabel {
                             VStack(spacing: 2) {
                                 Image(systemName: "mappin.circle.fill")
-                                    .font(.system(size: 16))
-                                    .foregroundColor(.white)
+                                    .font(.system(size: 18, weight: .medium))
+                                    .foregroundColor(accentColor)
                                 Text(label)
-                                    .font(.system(size: 10, weight: .medium))
-                                    .foregroundColor(.white)
+                                    .font(.system(size: 10, weight: .semibold))
+                                    .foregroundColor(.white.opacity(0.9))
                                     .lineLimit(1)
-                                    .frame(maxWidth: centerCircleDiameter - 8)
+                                    .frame(maxWidth: centerCircleDiameter - 12)
                             }
                         } else {
-                            // Toggle indicator: "Aa" when labels hidden, dot when shown
-                            if showLabels {
-                                Circle()
-                                    .fill(Color(hex: "#FFFC00"))
-                                    .frame(width: 12, height: 12)
-                            } else {
-                                Text("Aa")
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(.white.opacity(0.7))
+                            // Toggle indicator
+                            VStack(spacing: 4) {
+                                Image(systemName: showLabels ? "text.badge.checkmark" : "textformat.size")
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(showLabels ? accentColor : .white.opacity(0.5))
                             }
                         }
                     }
@@ -144,34 +155,37 @@ struct RadialMenuView: View {
                 }
                 .buttonStyle(.plain)
 
-                // Radial menu item icons
+                // Radial menu items with icons
                 ForEach(Array(configuration.items.enumerated()), id: \.element.id) { index, item in
-                    let isDestructive = item.action == .deleteMarker || item.action == .deleteDrawing
-
-                    Image(systemName: item.icon)
-                        .font(.system(size: configuration.itemSize * 0.55, weight: .medium))
-                        .foregroundColor(isDestructive ? .red : iconColor)
-                        .scaleEffect(selectedIndex == index ? 1.15 : 1.0)
-                        .animation(.easeInOut(duration: 0.15), value: selectedIndex)
-                        .offset(iconOffset(at: index))
+                    RadialMenuItemButton(
+                        item: item,
+                        index: index,
+                        isSelected: selectedIndex == index,
+                        itemSize: effectiveItemSize,
+                        offset: iconOffset(at: index),
+                        appeared: itemsAppeared
+                    )
                 }
 
-                // Radial menu item labels (when enabled)
+                // Labels outside the ring with pill background
                 if showLabels {
                     ForEach(Array(configuration.items.enumerated()), id: \.element.id) { index, item in
                         Text(item.label)
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.system(size: 11, weight: .bold))
                             .foregroundColor(.white)
-                            .shadow(color: .black.opacity(0.9), radius: 3, x: 0, y: 1)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(
+                                Capsule()
+                                    .fill(Color.black.opacity(0.7))
+                            )
                             .offset(labelOffset(at: index))
-                            .opacity(selectedIndex == index ? 1.0 : 0.9)
-                            .animation(.easeInOut(duration: 0.15), value: selectedIndex)
+                            .opacity(itemsAppeared ? (selectedIndex == index ? 1.0 : 0.85) : 0)
+                            .scaleEffect(selectedIndex == index ? 1.08 : 1.0)
+                            .animation(.spring(response: 0.3, dampingFraction: 0.7).delay(Double(index) * 0.02), value: itemsAppeared)
+                            .animation(.easeOut(duration: 0.15), value: selectedIndex)
                     }
                 }
-
-                // Outer ring border
-                Circle()
-                    .strokeBorder(dividerColor, lineWidth: 1.5)
             }
             .frame(width: totalMenuDiameter, height: totalMenuDiameter)
             .position(centerPoint)
@@ -201,63 +215,70 @@ struct RadialMenuView: View {
 
     // MARK: - Layout Calculations
 
-    /// Effective radius - same size regardless of labels (labels go outside)
+    /// Larger item size for better touch targets (54pt minimum)
+    private var effectiveItemSize: CGFloat {
+        max(configuration.itemSize, 54)  // 54pt for good touch targets
+    }
+
+    /// Effective radius from configuration
     private var effectiveRadius: CGFloat {
         configuration.radius
     }
 
+    /// Radius where icon centers are positioned - middle zone
+    private var iconRingRadius: CGFloat {
+        effectiveRadius * 0.52  // Position buttons closer to center for label room
+    }
+
+    /// Label ring radius - between buttons and outer edge
+    private var labelRingRadius: CGFloat {
+        iconRingRadius + (effectiveItemSize / 2) + 18  // Labels just outside buttons
+    }
+
+    /// Outer ring extends beyond labels to contain everything
     private var outerRingRadius: CGFloat {
-        effectiveRadius
+        showLabels ? labelRingRadius + 28 : iconRingRadius + (effectiveItemSize / 2) + 10
     }
 
     private var outerRingDiameter: CGFloat {
-        effectiveRadius * 2
+        outerRingRadius * 2
     }
 
     private var centerCircleRadius: CGFloat {
-        effectiveRadius * 0.38  // ~38% of outer radius for center circle
+        max(32, iconRingRadius - (effectiveItemSize / 2) - 4)  // Minimum 32pt center
     }
 
     private var centerCircleDiameter: CGFloat {
         centerCircleRadius * 2
     }
 
-    /// Radius for label text positioning (outside the icon ring)
-    private var labelRadius: CGFloat {
-        effectiveRadius * 0.72  // Position labels between center and edge
-    }
-
-    /// Total diameter including space for labels
+    /// Total diameter - same as outer ring since labels are inside
     private var totalMenuDiameter: CGFloat {
-        showLabels ? outerRingDiameter + 100 : outerRingDiameter  // Extra space for labels
+        outerRingDiameter
     }
 
-    /// Calculate icon offset within the wedge (centered between inner and outer radius)
+    /// Calculate icon offset within the wedge
     private func iconOffset(at index: Int) -> CGSize {
         let itemCount = configuration.items.count
         let angleStep = (2 * Double.pi) / Double(itemCount)
         let angle = Double(index) * angleStep - (Double.pi / 2)  // Start from top
 
-        // Position icon at midpoint between center circle and outer edge
-        let iconRadius = (centerCircleRadius + outerRingRadius) / 2
-
-        let x = iconRadius * CGFloat(cos(angle))
-        let y = iconRadius * CGFloat(sin(angle))
+        // Position icons in a ring
+        let x = iconRingRadius * CGFloat(cos(angle))
+        let y = iconRingRadius * CGFloat(sin(angle))
 
         return CGSize(width: x, height: y)
     }
 
-    /// Calculate label offset - positioned just outside the menu ring
+    /// Calculate label offset - positioned between buttons and outer edge
     private func labelOffset(at index: Int) -> CGSize {
         let itemCount = configuration.items.count
         let angleStep = (2 * Double.pi) / Double(itemCount)
         let angle = Double(index) * angleStep - (Double.pi / 2)  // Start from top
 
-        // Position label just outside the outer ring
-        let labelDistanceFromCenter = outerRingRadius + 20
-
-        let x = labelDistanceFromCenter * CGFloat(cos(angle))
-        let y = labelDistanceFromCenter * CGFloat(sin(angle))
+        // Position label inside the outer ring with padding from edge
+        let x = labelRingRadius * CGFloat(cos(angle))
+        let y = labelRingRadius * CGFloat(sin(angle))
 
         return CGSize(width: x, height: y)
     }
@@ -313,13 +334,29 @@ struct RadialMenuView: View {
     private func showMenu() {
         onEvent?(.opened(centerPoint))
 
-        withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+        // Initial scale animation
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
             scale = 1.0
             backgroundOpacity = 1.0
+        }
+
+        // Staggered item appearance
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+                itemsAppeared = true
+            }
+        }
+
+        // Haptic for menu open
+        if configuration.hapticFeedback {
+            impactGenerator.impactOccurred(intensity: 0.6)
         }
     }
 
     private func hideMenu() {
+        withAnimation(.easeOut(duration: 0.15)) {
+            itemsAppeared = false
+        }
         withAnimation(.easeOut(duration: 0.2)) {
             scale = 0
             backgroundOpacity = 0
@@ -329,7 +366,11 @@ struct RadialMenuView: View {
     private func dismissMenu() {
         onEvent?(.dismissed)
 
-        withAnimation(.easeOut(duration: 0.2)) {
+        withAnimation(.easeOut(duration: 0.15)) {
+            itemsAppeared = false
+        }
+
+        withAnimation(.easeOut(duration: 0.2).delay(0.05)) {
             scale = 0
             backgroundOpacity = 0
         }
@@ -337,6 +378,110 @@ struct RadialMenuView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
             isPresented = false
         }
+    }
+}
+
+// MARK: - Radial Menu Item Button
+
+/// Individual menu item with icon and colored background
+struct RadialMenuItemButton: View {
+    let item: RadialMenuItem
+    let index: Int
+    let isSelected: Bool
+    let itemSize: CGFloat
+    let offset: CGSize
+    let appeared: Bool
+
+    private var isDestructive: Bool {
+        item.action == .deleteMarker || item.action == .deleteDrawing
+    }
+
+    private var itemColor: Color {
+        isDestructive ? .red : item.color
+    }
+
+    var body: some View {
+        ZStack {
+            // Background circle with color
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            itemColor.opacity(isSelected ? 1.0 : 0.85),
+                            itemColor.opacity(isSelected ? 0.9 : 0.7)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(width: itemSize, height: itemSize)
+                .overlay(
+                    Circle()
+                        .stroke(Color.white.opacity(isSelected ? 0.4 : 0.2), lineWidth: 1)
+                )
+                .shadow(
+                    color: itemColor.opacity(isSelected ? 0.6 : 0.3),
+                    radius: isSelected ? 12 : 6,
+                    x: 0,
+                    y: isSelected ? 4 : 2
+                )
+
+            // Icon - larger for better visibility and easier recognition
+            Image(systemName: item.icon)
+                .font(.system(size: itemSize * 0.52, weight: .bold))
+                .foregroundColor(.white)
+                .shadow(color: .black.opacity(0.4), radius: 2, x: 0, y: 1)
+        }
+        .scaleEffect(appeared ? (isSelected ? 1.15 : 1.0) : 0.3)
+        .opacity(appeared ? 1.0 : 0)
+        .offset(offset)
+        .animation(.spring(response: 0.35, dampingFraction: 0.65).delay(Double(index) * 0.03), value: appeared)
+        .animation(.spring(response: 0.25, dampingFraction: 0.7), value: isSelected)
+    }
+}
+
+// MARK: - Selection Arc Shape
+
+/// Arc shape for selection highlight
+struct SelectionArc: Shape {
+    let index: Int
+    let totalItems: Int
+    let innerRadius: CGFloat
+    let outerRadius: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+
+        let center = CGPoint(x: rect.midX, y: rect.midY)
+        let angleStep = (2 * Double.pi) / Double(totalItems)
+
+        let startAngle = Double(index) * angleStep - (Double.pi / 2) - (angleStep / 2)
+        let endAngle = startAngle + angleStep
+
+        path.addArc(
+            center: center,
+            radius: innerRadius,
+            startAngle: .radians(startAngle),
+            endAngle: .radians(endAngle),
+            clockwise: false
+        )
+
+        path.addLine(to: CGPoint(
+            x: center.x + outerRadius * CGFloat(cos(endAngle)),
+            y: center.y + outerRadius * CGFloat(sin(endAngle))
+        ))
+
+        path.addArc(
+            center: center,
+            radius: outerRadius,
+            startAngle: .radians(endAngle),
+            endAngle: .radians(startAngle),
+            clockwise: true
+        )
+
+        path.closeSubpath()
+
+        return path
     }
 }
 

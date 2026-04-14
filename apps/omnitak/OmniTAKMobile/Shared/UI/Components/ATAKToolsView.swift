@@ -30,7 +30,6 @@ struct ATAKToolsView: View {
     @State private var showBloodhound = false
     @State private var show3DView = false
     @State private var showArcGISPortal = false
-    @State private var showDigitalPointer = false
     @State private var showTurnByTurnNav = false
     @State private var showMeshtastic = false
     @State private var showADSB = false
@@ -136,13 +135,11 @@ struct ATAKToolsView: View {
             BloodhoundSheetView()
         }
         .sheet(isPresented: $show3DView) {
-            Map3DSettingsView(terrainService: TerrainVisualizationService.shared)
+            // Use new MapLibre-based 3D terrain view
+            MapLibre3DSettingsView(service: MapLibreService.shared)
         }
         .sheet(isPresented: $showArcGISPortal) {
             ArcGISPortalView()
-        }
-        .sheet(isPresented: $showDigitalPointer) {
-            DigitalPointerControlPanel()
         }
         .sheet(isPresented: $showTurnByTurnNav) {
             TurnByTurnNavigationView()
@@ -208,8 +205,6 @@ struct ATAKToolsView: View {
             showPlugins = true
         case "settings":
             showSettings = true
-        case "digitalpointer":
-            showDigitalPointer = true
         case "turnbyturn":
             showTurnByTurnNav = true
         case "meshtastic":
@@ -275,34 +270,48 @@ struct ToolButton: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 8) {
-                Image(systemName: tool.iconName)
-                    .font(.system(size: 32))
-                    .foregroundColor(isEnabled ? .white : .gray.opacity(0.4))
-                    .frame(height: 44)
+            ZStack(alignment: .topTrailing) {
+                VStack(spacing: 8) {
+                    Image(systemName: tool.iconName)
+                        .font(.system(size: 32))
+                        .foregroundColor(isEnabled ? .white : .gray.opacity(0.4))
+                        .frame(height: 44)
 
-                Text(tool.displayName)
-                    .font(.system(size: 12))
-                    .foregroundColor(isEnabled ? .white : .gray.opacity(0.4))
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
-                    .frame(height: 32)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
-            .background(isEnabled ? Color(white: 0.15) : Color(white: 0.08))
-            .overlay(
-                Rectangle()
-                    .stroke(Color(white: 0.3), lineWidth: 0.5)
-            )
-            .overlay(
-                // Disabled overlay
-                Group {
-                    if !isEnabled {
-                        Color.black.opacity(0.3)
-                    }
+                    Text(tool.displayName)
+                        .font(.system(size: 12))
+                        .foregroundColor(isEnabled ? .white : .gray.opacity(0.4))
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                        .frame(height: 32)
                 }
-            )
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(isEnabled ? Color(white: 0.15) : Color(white: 0.08))
+                .overlay(
+                    Rectangle()
+                        .stroke(Color(white: 0.3), lineWidth: 0.5)
+                )
+                .overlay(
+                    // Disabled overlay
+                    Group {
+                        if !isEnabled {
+                            Color.black.opacity(0.3)
+                        }
+                    }
+                )
+
+                // "Beta" badge for disabled/experimental tools
+                if !isEnabled {
+                    Text("BETA")
+                        .font(.system(size: 7, weight: .bold))
+                        .foregroundColor(.black)
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 2)
+                        .background(Color.orange)
+                        .cornerRadius(3)
+                        .padding(4)
+                }
+            }
         }
         .disabled(!isEnabled)
     }
@@ -326,7 +335,7 @@ struct ATAKTool: Identifiable {
 
         // Row 2 - Data & Media
         ATAKTool(id: "data", displayName: "Data Packages", iconName: "shippingbox.fill", description: "Manage data packages"),
-        ATAKTool(id: "video", displayName: "Video", iconName: "video.fill", description: "Video streaming feeds"),
+        ATAKTool(id: "video", displayName: "Video", iconName: "video.fill", description: "Video streaming (Beta - requires TAK server)"),
         ATAKTool(id: "offline", displayName: "Offline Maps", iconName: "arrow.down.doc.fill", description: "Download maps for offline use"),
         ATAKTool(id: "drawing", displayName: "Drawing", iconName: "pencil.tip.crop.circle", description: "Draw on map"),
         ATAKTool(id: "measure", displayName: "Measure", iconName: "ruler", description: "Distance and area measurement"),
@@ -340,13 +349,12 @@ struct ATAKTool: Identifiable {
 
         // Row 4 - Utilities & Reports
         ATAKTool(id: "spotrep", displayName: "SPOTREP", iconName: "doc.text.fill", description: "Quick tactical spot report"),
-        ATAKTool(id: "3dview", displayName: "3D View", iconName: "view.3d", description: "3D terrain perspective view"),
-        ATAKTool(id: "digitalpointer", displayName: "Digital Pointer", iconName: "hand.point.up.left.fill", description: "Share cursor position with team"),
+        ATAKTool(id: "3dview", displayName: "3D Terrain", iconName: "view.3d", description: "Real 3D terrain with MapLibre"),
         ATAKTool(id: "turnbyturn", displayName: "Navigation", iconName: "location.north.line.fill", description: "Turn-by-turn voice navigation"),
         ATAKTool(id: "meshtastic", displayName: "Meshtastic", iconName: "dot.radiowaves.left.and.right", description: "Meshtastic mesh networking"),
 
         // Row 5 - Additional Utilities
-        ATAKTool(id: "arcgis", displayName: "ArcGIS", iconName: "globe.americas.fill", description: "ArcGIS Portal content"),
+        ATAKTool(id: "arcgis", displayName: "ArcGIS", iconName: "globe.americas.fill", description: "ArcGIS Portal (Beta - requires account)"),
         ATAKTool(id: "adsb", displayName: "ADS-B", iconName: "airplane.circle.fill", description: "ADS-B aircraft tracking"),
         ATAKTool(id: "plugins", displayName: "Plugins", iconName: "puzzlepiece.extension.fill", description: "Manage plugins"),
         ATAKTool(id: "settings", displayName: "Settings", iconName: "gearshape.fill", description: "App settings")

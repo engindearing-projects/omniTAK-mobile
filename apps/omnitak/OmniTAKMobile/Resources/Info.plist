@@ -47,6 +47,12 @@
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<true/>
 	</dict>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>OmniTAK needs continuous location access to track your position, share it with team members, and provide turn-by-turn navigation even when the app is in the background.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>OmniTAK needs continuous location access to track your position, share it with team members, and provide turn-by-turn navigation even when the app is in the background.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>OmniTAK needs your location to show your position on the map, share it with team members, and provide navigation assistance.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
@@ -54,6 +60,7 @@
 		<string>fetch</string>
 		<string>remote-notification</string>
 		<string>processing</string>
+		<string>voip</string>
 	</array>
 	<key>UILaunchScreen</key>
 	<dict/>

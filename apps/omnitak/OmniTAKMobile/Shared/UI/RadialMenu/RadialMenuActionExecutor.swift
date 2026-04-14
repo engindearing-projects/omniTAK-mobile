@@ -191,29 +191,69 @@ class RadialMenuActionExecutor {
     }
 
     private static func executeNavigateToMarker(context: RadialMenuContext, services: RadialMenuServices) -> Bool {
-        guard let navigationService = services.navigationService else { return false }
+        guard let routePlanningService = services.routePlanningService else { return false }
 
-        let coordinate: CLLocationCoordinate2D
-        let name: String
+        // Get target coordinate and name
+        let targetCoordinate: CLLocationCoordinate2D
+        let targetName: String
 
         if let marker = context.pressedMarker {
-            coordinate = marker.coordinate
-            name = marker.name
+            targetCoordinate = marker.coordinate
+            targetName = marker.name
         } else if let waypoint = context.pressedWaypoint {
-            coordinate = waypoint.coordinate
-            name = waypoint.name
+            targetCoordinate = waypoint.coordinate
+            targetName = waypoint.name
         } else {
-            coordinate = context.mapCoordinate
-            name = "Selected Location"
+            targetCoordinate = context.mapCoordinate
+            targetName = "Selected Location"
         }
 
-        let tempWaypoint = Waypoint(name: name, coordinate: coordinate)
-        navigationService.startNavigation(to: tempWaypoint)
+        // Get current location for start point
+        guard let currentLocation = routePlanningService.currentLocation else {
+            // Fall back to posting notification to show route planning UI
+            NotificationCenter.default.post(
+                name: .radialMenuNavigationStarted,
+                object: nil,
+                userInfo: ["destination": targetCoordinate, "destinationName": targetName]
+            )
+            return true
+        }
+
+        // Create quick 2-point route from current location to target
+        let startWaypoint = RouteWaypoint(
+            coordinate: currentLocation.coordinate,
+            name: "Current Location",
+            order: 0,
+            instruction: "Start navigation"
+        )
+
+        let endWaypoint = RouteWaypoint(
+            coordinate: targetCoordinate,
+            name: targetName,
+            order: 1,
+            instruction: "Arrive at \(targetName)"
+        )
+
+        // Create and start navigation route
+        let route = routePlanningService.createRoute(
+            name: "Navigate to \(targetName)",
+            waypoints: [startWaypoint, endWaypoint],
+            color: "#4CAF50",  // Green for navigation route
+            lineStyle: .solid,
+            lineOpacity: 0.9,
+            lineWidth: 5.0,
+            waypointIconStyle: .numbered,
+            waypointPrefix: "",
+            showDirectionArrows: true
+        )
+
+        // Start navigation on this route
+        routePlanningService.startNavigation(for: route)
 
         NotificationCenter.default.post(
             name: .radialMenuNavigationStarted,
             object: nil,
-            userInfo: ["waypoint": tempWaypoint]
+            userInfo: ["route": route, "destination": targetCoordinate]
         )
 
         return true
@@ -272,32 +312,83 @@ class RadialMenuActionExecutor {
     // MARK: - Navigation Implementation
 
     private static func executeNavigate(context: RadialMenuContext, services: RadialMenuServices) -> Bool {
-        guard let navigationService = services.navigationService else { return false }
+        guard let routePlanningService = services.routePlanningService else { return false }
 
-        let waypoint = Waypoint(name: "Nav Target", coordinate: context.mapCoordinate)
-        navigationService.startNavigation(to: waypoint)
+        let targetCoordinate = context.mapCoordinate
+
+        // Get current location for start point
+        guard let currentLocation = routePlanningService.currentLocation else {
+            // Fall back to posting notification to show route planning UI
+            NotificationCenter.default.post(
+                name: .radialMenuNavigationStarted,
+                object: nil,
+                userInfo: ["destination": targetCoordinate, "destinationName": "Nav Target"]
+            )
+            return true
+        }
+
+        // Create quick 2-point route from current location to target
+        let startWaypoint = RouteWaypoint(
+            coordinate: currentLocation.coordinate,
+            name: "Current Location",
+            order: 0,
+            instruction: "Start navigation"
+        )
+
+        let endWaypoint = RouteWaypoint(
+            coordinate: targetCoordinate,
+            name: "Nav Target",
+            order: 1,
+            instruction: "Arrive at destination"
+        )
+
+        // Create and start navigation route
+        let route = routePlanningService.createRoute(
+            name: "Quick Route",
+            waypoints: [startWaypoint, endWaypoint],
+            color: "#4CAF50",  // Green for navigation route
+            lineStyle: .solid,
+            lineOpacity: 0.9,
+            lineWidth: 5.0,
+            waypointIconStyle: .numbered,
+            waypointPrefix: "",
+            showDirectionArrows: true
+        )
+
+        // Start navigation on this route
+        routePlanningService.startNavigation(for: route)
 
         NotificationCenter.default.post(
             name: .radialMenuNavigationStarted,
             object: nil,
-            userInfo: ["coordinate": context.mapCoordinate]
+            userInfo: ["route": route, "coordinate": targetCoordinate]
         )
 
         return true
     }
 
     private static func executeAddWaypoint(context: RadialMenuContext, services: RadialMenuServices) -> Bool {
-        guard let waypointManager = services.waypointManager else { return false }
+        // Use PointDropperService to create a visible marker on the map
+        guard let pointDropperService = services.pointDropperService else { return false }
 
-        let waypoint = waypointManager.createWaypoint(
-            name: generateWaypointName(),
-            coordinate: context.mapCoordinate
+        // Create a neutral waypoint marker that displays immediately
+        let marker = pointDropperService.quickDrop(
+            at: context.mapCoordinate,
+            broadcast: false
         )
+
+        // Update to neutral affiliation with waypoint styling
+        var updatedMarker = marker
+        updatedMarker.affiliation = .neutral
+        updatedMarker.cotType = MarkerAffiliation.neutral.cotType
+        updatedMarker.iconName = "mappin.circle.fill"
+        updatedMarker.name = generateWaypointName()
+        pointDropperService.updateMarker(updatedMarker)
 
         NotificationCenter.default.post(
             name: .radialMenuWaypointAdded,
             object: nil,
-            userInfo: ["waypoint": waypoint]
+            userInfo: ["marker": updatedMarker]
         )
 
         return true
@@ -480,6 +571,11 @@ class RadialMenuActionExecutor {
     ) -> Bool {
         // Handle known custom actions with specific notifications
         switch identifier {
+        case "dismiss":
+            // Just dismiss the menu - no action needed
+            // The menu dismisses automatically when any action is selected
+            return true
+
         case "toggle_app_mode":
             NotificationCenter.default.post(
                 name: .radialMenuShowAppModePicker,
@@ -493,6 +589,15 @@ class RadialMenuActionExecutor {
                 name: .radialMenuShowLayers,
                 object: nil,
                 userInfo: [:]
+            )
+            return true
+
+        case "meshtastic":
+            // Open Meshtastic/mesh radio integration
+            NotificationCenter.default.post(
+                name: .radialMenuCustomAction,
+                object: nil,
+                userInfo: ["identifier": "open_meshtastic", "context": context]
             )
             return true
 

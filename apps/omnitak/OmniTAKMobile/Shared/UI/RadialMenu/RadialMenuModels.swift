@@ -205,19 +205,22 @@ struct RadialMenuServices {
     weak var navigationService: NavigationService?
     weak var waypointManager: WaypointManager?
     weak var drawingStore: DrawingStore?
+    weak var routePlanningService: RoutePlanningService?
 
     init(
         pointDropperService: PointDropperService? = nil,
         measurementManager: MeasurementManager? = nil,
         navigationService: NavigationService? = nil,
         waypointManager: WaypointManager? = nil,
-        drawingStore: DrawingStore? = nil
+        drawingStore: DrawingStore? = nil,
+        routePlanningService: RoutePlanningService? = nil
     ) {
         self.pointDropperService = pointDropperService
         self.measurementManager = measurementManager
         self.navigationService = navigationService
         self.waypointManager = waypointManager
         self.drawingStore = drawingStore
+        self.routePlanningService = routePlanningService
     }
 
     static let shared = RadialMenuServices(
@@ -225,7 +228,8 @@ struct RadialMenuServices {
         measurementManager: nil,
         navigationService: NavigationService.shared,
         waypointManager: WaypointManager.shared,
-        drawingStore: nil
+        drawingStore: nil,
+        routePlanningService: RoutePlanningService.shared
     )
 }
 

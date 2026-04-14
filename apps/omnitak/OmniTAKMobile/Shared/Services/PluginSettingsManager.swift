@@ -27,7 +27,6 @@ enum PluginID: String, CaseIterable {
     case bloodhound = "bloodhound"
     case spotrep = "spotrep"
     case view3d = "3dview"
-    case digitalPointer = "digitalpointer"
     case turnByTurn = "turnbyturn"
     case arcgis = "arcgis"
     case adsb = "adsb"
@@ -51,7 +50,6 @@ enum PluginID: String, CaseIterable {
         case .bloodhound: return "Bloodhound"
         case .spotrep: return "SPOTREP"
         case .view3d: return "3D View"
-        case .digitalPointer: return "Digital Pointer"
         case .turnByTurn: return "Navigation"
         case .arcgis: return "ArcGIS"
         case .adsb: return "ADS-B"
@@ -77,7 +75,6 @@ enum PluginID: String, CaseIterable {
         case .bloodhound: return "antenna.radiowaves.left.and.right"
         case .spotrep: return "doc.text.fill"
         case .view3d: return "view.3d"
-        case .digitalPointer: return "hand.point.up.left.fill"
         case .turnByTurn: return "location.north.line.fill"
         case .arcgis: return "globe.americas.fill"
         case .adsb: return "airplane.circle.fill"
@@ -96,16 +93,15 @@ enum PluginID: String, CaseIterable {
         case .routePlanning: return "Plan and share routes"
         case .emergencyBeacon: return "Emergency beacon and alerts"
         case .chat: return "Team chat messaging"
-        case .video: return "Video streaming feeds"
+        case .video: return "Video streaming (Beta - requires TAK server)"
         case .geofence: return "Create geofence alerts"
         case .casevac: return "Request casualty evacuation"
         case .nineline: return "Close Air Support request"
         case .bloodhound: return "Blue Force Tracking"
         case .spotrep: return "Quick tactical spot report"
-        case .view3d: return "3D terrain perspective view"
-        case .digitalPointer: return "Share cursor position with team"
+        case .view3d: return "Real 3D terrain visualization with MapLibre"
         case .turnByTurn: return "Turn-by-turn voice navigation"
-        case .arcgis: return "ArcGIS Portal content"
+        case .arcgis: return "ArcGIS Portal (Beta - requires account)"
         case .adsb: return "ADS-B aircraft traffic overlay"
         }
     }
@@ -121,6 +117,14 @@ class PluginSettingsManager: ObservableObject {
     /// Published dictionary of plugin enabled states
     @Published private(set) var enabledPlugins: [PluginID: Bool] = [:]
 
+    /// Tools that are not fully implemented and should be disabled by default
+    /// Users can still enable them manually in the Plugins settings to try experimental features
+    private static let disabledByDefault: Set<PluginID> = [
+        // .view3d - Now uses MapLibre with real 3D terrain, fully functional
+        .arcgis,        // ArcGIS Portal - requires external account/API
+        .video,         // Video streaming - requires TAK server video feeds
+    ]
+
     private init() {
         loadSettings()
     }
@@ -130,9 +134,10 @@ class PluginSettingsManager: ObservableObject {
         var settings: [PluginID: Bool] = [:]
         for plugin in PluginID.allCases {
             let key = keyPrefix + plugin.rawValue
-            // Default to enabled if not set
+            // Check if user has explicitly set a value
             if userDefaults.object(forKey: key) == nil {
-                settings[plugin] = true
+                // No user setting - use default based on implementation status
+                settings[plugin] = !Self.disabledByDefault.contains(plugin)
             } else {
                 settings[plugin] = userDefaults.bool(forKey: key)
             }

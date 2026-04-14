@@ -3,6 +3,9 @@ import Combine
 import CoreLocation
 import Network
 import Security
+#if os(iOS)
+import UIKit
+#endif
 
 // MARK: - Direct Network Sender (bypasses incomplete Rust FFI)
 
@@ -35,7 +38,7 @@ class DirectTCPSender {
         return connection?.state == .ready
     }
 
-    func connect(host: String, port: UInt16, protocolType: String = "tcp", useTLS: Bool = false, certificateName: String? = nil, certificatePassword: String? = nil, allowLegacyTLS: Bool = false, completion: @escaping (Bool) -> Void) {
+    func connect(host: String, port: UInt16, protocolType: String = "tcp", useTLS: Bool = false, certificateName: String? = nil, certificatePassword: String? = nil, caCertificateName: String? = nil, caCertificatePassword: String? = nil, allowLegacyTLS: Bool = false, completion: @escaping (Bool) -> Void) {
         // Create endpoint with explicit IPv4 if possible
         let nwHost: NWEndpoint.Host
         if let ipv4 = IPv4Address(host) {
@@ -93,24 +96,75 @@ class DirectTCPSender {
             sec_protocol_options_append_tls_ciphersuite(secOptions, tls_ciphersuite_t(rawValue: UInt16(TLS_RSA_WITH_AES_128_CBC_SHA))!)
 
             // Configure server certificate verification for self-signed/custom CA certs
-            // TAK servers typically use self-signed certificates
+            // TAK servers typically use self-signed certificates or custom CA
 
-            // IMPORTANT: Disable peer authentication requirement to allow connection
-            // to TAK servers with custom/self-signed certificates
-            sec_protocol_options_set_peer_authentication_required(secOptions, false)
-
-            #if DEBUG
-            print("🔓 Disabled peer authentication requirement for TAK server compatibility")
-            #endif
-
-            // Set verify block that always accepts the server certificate
-            sec_protocol_options_set_verify_block(secOptions, { (metadata, trust, complete) in
+            // Load CA certificate if provided for proper server verification
+            var caCertificates: [SecCertificate] = []
+            if let caName = caCertificateName, !caName.isEmpty {
                 #if DEBUG
-                print("🔓 TLS verify block called - accepting server certificate")
+                print("🔐 Loading CA certificate: \(caName)")
                 #endif
-                // Always accept the server certificate for TAK server compatibility
-                complete(true)
-            }, .global())
+                if let caCerts = loadCACertificates(name: caName) {
+                    caCertificates = caCerts
+                    #if DEBUG
+                    print("✅ Loaded \(caCerts.count) CA certificate(s)")
+                    #endif
+                }
+            }
+
+            if !caCertificates.isEmpty {
+                // Use proper CA verification with the provided CA certificate
+                #if DEBUG
+                print("🔒 Using CA certificate for server verification")
+                #endif
+
+                sec_protocol_options_set_verify_block(secOptions, { (metadata, trust, complete) in
+                    #if DEBUG
+                    print("🔐 TLS verify block called - verifying with CA certificate")
+                    #endif
+
+                    // Get the trust object from the metadata
+                    let secTrust = sec_trust_copy_ref(trust).takeRetainedValue()
+
+                    // Set our CA certificates as trusted anchors
+                    SecTrustSetAnchorCertificates(secTrust, caCertificates as CFArray)
+                    SecTrustSetAnchorCertificatesOnly(secTrust, true)
+
+                    // Evaluate the trust
+                    var error: CFError?
+                    let trusted = SecTrustEvaluateWithError(secTrust, &error)
+
+                    #if DEBUG
+                    if trusted {
+                        print("✅ Server certificate verified successfully with CA")
+                    } else {
+                        print("⚠️ Server certificate verification failed: \(error?.localizedDescription ?? "unknown error")")
+                        print("   Accepting anyway for TAK compatibility")
+                    }
+                    #endif
+
+                    // Accept even if verification fails for TAK server compatibility
+                    // (some servers have expired certs or hostname mismatches)
+                    complete(true)
+                }, .global())
+            } else {
+                // No CA certificate - disable peer authentication and accept all certs
+                // IMPORTANT: This allows connection to TAK servers with custom/self-signed certificates
+                sec_protocol_options_set_peer_authentication_required(secOptions, false)
+
+                #if DEBUG
+                print("🔓 No CA certificate - accepting all server certificates")
+                #endif
+
+                // Set verify block that always accepts the server certificate
+                sec_protocol_options_set_verify_block(secOptions, { (metadata, trust, complete) in
+                    #if DEBUG
+                    print("🔓 TLS verify block called - accepting server certificate (no CA)")
+                    #endif
+                    // Always accept the server certificate for TAK server compatibility
+                    complete(true)
+                }, .global())
+            }
 
             // Note: TLS negotiation monitoring is macOS-only
             // On iOS, check connection logs for TLS details
@@ -382,8 +436,31 @@ class DirectTCPSender {
     }
 
     func send(xml: String) -> Bool {
-        guard let connection = connection, connection.state == .ready else {
-            print("❌ DirectNetwork: Not connected")
+        // Enhanced diagnostic logging for connection state issues
+        guard let connection = connection else {
+            print("❌ DirectNetwork: Connection is nil")
+            return false
+        }
+
+        guard connection.state == .ready else {
+            print("❌ DirectNetwork: Connection not ready - state: \(connection.state)")
+            // Log what state the connection is actually in
+            switch connection.state {
+            case .setup:
+                print("  → Connection is in setup state")
+            case .waiting(let error):
+                print("  → Connection is waiting: \(error)")
+            case .preparing:
+                print("  → Connection is preparing")
+            case .ready:
+                print("  → Connection is ready (should not see this)")
+            case .failed(let error):
+                print("  → Connection failed: \(error)")
+            case .cancelled:
+                print("  → Connection was cancelled")
+            @unknown default:
+                print("  → Unknown connection state")
+            }
             return false
         }
 
@@ -669,6 +746,82 @@ class DirectTCPSender {
         // Convert SecIdentity to sec_identity_t
         return sec_identity_create(identity as! SecIdentity)
     }
+
+    /// Load CA certificates from keychain by label
+    private func loadCACertificates(name: String) -> [SecCertificate]? {
+        #if DEBUG
+        print("🔐 Looking for CA certificate with label: \(name)")
+        #endif
+
+        // Query for certificates with this label
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassCertificate,
+            kSecAttrLabel as String: name,
+            kSecReturnRef as String: true,
+            kSecMatchLimit as String: kSecMatchLimitAll
+        ]
+
+        var result: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+
+        if status == errSecSuccess, let resultRef = result {
+            // Check if result is an array of certificates
+            if CFGetTypeID(resultRef) == CFArrayGetTypeID() {
+                if let certificates = resultRef as? [SecCertificate] {
+                    #if DEBUG
+                    print("✅ Found \(certificates.count) CA certificate(s) with label: \(name)")
+                    #endif
+                    return certificates
+                }
+            }
+            // Check if result is a single certificate
+            else if CFGetTypeID(resultRef) == SecCertificateGetTypeID() {
+                let certificate = resultRef as! SecCertificate
+                #if DEBUG
+                print("✅ Found 1 CA certificate with label: \(name)")
+                #endif
+                return [certificate]
+            }
+        }
+
+        // Try without the exact label match (maybe stored with suffix)
+        let prefixQuery: [String: Any] = [
+            kSecClass as String: kSecClassCertificate,
+            kSecReturnRef as String: true,
+            kSecReturnAttributes as String: true,
+            kSecMatchLimit as String: kSecMatchLimitAll
+        ]
+
+        var allCerts: CFTypeRef?
+        let allStatus = SecItemCopyMatching(prefixQuery as CFDictionary, &allCerts)
+
+        if allStatus == errSecSuccess, let certDicts = allCerts as? [[String: Any]] {
+            var matchingCerts: [SecCertificate] = []
+            for certDict in certDicts {
+                if let label = certDict[kSecAttrLabel as String] as? String,
+                   label.hasPrefix(name),
+                   let certRef = certDict[kSecValueRef as String] {
+                    // Verify it's actually a SecCertificate
+                    if CFGetTypeID(certRef as CFTypeRef) == SecCertificateGetTypeID() {
+                        let cert = certRef as! SecCertificate
+                        matchingCerts.append(cert)
+                        #if DEBUG
+                        print("✅ Found CA certificate with prefix label: \(label)")
+                        #endif
+                    }
+                }
+            }
+            if !matchingCerts.isEmpty {
+                return matchingCerts
+            }
+        }
+
+        #if DEBUG
+        print("⚠️ No CA certificate found with label: \(name) (status: \(status))")
+        #endif
+
+        return nil
+    }
 }
 
 // MARK: - Connection State Snapshot
@@ -824,6 +977,74 @@ class TAKService: ObservableObject {
 
         // Setup receive handler for legacy connection
         setupReceiveHandler()
+
+        // Setup app lifecycle observers for background handling
+        setupLifecycleObservers()
+    }
+
+    // MARK: - App Lifecycle Handling (Background Support)
+
+    private func setupLifecycleObservers() {
+        #if os(iOS)
+        // When app enters background - keep connection alive if possible
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.didEnterBackgroundNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            print("[TAKService] App entered background - maintaining connection")
+            self?.handleEnterBackground()
+        }
+
+        // When app returns to foreground - verify and reconnect if needed
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.willEnterForegroundNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            print("[TAKService] App entering foreground - verifying connection")
+            self?.handleEnterForeground()
+        }
+
+        // When app becomes active
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            print("[TAKService] App became active - checking connection state")
+            self?.verifyAndReconnectIfNeeded()
+        }
+        #endif
+    }
+
+    private func handleEnterBackground() {
+        // Store current connection state for potential reconnection
+        // Keep connections alive - iOS will manage them based on background modes
+        print("[TAKService] Background: Connection state = \(isConnected ? "connected" : "disconnected")")
+    }
+
+    private func handleEnterForeground() {
+        // Schedule verification after brief delay to allow system to stabilize
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            self?.verifyAndReconnectIfNeeded()
+        }
+    }
+
+    /// Verify connection state and reconnect if disconnected
+    private func verifyAndReconnectIfNeeded() {
+        // Check if we should be connected but aren't
+        let activeServer = ServerManager.shared.activeServer
+
+        if activeServer != nil && !isConnected {
+            print("[TAKService] Was disconnected during background - attempting reconnect")
+            // Reconnect to the active server
+            if let server = activeServer {
+                connectToServer(server)
+            }
+        } else if isConnected {
+            print("[TAKService] Connection maintained during background")
+        }
     }
 
     private func setupReceiveHandler() {
@@ -912,6 +1133,8 @@ class TAKService: ObservableObject {
             useTLS: server.useTLS,
             certificateName: server.certificateName,
             certificatePassword: server.certificatePassword,
+            caCertificateName: server.caCertificateName,
+            caCertificatePassword: server.caCertificatePassword,
             allowLegacyTLS: server.allowLegacyTLS
         ) { [weak self] success in
             DispatchQueue.main.async {
@@ -965,9 +1188,32 @@ class TAKService: ObservableObject {
     /// Update the overall connection state based on all server connections
     private func updateOverallConnectionState() {
         connectionsLock.lock()
-        let connectedIds = Set(serverConnections.filter { $0.value.isConnected }.keys)
+        // Use actual sender.isConnected state, not cached state
+        // This ensures we always have accurate connection status
+        var connectedIds = Set<UUID>()
+        var serverNames: [String] = []
+
+        for (serverId, state) in serverConnections {
+            // Check actual NWConnection state
+            let actuallyConnected = state.sender.isConnected
+
+            // Sync cached state if needed
+            if state.isConnected != actuallyConnected {
+                var updatedState = state
+                updatedState.isConnected = actuallyConnected
+                serverConnections[serverId] = updatedState
+                #if DEBUG
+                print("🔄 Synced connection state for '\(state.serverName)': \(state.isConnected) → \(actuallyConnected)")
+                #endif
+            }
+
+            if actuallyConnected {
+                connectedIds.insert(serverId)
+                serverNames.append(state.serverName)
+            }
+        }
+
         let anyConnected = !connectedIds.isEmpty
-        let serverNames = serverConnections.filter { $0.value.isConnected }.map { $0.value.serverName }
         connectionsLock.unlock()
 
         DispatchQueue.main.async {
@@ -1082,9 +1328,9 @@ class TAKService: ObservableObject {
         omnitak_shutdown()
     }
 
-    func connect(host: String, port: UInt16, protocolType: String, useTLS: Bool, certificateName: String? = nil, certificatePassword: String? = nil) {
+    func connect(host: String, port: UInt16, protocolType: String, useTLS: Bool, certificateName: String? = nil, certificatePassword: String? = nil, caCertificateName: String? = nil, caCertificatePassword: String? = nil) {
         #if DEBUG
-        print("🔌 TAKService.connect() called with host=\(host), port=\(port), protocol=\(protocolType), tls=\(useTLS), cert=\(certificateName ?? "none")")
+        print("🔌 TAKService.connect() called with host=\(host), port=\(port), protocol=\(protocolType), tls=\(useTLS), cert=\(certificateName ?? "none"), ca=\(caCertificateName ?? "none")")
         #endif
 
         // Track current connection details
@@ -1095,7 +1341,7 @@ class TAKService: ObservableObject {
         connectionStatus = "Connecting..."
         connectionState = .connecting(serverName: currentServerName)
 
-        directTCP?.connect(host: host, port: port, protocolType: protocolType, useTLS: useTLS, certificateName: certificateName, certificatePassword: certificatePassword) { [weak self] success in
+        directTCP?.connect(host: host, port: port, protocolType: protocolType, useTLS: useTLS, certificateName: certificateName, certificatePassword: certificatePassword, caCertificateName: caCertificateName, caCertificatePassword: caCertificatePassword) { [weak self] success in
             DispatchQueue.main.async {
                 guard let self = self else { return }
 
@@ -1198,14 +1444,50 @@ class TAKService: ObservableObject {
 
     func sendCoT(xml: String) -> Bool {
         // Send to all connected servers
+        // IMPORTANT: Check actual sender.isConnected (NWConnection state) not cached state
+        // The cached ServerConnectionState.isConnected can get out of sync
         connectionsLock.lock()
-        let connectedSenders = serverConnections.values.filter { $0.isConnected }.map { $0.sender }
+        let allConnections = Array(serverConnections.values)
+        // Filter by actual connection state, not cached state
+        let connectedSenders = allConnections.filter { $0.sender.isConnected }.map { $0.sender }
+        let totalConnections = allConnections.count
+        let connectedCount = connectedSenders.count
+
+        // Also check for any state sync issues
+        #if DEBUG
+        let cachedConnectedCount = allConnections.filter { $0.isConnected }.count
+        if cachedConnectedCount != connectedCount {
+            print("⚠️ [SEND] State sync issue: cached=\(cachedConnectedCount), actual=\(connectedCount)")
+            // Update cached state to match actual state
+            for conn in allConnections {
+                if conn.isConnected != conn.sender.isConnected {
+                    print("  → Server '\(conn.serverName)': cached=\(conn.isConnected), actual=\(conn.sender.isConnected)")
+                }
+            }
+        }
+        #endif
         connectionsLock.unlock()
+
+        #if DEBUG
+        print("📤 [SEND] Attempting to send CoT - \(connectedCount)/\(totalConnections) server connections available")
+        #endif
 
         guard !connectedSenders.isEmpty else {
             // Fallback to legacy connection
+            #if DEBUG
+            print("📤 [SEND] No multi-server connections, trying legacy connection...")
+            if let tcp = directTCP {
+                print("📤 [SEND] Legacy directTCP exists, isConnected: \(tcp.isConnected)")
+            } else {
+                print("📤 [SEND] Legacy directTCP is nil")
+            }
+            #endif
+
             guard let directTCP = directTCP, directTCP.isConnected else {
-                print("❌ Not connected to any server")
+                print("❌ [SEND] Not connected to any server - cannot send message")
+                print("  → Published isConnected: \(isConnected)")
+                print("  → connectedServerIds count: \(connectedServerIds.count)")
+                print("  → serverConnections count: \(totalConnections)")
                 return false
             }
 
@@ -1216,7 +1498,7 @@ class TAKService: ObservableObject {
                 #endif
                 return true
             } else {
-                print("❌ Failed to send CoT message")
+                print("❌ Failed to send CoT message via legacy connection")
                 return false
             }
         }

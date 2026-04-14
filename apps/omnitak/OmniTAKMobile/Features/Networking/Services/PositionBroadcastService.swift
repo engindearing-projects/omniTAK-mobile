@@ -76,6 +76,7 @@ class PositionBroadcastService: ObservableObject {
     private var takService: TAKService?
     private var locationManager: LocationManager?
     private var cancellables = Set<AnyCancellable>()
+    private var isLoadingSettings = false
 
     // MARK: - Initialization
 
@@ -290,6 +291,7 @@ class PositionBroadcastService: ObservableObject {
     // MARK: - Persistence
 
     private func saveBroadcastSettings() {
+        guard !isLoadingSettings else { return }
         UserDefaults.standard.set(isEnabled, forKey: "positionBroadcastEnabled")
         UserDefaults.standard.set(updateInterval, forKey: "positionUpdateInterval")
         UserDefaults.standard.set(staleTime, forKey: "positionStaleTime")
@@ -299,6 +301,9 @@ class PositionBroadcastService: ObservableObject {
     }
 
     private func loadBroadcastSettings() {
+        isLoadingSettings = true
+        defer { isLoadingSettings = false }
+
         if UserDefaults.standard.object(forKey: "positionBroadcastEnabled") != nil {
             isEnabled = UserDefaults.standard.bool(forKey: "positionBroadcastEnabled")
         }

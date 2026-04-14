@@ -102,6 +102,22 @@ struct SettingsView: View {
                     Toggle("Enable Location Sharing", isOn: $enableLocationSharing)
                 }
 
+                // Navigation Settings
+                Section("NAVIGATION") {
+                    NavigationLink(destination: NavigationSettingsView()) {
+                        HStack {
+                            Image(systemName: "location.north.line.fill")
+                                .foregroundColor(Color(hex: "#FFFC00"))
+                                .frame(width: 24)
+                            Text("Route Navigation")
+                            Spacer()
+                            Text("ATAK-Style")
+                                .font(.system(size: 12))
+                                .foregroundColor(.gray)
+                        }
+                    }
+                }
+
                 // Map Overlay Settings
                 Section("MAP OVERLAYS") {
                     // MGRS Grid Settings

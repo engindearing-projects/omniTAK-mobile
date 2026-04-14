@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "1640"
+   LastUpgradeVersion = "2620"
    version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -74,5 +74,23 @@
    <ArchiveAction
       buildConfiguration = "Release"
       revealArchiveInOrganizer = "YES">
+      <PostActions>
+         <ExecutionAction
+            ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
+            <ActionContent
+               title = "Copy MapLibre dSYM"
+               scriptText = "DSYM_SOURCE=&quot;${PROJECT_DIR}/dSYMs/MapLibre.framework.dSYM&quot;&#10;DSYM_DEST=&quot;${ARCHIVE_DSYMS_PATH}/MapLibre.framework.dSYM&quot;&#10;if [ -d &quot;${DSYM_SOURCE}&quot; ] &amp;&amp; [ -n &quot;${ARCHIVE_DSYMS_PATH}&quot; ]; then&#10;    mkdir -p &quot;${ARCHIVE_DSYMS_PATH}&quot;&#10;    rm -rf &quot;${DSYM_DEST}&quot;&#10;    cp -R &quot;${DSYM_SOURCE}&quot; &quot;${DSYM_DEST}&quot;&#10;    echo &quot;Copied MapLibre dSYM to ${DSYM_DEST}&quot;&#10;fi&#10;">
+               <EnvironmentBuildable>
+                  <BuildableReference
+                     BuildableIdentifier = "primary"
+                     BlueprintIdentifier = "A11111111111111111111111000000A1"
+                     BuildableName = "OmniTAKMobile.app"
+                     BlueprintName = "OmniTAKMobile"
+                     ReferencedContainer = "container:OmniTAKMobile.xcodeproj">
+                  </BuildableReference>
+               </EnvironmentBuildable>
+            </ActionContent>
+         </ExecutionAction>
+      </PostActions>
    </ArchiveAction>
 </Scheme>

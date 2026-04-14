@@ -16,48 +16,58 @@ enum RadialMenuPresets {
 
     /// Menu for map interactions (long-press on empty map area)
     /// Actions: Mark Hostile, Mark Friendly, Draw, Drawings, Measure, Waypoint
+    // ATAK-style tactical colors
+    private static let atakRed = Color(hex: "#C62828")      // Hostile red
+    private static let atakBlue = Color(hex: "#1565C0")     // Friendly blue
+    private static let atakGreen = Color(hex: "#2E7D32")    // Navigation green
+    private static let atakOrange = Color(hex: "#EF6C00")   // Warning orange
+    private static let atakTan = Color(hex: "#8D6E63")      // Neutral tan
+    private static let atakGray = Color(hex: "#546E7A")     // Tool gray
+    private static let atakOlive = Color(hex: "#7CB342")    // Olive/action
+    private static let atakPurple = Color(hex: "#7B1FA2")   // Drawing purple
+
     static var mapContextMenu: RadialMenuConfiguration {
         RadialMenuConfiguration(
             items: [
                 RadialMenuItem(
                     icon: "exclamationmark.triangle.fill",
                     label: "Hostile",
-                    color: .red,
+                    color: atakRed,
                     action: .dropMarker(.hostile)
                 ),
                 RadialMenuItem(
                     icon: "shield.fill",
                     label: "Friendly",
-                    color: .cyan,
+                    color: atakBlue,
                     action: .dropMarker(.friendly)
                 ),
                 RadialMenuItem(
                     icon: "pencil.tip.crop.circle",
                     label: "Draw",
-                    color: .purple,
+                    color: atakPurple,
                     action: .openDrawingTools
                 ),
                 RadialMenuItem(
                     icon: "list.bullet.rectangle",
                     label: "Drawings",
-                    color: .indigo,
+                    color: atakGray,
                     action: .openDrawingsList
                 ),
                 RadialMenuItem(
                     icon: "ruler",
                     label: "Measure",
-                    color: Color(hex: "#FFFC00"),
+                    color: atakOrange,
                     action: .measure
                 ),
                 RadialMenuItem(
                     icon: "mappin.and.ellipse",
                     label: "Waypoint",
-                    color: .orange,
+                    color: atakOlive,
                     action: .addWaypoint
                 )
             ],
-            radius: 130,
-            itemSize: 48,
+            radius: 130,  // Larger to contain labels inside black ring
+            itemSize: 56, // Good touch targets
             hapticFeedback: true,
             showLabels: true
         )
@@ -73,36 +83,36 @@ enum RadialMenuPresets {
                 RadialMenuItem(
                     icon: "pencil.circle.fill",
                     label: "Edit",
-                    color: Color(hex: "#FFFC00"),
+                    color: atakOrange,
                     action: .editMarker
                 ),
                 RadialMenuItem(
                     icon: "trash.fill",
                     label: "Delete",
-                    color: .red,
+                    color: atakRed,
                     action: .deleteMarker
                 ),
                 RadialMenuItem(
                     icon: "square.and.arrow.up.fill",
                     label: "Share",
-                    color: .blue,
+                    color: atakBlue,
                     action: .shareMarker
                 ),
                 RadialMenuItem(
                     icon: "arrow.triangle.turn.up.right.circle.fill",
                     label: "Navigate",
-                    color: .green,
+                    color: atakGreen,
                     action: .navigate
                 ),
                 RadialMenuItem(
                     icon: "info.circle.fill",
                     label: "Info",
-                    color: .gray,
+                    color: atakGray,
                     action: .getInfo
                 )
             ],
-            radius: 100,
-            itemSize: 50,
+            radius: 120,  // Larger to contain labels
+            itemSize: 56, // Good touch targets
             hapticFeedback: true,
             showLabels: true
         )
@@ -118,36 +128,36 @@ enum RadialMenuPresets {
                 RadialMenuItem(
                     icon: "mappin.circle.fill",
                     label: "Drop Point",
-                    color: Color(hex: "#FFFC00"),
+                    color: atakOlive,
                     action: .addWaypoint
                 ),
                 RadialMenuItem(
                     icon: "point.topleft.down.curvedto.point.bottomright.up.fill",
                     label: "Route",
-                    color: .orange,
+                    color: atakOrange,
                     action: .createRoute
                 ),
                 RadialMenuItem(
                     icon: "bubble.left.fill",
                     label: "Chat",
-                    color: .blue,
+                    color: atakBlue,
                     action: .quickChat
                 ),
                 RadialMenuItem(
                     icon: "dot.radiowaves.left.and.right",
                     label: "Mesh",
-                    color: .green,
+                    color: atakGreen,
                     action: .custom("meshtastic")
                 ),
                 RadialMenuItem(
                     icon: "exclamationmark.octagon.fill",
                     label: "Emergency",
-                    color: .red,
+                    color: atakRed,
                     action: .emergency
                 )
             ],
-            radius: 90,
-            itemSize: 55,
+            radius: 120,  // Contains labels
+            itemSize: 56, // Good touch targets
             hapticFeedback: true,
             showLabels: true
         )
@@ -162,30 +172,30 @@ enum RadialMenuPresets {
                 RadialMenuItem(
                     icon: "shield.fill",
                     label: "Friendly",
-                    color: .cyan,
+                    color: atakBlue,
                     action: .dropMarker(.friendly)
                 ),
                 RadialMenuItem(
                     icon: "exclamationmark.triangle.fill",
                     label: "Hostile",
-                    color: .red,
+                    color: atakRed,
                     action: .dropMarker(.hostile)
                 ),
                 RadialMenuItem(
                     icon: "questionmark.circle.fill",
                     label: "Unknown",
-                    color: .yellow,
+                    color: Color(hex: "#FDD835"),  // ATAK yellow for unknown
                     action: .dropMarker(.unknown)
                 ),
                 RadialMenuItem(
                     icon: "circle.fill",
                     label: "Neutral",
-                    color: .green,
+                    color: atakGreen,
                     action: .dropMarker(.neutral)
                 )
             ],
-            radius: 85,
-            itemSize: 55,
+            radius: 115,  // Contains labels
+            itemSize: 58, // Good touch targets
             hapticFeedback: true,
             showLabels: true
         )
@@ -200,30 +210,30 @@ enum RadialMenuPresets {
                 RadialMenuItem(
                     icon: "ruler",
                     label: "Distance",
-                    color: Color(hex: "#FFFC00"),
-                    action: .measure
+                    color: atakOrange,
+                    action: .measureDistance
                 ),
                 RadialMenuItem(
-                    icon: "arrow.up.left.and.arrow.down.right",
+                    icon: "square.dashed",
                     label: "Area",
-                    color: .orange,
-                    action: .custom("placeholder")
+                    color: atakTan,
+                    action: .measureArea
                 ),
                 RadialMenuItem(
                     icon: "scope",
                     label: "Bearing",
-                    color: .cyan,
-                    action: .custom("placeholder")
+                    color: atakBlue,
+                    action: .measureBearing
                 ),
                 RadialMenuItem(
-                    icon: "mountain.2.fill",
-                    label: "Elevation",
-                    color: .green,
-                    action: .custom("placeholder")
+                    icon: "target",
+                    label: "Range Rings",
+                    color: atakGreen,
+                    action: .setRangeRings
                 )
             ],
-            radius: 95,
-            itemSize: 50,
+            radius: 115,  // Contains labels
+            itemSize: 56, // Good touch targets
             hapticFeedback: true,
             showLabels: true
         )
@@ -238,30 +248,30 @@ enum RadialMenuPresets {
                 RadialMenuItem(
                     icon: "location.fill",
                     label: "Navigate",
-                    color: .green,
+                    color: atakGreen,
                     action: .navigate
                 ),
                 RadialMenuItem(
                     icon: "map.fill",
                     label: "Route",
-                    color: .blue,
+                    color: atakBlue,
                     action: .createRoute
                 ),
                 RadialMenuItem(
                     icon: "mappin.and.ellipse",
                     label: "Waypoint",
-                    color: .orange,
+                    color: atakOlive,
                     action: .addWaypoint
                 ),
                 RadialMenuItem(
                     icon: "location.north.line.fill",
                     label: "Center",
-                    color: Color(hex: "#FFFC00"),
-                    action: .custom("placeholder")
+                    color: atakGray,
+                    action: .centerMap
                 )
             ],
-            radius: 95,
-            itemSize: 50,
+            radius: 115,  // Contains labels
+            itemSize: 56, // Good touch targets
             hapticFeedback: true,
             showLabels: true
         )
@@ -276,24 +286,24 @@ enum RadialMenuPresets {
                 RadialMenuItem(
                     icon: "plus.circle.fill",
                     label: "Add",
-                    color: Color(hex: "#FFFC00"),
+                    color: atakOlive,
                     action: .addWaypoint
                 ),
                 RadialMenuItem(
                     icon: "info.circle.fill",
                     label: "Info",
-                    color: .blue,
+                    color: atakBlue,
                     action: .getInfo
                 ),
                 RadialMenuItem(
                     icon: "xmark.circle.fill",
                     label: "Cancel",
-                    color: .red,
-                    action: .custom("placeholder")
+                    color: atakGray,
+                    action: .custom("dismiss")
                 )
             ],
-            radius: 70,
-            itemSize: 45,
+            radius: 90,   // Compact but usable
+            itemSize: 54, // Good touch target
             hapticFeedback: true,
             showLabels: false
         )

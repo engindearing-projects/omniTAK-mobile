@@ -52,6 +52,10 @@ struct RouteWaypoint: Identifiable, Codable, Equatable {
     var timeToNext: TimeInterval? // seconds
     var altitude: Double?
 
+    // ATAK-style custom cues for voice guidance
+    var approachCue: String? // Custom message when approaching this waypoint
+    var arrivalCue: String? // Custom message upon arrival at this waypoint
+
     init(
         id: UUID = UUID(),
         coordinate: CLLocationCoordinate2D,
@@ -60,7 +64,9 @@ struct RouteWaypoint: Identifiable, Codable, Equatable {
         instruction: String? = nil,
         distanceToNext: Double? = nil,
         timeToNext: TimeInterval? = nil,
-        altitude: Double? = nil
+        altitude: Double? = nil,
+        approachCue: String? = nil,
+        arrivalCue: String? = nil
     ) {
         self.id = id
         self.latitude = coordinate.latitude
@@ -71,6 +77,8 @@ struct RouteWaypoint: Identifiable, Codable, Equatable {
         self.distanceToNext = distanceToNext
         self.timeToNext = timeToNext
         self.altitude = altitude
+        self.approachCue = approachCue
+        self.arrivalCue = arrivalCue
     }
 
     /// Get CLLocationCoordinate2D
@@ -164,6 +172,14 @@ struct Route: Identifiable, Codable, Equatable {
     var notes: String?
     var uid: String // CoT UID
 
+    // MARK: - Route Styling (ATAK Parity)
+    var lineStyle: RouteLineStyle
+    var lineOpacity: Double // 0.0 - 1.0
+    var lineWidth: Double // points
+    var waypointIconStyle: WaypointIconStyle
+    var waypointPrefix: String // e.g., "WP", "CP", ""
+    var showDirectionArrows: Bool
+
     init(
         id: UUID = UUID(),
         name: String,
@@ -174,7 +190,13 @@ struct Route: Identifiable, Codable, Equatable {
         createdAt: Date = Date(),
         color: String = "#FFFC00",
         status: RouteStatus = .planning,
-        notes: String? = nil
+        notes: String? = nil,
+        lineStyle: RouteLineStyle = .solid,
+        lineOpacity: Double = 1.0,
+        lineWidth: Double = 4.0,
+        waypointIconStyle: WaypointIconStyle = .numbered,
+        waypointPrefix: String = "",
+        showDirectionArrows: Bool = false
     ) {
         self.id = id
         self.name = name.isEmpty ? "Route \(Route.dateFormatter.string(from: createdAt))" : name
@@ -188,6 +210,12 @@ struct Route: Identifiable, Codable, Equatable {
         self.status = status
         self.notes = notes
         self.uid = "route-\(id.uuidString)"
+        self.lineStyle = lineStyle
+        self.lineOpacity = lineOpacity
+        self.lineWidth = lineWidth
+        self.waypointIconStyle = waypointIconStyle
+        self.waypointPrefix = waypointPrefix
+        self.showDirectionArrows = showDirectionArrows
     }
 
     // MARK: - Static Properties
@@ -353,6 +381,78 @@ struct Route: Identifiable, Codable, Equatable {
     }
 }
 
+// MARK: - Route Line Style
+
+/// Line style for route polyline rendering
+enum RouteLineStyle: String, CaseIterable, Codable {
+    case solid = "Solid"
+    case dashed = "Dashed"
+    case dotted = "Dotted"
+
+    var displayName: String {
+        rawValue
+    }
+
+    var icon: String {
+        switch self {
+        case .solid: return "line.horizontal.3"
+        case .dashed: return "line.horizontal.3.decrease"
+        case .dotted: return "ellipsis"
+        }
+    }
+
+    /// Dash pattern for MapKit rendering
+    var dashPattern: [NSNumber]? {
+        switch self {
+        case .solid: return nil
+        case .dashed: return [10, 8]
+        case .dotted: return [2, 6]
+        }
+    }
+}
+
+// MARK: - Waypoint Icon Style
+
+/// Icon style for route waypoints
+enum WaypointIconStyle: String, CaseIterable, Codable {
+    case numbered = "Numbered"
+    case lettered = "Lettered"
+    case checkpoint = "Checkpoint"
+    case flag = "Flag"
+    case pin = "Pin"
+
+    var displayName: String {
+        rawValue
+    }
+
+    var icon: String {
+        switch self {
+        case .numbered: return "number.circle.fill"
+        case .lettered: return "a.circle.fill"
+        case .checkpoint: return "mappin.circle.fill"
+        case .flag: return "flag.fill"
+        case .pin: return "pin.fill"
+        }
+    }
+
+    /// Get label for a waypoint at given index
+    func label(for index: Int, prefix: String) -> String {
+        switch self {
+        case .numbered:
+            return "\(prefix)\(index + 1)"
+        case .lettered:
+            let letter = String(UnicodeScalar(65 + (index % 26))!) // A-Z
+            return "\(prefix)\(letter)"
+        case .checkpoint:
+            return "CP\(index + 1)"
+        case .flag:
+            return "WP\(index + 1)"
+        case .pin:
+            return "\(index + 1)"
+        }
+    }
+}
+
 // MARK: - Route Color Presets
 
 enum RouteColorPreset: String, CaseIterable {
@@ -447,6 +547,10 @@ class RouteWaypointAnnotation: NSObject, MKAnnotation {
     let isStart: Bool
     let isEnd: Bool
 
+    // ATAK-style waypoint styling
+    var waypointIconStyle: WaypointIconStyle = .numbered
+    var waypointPrefix: String = ""
+
     var coordinate: CLLocationCoordinate2D {
         waypoint.coordinate
     }
@@ -463,6 +567,11 @@ class RouteWaypointAnnotation: NSObject, MKAnnotation {
             return "Next: \(distance.formattedDistance)"
         }
         return nil
+    }
+
+    /// Get the display label based on icon style and prefix
+    var displayLabel: String {
+        waypointIconStyle.label(for: waypoint.order, prefix: waypointPrefix)
     }
 
     init(waypoint: RouteWaypoint, routeColor: UIColor, isStart: Bool = false, isEnd: Bool = false) {

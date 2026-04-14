@@ -209,15 +209,9 @@ class MeasurementCalculator {
 
     // MARK: - Formatting Helpers
 
-    /// Format distance with appropriate unit
+    /// Format distance with appropriate unit based on user preferences
     static func formatDistance(_ meters: Double) -> String {
-        if meters < 1000 {
-            return String(format: "%.1f m", meters)
-        } else if meters < 10000 {
-            return String(format: "%.2f km", meters / 1000.0)
-        } else {
-            return String(format: "%.1f km", meters / 1000.0)
-        }
+        return UnitFormatter.distance(meters)
     }
 
     /// Format bearing with cardinal direction
@@ -234,15 +228,9 @@ class MeasurementCalculator {
         return directions[index]
     }
 
-    /// Format area with appropriate unit
+    /// Format area with appropriate unit based on user preferences
     static func formatArea(_ squareMeters: Double) -> String {
-        if squareMeters < 10000 {
-            return String(format: "%.1f m\u{00B2}", squareMeters)
-        } else if squareMeters < 1000000 {
-            return String(format: "%.2f ha", squareMeters / 10000.0)
-        } else {
-            return String(format: "%.2f km\u{00B2}", squareMeters / 1000000.0)
-        }
+        return UnitFormatter.area(squareMeters)
     }
 
     // MARK: - Complete Measurement Calculation

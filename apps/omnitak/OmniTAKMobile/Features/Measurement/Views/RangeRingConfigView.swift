@@ -159,11 +159,7 @@ struct RangeRingConfigView: View {
     // MARK: - Helper Methods
 
     private func formatDistance(_ meters: Double) -> String {
-        if meters >= 1000 {
-            return String(format: "%.1f km", meters / 1000.0)
-        } else {
-            return String(format: "%.0f m", meters)
-        }
+        return UnitFormatter.distance(meters)
     }
 
     private func addCustomDistance() {
