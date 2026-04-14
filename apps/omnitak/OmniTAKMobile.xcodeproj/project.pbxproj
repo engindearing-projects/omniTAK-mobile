@@ -21,10 +21,8 @@
 		0F62F18FF7E01A4873C55CD2 /* ConnectionStatusWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2399F38E59FEB96764216BFB /* ConnectionStatusWidget.swift */; };
 		0F9BEFBD1BA9F7430DD763EB /* ATAKLoadingScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50F7DBC520F74BA47052BCB7 /* ATAKLoadingScreen.swift */; };
 		1374EB3089F65B0141A84BC7 /* MeshNodeMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4A0DCCEFB04D08FB298E2FD /* MeshNodeMapView.swift */; };
-		13F70B910BFD4F73B5BEF156 /* ArcGISPortalService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41649878BA565C31AD9300C0 /* ArcGISPortalService.swift */; };
 		149136897028455D70FB7E32 /* CASRequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD9F8A771AD5292E85B04E77 /* CASRequestView.swift */; };
 		1940A8A30A4B52CEF45B743F /* SHGPUCA----.svg in Resources */ = {isa = PBXBuildFile; fileRef = 1EBC84DF2F7B1C325E9B3B16 /* SHGPUCA----.svg */; };
-		194817D671843DCAD0D230BE /* ArcGISFeatureService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A46765208111AFA02748AA2 /* ArcGISFeatureService.swift */; };
 		19D744558EA49782E42ADE7E /* CertificateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D2A4D2EF96B4EB2D74EF5C3 /* CertificateManager.swift */; };
 		1BE25DA5B44BA5AD28D90C82 /* RadialMenuMapCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 628B317671CF6452847569CB /* RadialMenuMapCoordinator.swift */; };
 		20CAAB4409715F7431C1DEAB /* AppPreviewRecordingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 786486F562966ED005A6E978 /* AppPreviewRecordingTests.swift */; };
@@ -148,7 +146,6 @@
 		949B46268C25A2AABBC332A4 /* SimpleEnrollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72FA80C978460AFCBAA502D9 /* SimpleEnrollView.swift */; };
 		94D1BA1CC476ADFA211DCD2C /* PluginsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F56D7F0993619ED2315DFFF3 /* PluginsListView.swift */; };
 		98A5477F86EE7B3523DD71C7 /* SFGPUULC----.svg in Resources */ = {isa = PBXBuildFile; fileRef = 521020DF5388AD3BD0C8C876 /* SFGPUULC----.svg */; };
-		98B0B1736ED5F9792A0A8826 /* ArcGISModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35478EEE29787021B3835752 /* ArcGISModels.swift */; };
 		98F359A0B3B19480BA7BE805 /* VideoStreamModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = D73B72E19694F5ADED598A7E /* VideoStreamModels.swift */; };
 		990DE84422F1AAA1C165A217 /* RadialMenuGestureHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F58AEC1ED40150C4E94E8A2 /* RadialMenuGestureHandler.swift */; };
 		9B53B95D7EDEE6FC5CB09995 /* TurnByTurnNavigationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DF4CA147B5220C0A776A48B /* TurnByTurnNavigationService.swift */; };
@@ -236,7 +233,6 @@
 		DE13E8D462F0655B012B5AB0 /* RadialMenuModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FBC2615A833D70CD96C5723 /* RadialMenuModels.swift */; };
 		DE33389B8145869804340112 /* BNGConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5160EE3247DE0377F3E6CE8 /* BNGConverter.swift */; };
 		E072202BA54DC55005061421 /* BreadcrumbTrailOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E18E500589D60B62FC2D310 /* BreadcrumbTrailOverlay.swift */; };
-		E11C47835FABECE6A41EB0B8 /* ArcGISPortalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0891380D3547D770ABBCE89 /* ArcGISPortalView.swift */; };
 		E3397D517A54F6F76789C606 /* MeshtasticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7E7E03CF8CE1ECA81C1AA86 /* MeshtasticManager.swift */; };
 		E696090A2C20C65D83CD1F3D /* MeshtasticCoTConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1419954D52EBD5859EFA2213 /* MeshtasticCoTConverter.swift */; };
 		E8FC76F4642B0A491FDDD72E /* SFGPUSM----.svg in Resources */ = {isa = PBXBuildFile; fileRef = 2A8886CA936AF8F6E8582BA9 /* SFGPUSM----.svg */; };
@@ -320,7 +316,6 @@
 		337B02FC01D3C75F89D078A8 /* UnitTrailOverlay.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = UnitTrailOverlay.swift; path = OmniTAKMobile/Features/Map/Overlays/UnitTrailOverlay.swift; sourceTree = "<group>"; };
 		33BE217D66F59D9E9606C20A /* GeofenceManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = GeofenceManager.swift; path = OmniTAKMobile/Features/Geofencing/Managers/GeofenceManager.swift; sourceTree = "<group>"; };
 		343A9DB3612DAF9A47999950 /* OfflineTileCache.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = OfflineTileCache.swift; path = OmniTAKMobile/Features/Map/TileSources/OfflineTileCache.swift; sourceTree = "<group>"; };
-		35478EEE29787021B3835752 /* ArcGISModels.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ArcGISModels.swift; path = OmniTAKMobile/Features/OfflineMaps/Models/ArcGISModels.swift; sourceTree = "<group>"; };
 		358A8322D6B0A02926268368 /* SHARED_INTERFACES.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SHARED_INTERFACES.swift; path = OmniTAKMobile/Resources/Documentation/SHARED_INTERFACES.swift; sourceTree = "<group>"; };
 		3611027C930D5BCF88C9FB3B /* BloodhoundView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BloodhoundView.swift; path = OmniTAKMobile/Features/Tracking/Views/BloodhoundView.swift; sourceTree = "<group>"; };
 		372BEE330DDD178296377ADA /* MarkerAnnotationView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MarkerAnnotationView.swift; path = OmniTAKMobile/Features/Map/Markers/MarkerAnnotationView.swift; sourceTree = "<group>"; };
@@ -335,7 +330,6 @@
 		40210ECC988A417364D71247 /* SFGPUCA----.svg */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = "SFGPUCA----.svg"; sourceTree = "<group>"; };
 		40BFBA51A756BC0EA91C9245 /* MapViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MapViewController.swift; path = OmniTAKMobile/Features/Map/Controllers/MapViewController.swift; sourceTree = "<group>"; };
 		4117A74128252722FF170D0E /* MultiServerFederation.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MultiServerFederation.swift; path = OmniTAKMobile/Utilities/Network/MultiServerFederation.swift; sourceTree = "<group>"; };
-		41649878BA565C31AD9300C0 /* ArcGISPortalService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ArcGISPortalService.swift; path = OmniTAKMobile/Features/OfflineMaps/Services/ArcGISPortalService.swift; sourceTree = "<group>"; };
 		43C20C5734319D533A7C2227 /* OfflineMapsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = OfflineMapsView.swift; path = OmniTAKMobile/Features/OfflineMaps/Views/OfflineMapsView.swift; sourceTree = "<group>"; };
 		441D3BF6E34A4ECF34A40AEF /* SFGPEVF----.svg */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = "SFGPEVF----.svg"; sourceTree = "<group>"; };
 		448D0EBEFF3E2A71669016D1 /* ScaleBarView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ScaleBarView.swift; path = OmniTAKMobile/Features/Map/Views/ScaleBarView.swift; sourceTree = "<group>"; };
@@ -425,12 +419,10 @@
 		9144EDB48A9F4873A6F5392A /* VideoMapOverlay.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = VideoMapOverlay.swift; path = OmniTAKMobile/Features/Map/Overlays/VideoMapOverlay.swift; sourceTree = "<group>"; };
 		922F25506591914930EEC898 /* TeamService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TeamService.swift; path = OmniTAKMobile/Features/Teams/Services/TeamService.swift; sourceTree = "<group>"; };
 		9450DBDE52BFDA77D0BBA9DE /* EmergencyBeaconService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = EmergencyBeaconService.swift; path = OmniTAKMobile/Features/Tracking/Services/EmergencyBeaconService.swift; sourceTree = "<group>"; };
-		9A46765208111AFA02748AA2 /* ArcGISFeatureService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ArcGISFeatureService.swift; path = OmniTAKMobile/Features/OfflineMaps/Services/ArcGISFeatureService.swift; sourceTree = "<group>"; };
 		9F9AA2203CD168813C8B8F77 /* BreadcrumbTrailService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BreadcrumbTrailService.swift; path = OmniTAKMobile/Features/Tracking/Services/BreadcrumbTrailService.swift; sourceTree = "<group>"; };
 		9FB7E9180D42C5F7B940CFA4 /* CoTFilterModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CoTFilterModel.swift; path = OmniTAKMobile/Features/Networking/Models/CoTFilterModel.swift; sourceTree = "<group>"; };
 		A0453E372571CF9C2739A871 /* GeofenceManagementView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = GeofenceManagementView.swift; path = OmniTAKMobile/Features/Geofencing/Views/GeofenceManagementView.swift; sourceTree = "<group>"; };
 		A06A59DC9C712878830E5D23 /* PointDropperView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PointDropperView.swift; path = OmniTAKMobile/Features/Drawing/Views/PointDropperView.swift; sourceTree = "<group>"; };
-		A0891380D3547D770ABBCE89 /* ArcGISPortalView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ArcGISPortalView.swift; path = OmniTAKMobile/Features/OfflineMaps/Views/ArcGISPortalView.swift; sourceTree = "<group>"; };
 		A0D37E8D6422BE44C712E352 /* MeshtasticDevicePickerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MeshtasticDevicePickerView.swift; path = OmniTAKMobile/Features/Meshtastic/Views/MeshtasticDevicePickerView.swift; sourceTree = "<group>"; };
 		A156DBDE2ED6E19C0021BAAF /* OmniTAKMobile.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OmniTAKMobile.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A2C4AE7792EC101310F1483A /* RadialMenuActionExecutor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RadialMenuActionExecutor.swift; path = OmniTAKMobile/Shared/UI/RadialMenu/RadialMenuActionExecutor.swift; sourceTree = "<group>"; };
@@ -567,7 +559,6 @@
 		02C56FB30ABEB3611E10CFC4 /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				35478EEE29787021B3835752 /* ArcGISModels.swift */,
 				CD9BA46286CAC85A7816A3FF /* OfflineMapModels.swift */,
 			);
 			name = Models;
@@ -822,7 +813,6 @@
 		25405FED8E51015BFBD9B920 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				A0891380D3547D770ABBCE89 /* ArcGISPortalView.swift */,
 				43C20C5734319D533A7C2227 /* OfflineMapsView.swift */,
 				7740DF1463CF041207C4772B /* RegionSelectionView.swift */,
 			);
@@ -1610,8 +1600,6 @@
 		B6812ED7ACB49C1FA86A49DF /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				9A46765208111AFA02748AA2 /* ArcGISFeatureService.swift */,
-				41649878BA565C31AD9300C0 /* ArcGISPortalService.swift */,
 			);
 			name = Services;
 			sourceTree = "<group>";
@@ -2086,11 +2074,7 @@
 				87FC95DA6DE5F827F2355859 /* CoTUnitListView.swift in Sources */,
 				FBA789518DB4F7E977D5F0BD /* PositionBroadcastView.swift in Sources */,
 				7985F8F77553018A47ECD92A /* OfflineMapManager.swift in Sources */,
-				98B0B1736ED5F9792A0A8826 /* ArcGISModels.swift in Sources */,
 				84389251057DBE86412E1FAD /* OfflineMapModels.swift in Sources */,
-				194817D671843DCAD0D230BE /* ArcGISFeatureService.swift in Sources */,
-				13F70B910BFD4F73B5BEF156 /* ArcGISPortalService.swift in Sources */,
-				E11C47835FABECE6A41EB0B8 /* ArcGISPortalView.swift in Sources */,
 				83C89AB8B5F9864651DFBA7F /* OfflineMapsView.swift in Sources */,
 				4FBD96472BF89CBF77EB0BD4 /* RegionSelectionView.swift in Sources */,
 				9283117A5B3461B4491D39CE /* AboutView.swift in Sources */,
