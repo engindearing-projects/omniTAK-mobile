@@ -8,6 +8,7 @@
 import Foundation
 import CoreLocation
 import Combine
+import os
 
 class ADSBTrafficService: ObservableObject {
     static let shared = ADSBTrafficService()
@@ -246,9 +247,7 @@ class ADSBTrafficService: ObservableObject {
         request.setValue("v1", forHTTPHeaderField: "Accept-Version")
         request.setValue("Bearer \(config.apiKey)", forHTTPHeaderField: "Authorization")
 
-        // Debug logging
-        print("FR24 Request URL: \(url)")
-        print("FR24 API Key (first 20 chars): \(String(config.apiKey.prefix(20)))...")
+        Logger.adsb.debug("ADS-B request prepared")
 
         performRequest(request) { [weak self] data in
             try self?.parseFlightRadar24Response(data: data, center: center) ?? []

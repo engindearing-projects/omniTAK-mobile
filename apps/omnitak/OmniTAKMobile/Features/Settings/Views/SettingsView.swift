@@ -11,14 +11,9 @@ struct SettingsView: View {
     @Environment(\.dismiss) var dismiss
     @AppStorage("userCallsign") private var userCallsign = "ALPHA-1"
     @AppStorage("userName") private var userName = "Operator"
-    @AppStorage("autoConnect") private var autoConnect = true
-    @AppStorage("sendPositionInterval") private var sendPositionInterval = 30.0
-    @AppStorage("enableHaptics") private var enableHaptics = true
-    @AppStorage("darkMode") private var darkMode = true
-    @AppStorage("showTrafficOverlay") private var showTrafficOverlay = false
-    @AppStorage("enableLocationSharing") private var enableLocationSharing = true
-    @AppStorage("batteryOptimization") private var batteryOptimization = false
     @AppStorage("unitSystem") private var unitSystemString = "Metric"
+    @State private var cacheSizeText: String = "—"
+    @State private var showCacheCleared = false
 
     // Map Overlay Settings
     @AppStorage("mgrsGridEnabled") private var mgrsGridEnabled = false
@@ -29,7 +24,6 @@ struct SettingsView: View {
     @AppStorage("trailMaxLength") private var trailMaxLength = 100
     @AppStorage("trailColorName") private var trailColorName = "cyan"
 
-    @State private var showNetworkPreferences = false
     @State private var showServersSheet = false
 
     var body: some View {
@@ -85,23 +79,6 @@ struct SettingsView: View {
                     }
                 }
 
-                // Connection Settings
-                Section("CONNECTION") {
-                    Toggle("Auto-connect on Launch", isOn: $autoConnect)
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            Text("Position Update Interval")
-                            Spacer()
-                            Text("\(Int(sendPositionInterval))s")
-                                .foregroundColor(.gray)
-                        }
-                        Slider(value: $sendPositionInterval, in: 5...120, step: 5)
-                    }
-
-                    Toggle("Enable Location Sharing", isOn: $enableLocationSharing)
-                }
-
                 // Navigation Settings
                 Section("NAVIGATION") {
                     NavigationLink(destination: NavigationSettingsView()) {
@@ -117,6 +94,7 @@ struct SettingsView: View {
                         }
                     }
                 }
+
 
                 // Map Overlay Settings
                 Section("MAP OVERLAYS") {
@@ -187,25 +165,19 @@ struct SettingsView: View {
                         Text("Metric (km, m, km/h)").tag("Metric")
                         Text("Imperial (mi, ft, mph)").tag("Imperial")
                     }
-
-                    Toggle("Dark Mode", isOn: $darkMode)
-                    Toggle("Show Traffic Overlay", isOn: $showTrafficOverlay)
-                    Toggle("Enable Haptic Feedback", isOn: $enableHaptics)
                 }
 
                 // Performance
                 Section("PERFORMANCE") {
-                    Toggle("Battery Optimization", isOn: $batteryOptimization)
-
                     HStack {
                         Text("Cache Size")
                         Spacer()
-                        Text("127 MB")
+                        Text(cacheSizeText)
                             .foregroundColor(.gray)
                     }
 
                     Button("Clear Cache") {
-                        // Clear cache
+                        clearCache()
                     }
                     .foregroundColor(.red)
                 }
@@ -219,13 +191,6 @@ struct SettingsView: View {
                     Button("Reset to Defaults") {
                         userCallsign = "ALPHA-1"
                         userName = "Operator"
-                        autoConnect = true
-                        sendPositionInterval = 30.0
-                        enableHaptics = true
-                        darkMode = true
-                        showTrafficOverlay = false
-                        enableLocationSharing = true
-                        batteryOptimization = false
                         unitSystemString = "Metric"
                         // Map overlay defaults
                         mgrsGridEnabled = false
@@ -259,6 +224,47 @@ struct SettingsView: View {
             .sheet(isPresented: $showServersSheet) {
                 ServersView()
             }
+            .alert("Cache Cleared", isPresented: $showCacheCleared) {
+                Button("OK", role: .cancel) {}
+            }
+            .onAppear { refreshCacheSize() }
         }
+    }
+
+    private func refreshCacheSize() {
+        let urlBytes = URLCache.shared.currentDiskUsage + URLCache.shared.currentMemoryUsage
+        let tileBytes = tileCacheSizeBytes()
+        let total = Int64(urlBytes) + tileBytes
+        let formatter = ByteCountFormatter()
+        formatter.allowedUnits = [.useMB, .useGB, .useKB]
+        formatter.countStyle = .file
+        cacheSizeText = formatter.string(fromByteCount: total)
+    }
+
+    private func tileCacheSizeBytes() -> Int64 {
+        guard let cachesDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else {
+            return 0
+        }
+        let tileDir = cachesDir.appendingPathComponent("tiles", isDirectory: true)
+        guard let enumerator = FileManager.default.enumerator(at: tileDir, includingPropertiesForKeys: [.fileSizeKey], options: [.skipsHiddenFiles]) else {
+            return 0
+        }
+        var total: Int64 = 0
+        for case let fileURL as URL in enumerator {
+            if let size = try? fileURL.resourceValues(forKeys: [.fileSizeKey]).fileSize {
+                total += Int64(size)
+            }
+        }
+        return total
+    }
+
+    private func clearCache() {
+        URLCache.shared.removeAllCachedResponses()
+        if let cachesDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first {
+            let tileDir = cachesDir.appendingPathComponent("tiles", isDirectory: true)
+            try? FileManager.default.removeItem(at: tileDir)
+        }
+        refreshCacheSize()
+        showCacheCleared = true
     }
 }

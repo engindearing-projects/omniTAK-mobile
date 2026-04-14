@@ -7,6 +7,7 @@
 
 import SwiftUI
 import CoreLocation
+import os
 
 struct SPOTREPView: View {
     @Environment(\.dismiss) var dismiss
@@ -26,6 +27,7 @@ struct SPOTREPView: View {
     @State private var showPreview = false
     @State private var showCopiedAlert = false
     @State private var showSentAlert = false
+    @State private var showSendErrorAlert = false
 
     var body: some View {
         NavigationView {
@@ -102,6 +104,15 @@ struct SPOTREPView: View {
                 }
             } message: {
                 Text("SPOTREP transmitted via CoT")
+            }
+            .alert("Send Failed", isPresented: $showSendErrorAlert) {
+                Button("Copy CoT") {
+                    UIPasteboard.general.string = generateSPOTREPCoT(report: createReport())
+                    showCopiedAlert = true
+                }
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Could not deliver SPOTREP to TAK server. Check connection and retry.")
             }
             .onAppear {
                 locationManager.startUpdating()
@@ -382,19 +393,19 @@ struct SPOTREPView: View {
 
     private func sendReport() {
         let report = createReport()
-
-        // Copy to clipboard
-        UIPasteboard.general.string = report.formattedReportText
-
-        // Generate and send CoT
         let cotXML = generateSPOTREPCoT(report: report)
-        print("Generated SPOTREP CoT: \(cotXML)")
 
-        // Haptic feedback
+        let success = TAKService.shared.sendCoT(xml: cotXML)
+        Logger.military.info("SPOTREP send success=\(success, privacy: .public)")
+
         let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(.success)
-
-        showSentAlert = true
+        if success {
+            generator.notificationOccurred(.success)
+            showSentAlert = true
+        } else {
+            generator.notificationOccurred(.error)
+            showSendErrorAlert = true
+        }
     }
 
     private func generateSPOTREPCoT(report: SPOTREPReport) -> String {

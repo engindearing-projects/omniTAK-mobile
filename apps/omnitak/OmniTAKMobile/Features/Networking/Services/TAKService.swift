@@ -3,6 +3,7 @@ import Combine
 import CoreLocation
 import Network
 import Security
+import os
 #if os(iOS)
 import UIKit
 #endif
@@ -176,7 +177,7 @@ class DirectTCPSender {
                 #if DEBUG
                 print("🔐 Configuring client certificate: \(certName)")
                 #endif
-                clientIdentity = loadClientCertificate(name: certName, password: certificatePassword ?? "atakatak")
+                clientIdentity = loadClientCertificate(name: certName, password: certificatePassword ?? CertificateImportPipeline.bundledP12Password)
             }
 
             // Fallback: Try loading bundled-client.p12 directly from bundle
@@ -189,7 +190,7 @@ class DirectTCPSender {
                     print("📂 Found bundled-client.p12 at: \(bundledURL.path)")
                     #endif
                     if let data = try? Data(contentsOf: bundledURL) {
-                        let options: [String: Any] = [kSecImportExportPassphrase as String: "atakatak"]
+                        let options: [String: Any] = [kSecImportExportPassphrase as String: CertificateImportPipeline.bundledP12Password]
                         var items: CFArray?
                         let status = SecPKCS12Import(data as CFData, options as CFDictionary, &items)
                         if status == errSecSuccess,
@@ -276,25 +277,22 @@ class DirectTCPSender {
             guard let self = self else { return }
             switch state {
             case .ready:
-                #if DEBUG
-                print("✅ Direct\(self.currentProtocol): Connected to \(host):\(port)")
-                #endif
+                let proto = "\(self.currentProtocol)"
+                Logger.takNetwork.info("Connected via \(proto, privacy: .public)")
                 self.onConnectionStateChanged?(true)
                 // Start the receive loop
                 self.startReceiveLoop()
                 completion(true)
             case .failed(let error):
-                print("❌ Direct\(self.currentProtocol): Connection failed: \(error)")
+                let errStr = "\(error)"
+                Logger.takNetwork.error("Connection failed: \(errStr, privacy: .public)")
                 self.onConnectionStateChanged?(false)
                 completion(false)
             case .waiting(let error):
-                #if DEBUG
-                print("⏳ Direct\(self.currentProtocol): Waiting to connect: \(error)")
-                #endif
+                let errStr = "\(error)"
+                Logger.takNetwork.debug("Waiting to connect: \(errStr, privacy: .public)")
             case .cancelled:
-                #if DEBUG
-                print("🔌 Direct\(self.currentProtocol): Connection cancelled")
-                #endif
+                Logger.takNetwork.info("Connection cancelled")
                 self.onConnectionStateChanged?(false)
             default:
                 break
@@ -1484,21 +1482,17 @@ class TAKService: ObservableObject {
             #endif
 
             guard let directTCP = directTCP, directTCP.isConnected else {
-                print("❌ [SEND] Not connected to any server - cannot send message")
-                print("  → Published isConnected: \(isConnected)")
-                print("  → connectedServerIds count: \(connectedServerIds.count)")
-                print("  → serverConnections count: \(totalConnections)")
+                Logger.takNetwork.error("sendCoT failed: not connected to any server")
+                Logger.takNetwork.debug("isConnected=\(self.isConnected, privacy: .public) connectedServerIds=\(self.connectedServerIds.count, privacy: .public) serverConnections=\(self.totalConnections, privacy: .public)")
                 return false
             }
 
             if directTCP.send(xml: xml) {
                 messagesSent += 1
-                #if DEBUG
-                print("📤 Sent CoT message via legacy connection")
-                #endif
+                Logger.takCoT.debug("Sent CoT via legacy connection")
                 return true
             } else {
-                print("❌ Failed to send CoT message via legacy connection")
+                Logger.takNetwork.error("sendCoT failed via legacy connection")
                 return false
             }
         }
@@ -1512,12 +1506,10 @@ class TAKService: ObservableObject {
 
         if sentCount > 0 {
             messagesSent += 1
-            #if DEBUG
-            print("📤 Sent CoT message to \(sentCount) server(s)")
-            #endif
+            Logger.takCoT.debug("Sent CoT to \(sentCount, privacy: .public) server(s)")
             return true
         } else {
-            print("❌ Failed to send CoT message to any server")
+            Logger.takNetwork.error("sendCoT failed to all servers")
             return false
         }
     }

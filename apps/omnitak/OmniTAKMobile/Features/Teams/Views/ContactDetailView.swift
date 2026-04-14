@@ -7,6 +7,13 @@
 
 import SwiftUI
 import MapKit
+import UIKit
+import os
+
+extension Notification.Name {
+    static let centerMapOnContact = Notification.Name("centerMapOnContact")
+    static let startNavigationToContact = Notification.Name("startNavigationToContact")
+}
 
 struct ContactDetailView: View {
     let contact: ChatParticipant
@@ -14,6 +21,7 @@ struct ContactDetailView: View {
     @Environment(\.dismiss) var dismiss
     @State private var showChat = false
     @State private var mapRegion: MKCoordinateRegion
+    @State private var showShareSheet = false
 
     init(contact: ChatParticipant, chatManager: ChatManager) {
         self.contact = contact
@@ -216,7 +224,13 @@ struct ContactDetailView: View {
                                     title: "Show on Map",
                                     color: Color(hex: "#4CAF50")
                                 ) {
-                                    // TODO: Navigate to map and center on contact position
+                                    NotificationCenter.default.post(
+                                        name: .centerMapOnContact,
+                                        object: nil,
+                                        userInfo: ["uid": contact.id, "callsign": contact.callsign]
+                                    )
+                                    Logger.ui.info("centerMapOnContact posted")
+                                    dismiss()
                                 }
 
                                 ATAKButton(
@@ -224,7 +238,13 @@ struct ContactDetailView: View {
                                     title: "Navigate to Contact",
                                     color: Color(hex: "#2196F3")
                                 ) {
-                                    // TODO: Start navigation to contact
+                                    NotificationCenter.default.post(
+                                        name: .startNavigationToContact,
+                                        object: nil,
+                                        userInfo: ["uid": contact.id, "callsign": contact.callsign]
+                                    )
+                                    Logger.ui.info("startNavigationToContact posted")
+                                    dismiss()
                                 }
                             }
                             .padding(.horizontal)
@@ -248,13 +268,15 @@ struct ContactDetailView: View {
                     Button(action: { startChat() }) {
                         Label("Send Message", systemImage: "message")
                     }
-                    Button(action: { /* TODO: Share contact */ }) {
+                    Button(action: { showShareSheet = true }) {
                         Label("Share Contact", systemImage: "square.and.arrow.up")
                     }
                     Divider()
-                    Button(role: .destructive, action: { /* TODO: Block contact */ }) {
+                    // No block-list service exists yet — disabled until implemented.
+                    Button(role: .destructive, action: {}) {
                         Label("Block Contact", systemImage: "hand.raised")
                     }
+                    .disabled(true)
                 } label: {
                     Image(systemName: "ellipsis.circle")
                         .foregroundColor(Color(hex: "#FFFC00"))
@@ -268,7 +290,14 @@ struct ContactDetailView: View {
                     ConversationView(chatManager: chatManager, conversation: conversation)
                 }
             }
+            .sheet(isPresented: $showShareSheet) {
+                ContactShareSheet(activityItems: [contactVCardString])
+            }
         }
+    }
+
+    private var contactVCardString: String {
+        return "BEGIN:VCARD\nVERSION:3.0\nFN:\(contact.callsign)\nUID:\(contact.id)\nEND:VCARD\n"
     }
 
     private func startChat() {
@@ -282,6 +311,18 @@ struct ContactDetailView: View {
         formatter.timeStyle = .short
         return formatter.string(from: date)
     }
+}
+
+// MARK: - Share Sheet Wrapper
+
+private struct ContactShareSheet: UIViewControllerRepresentable {
+    let activityItems: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 // MARK: - Detail Section

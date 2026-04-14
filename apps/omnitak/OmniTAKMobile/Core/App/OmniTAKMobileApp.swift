@@ -1,8 +1,29 @@
 import SwiftUI
+import os
+
+extension Logger {
+    static let takNetwork = Logger(subsystem: "com.omnitak.mobile", category: "tak.network")
+    static let takCoT = Logger(subsystem: "com.omnitak.mobile", category: "tak.cot")
+    static let authEnrollment = Logger(subsystem: "com.omnitak.mobile", category: "auth.enrollment")
+    static let map = Logger(subsystem: "com.omnitak.mobile", category: "map")
+    static let adsb = Logger(subsystem: "com.omnitak.mobile", category: "adsb")
+    static let military = Logger(subsystem: "com.omnitak.mobile", category: "military")
+    static let meshtastic = Logger(subsystem: "com.omnitak.mobile", category: "meshtastic")
+    static let ui = Logger(subsystem: "com.omnitak.mobile", category: "ui")
+}
 
 @main
 struct OmniTAKMobileApp: App {
     @StateObject private var deepLinkHandler = DeepLinkHandler.shared
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+
+    init() {
+        // Eagerly initialize the Meshtastic manager so its COT bridge is wired
+        // into TAKService at launch. Without this, mesh nodes would only
+        // appear on the map after a Meshtastic view is opened.
+        _ = MeshtasticManager.shared
+        Logger.meshtastic.info("MeshtasticManager + CoT bridge initialized at launch")
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -48,6 +69,14 @@ struct OmniTAKMobileApp: App {
             .onOpenURL { url in
                 // Handle tak:// deep links (QR code enrollment)
                 deepLinkHandler.handleURL(url)
+            }
+            .fullScreenCover(isPresented: Binding(
+                get: { !hasCompletedOnboarding },
+                set: { newValue in if !newValue { hasCompletedOnboarding = true } }
+            )) {
+                FirstTimeOnboarding(onComplete: {
+                    hasCompletedOnboarding = true
+                })
             }
         }
     }

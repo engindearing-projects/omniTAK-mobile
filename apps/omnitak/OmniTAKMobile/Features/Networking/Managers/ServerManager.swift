@@ -93,7 +93,7 @@ class ServerManager: ObservableObject {
         if let clientCertURL = Bundle.main.url(forResource: "bundled-client", withExtension: "p12") {
             do {
                 let data = try Data(contentsOf: clientCertURL)
-                try importP12ToKeychain(data: data, password: "atakatak", label: "bundled-client")
+                try importP12ToKeychain(data: data, password: CertificateImportPipeline.bundledP12Password, label: "bundled-client")
                 print("✅ Imported bundled client certificate")
             } catch {
                 print("⚠️ Failed to import bundled client certificate: \(error)")
@@ -106,7 +106,7 @@ class ServerManager: ObservableObject {
         if let caCertURL = Bundle.main.url(forResource: "bundled-ca", withExtension: "p12") {
             do {
                 let data = try Data(contentsOf: caCertURL)
-                try importP12ToKeychain(data: data, password: "atakatak", label: "bundled-ca")
+                try importP12ToKeychain(data: data, password: CertificateImportPipeline.bundledP12Password, label: "bundled-ca")
                 print("✅ Imported bundled CA certificate")
             } catch {
                 print("⚠️ Failed to import bundled CA certificate: \(error)")
@@ -158,7 +158,7 @@ class ServerManager: ObservableObject {
             isDefault: true,
             enabled: true,
             certificateName: "bundled-client",
-            certificatePassword: "atakatak"
+            certificatePassword: CertificateImportPipeline.bundledP12Password
         )
 
         servers.insert(bundledServer, at: 0)

@@ -879,8 +879,6 @@ struct ProviderConfigSheet: View {
         // Also set this provider as the active provider when saving
         if config.isConfigured {
             settings.activeProvider = provider
-            print("Set active provider to: \(provider.displayName)")
-            print("API Key saved (first 20 chars): \(String(apiKey.prefix(20)))...")
         }
 
         trafficService.settings = settings

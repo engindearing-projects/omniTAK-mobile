@@ -7,6 +7,7 @@
 
 import SwiftUI
 import CoreLocation
+import os
 
 struct CASRequestView: View {
     @Environment(\.dismiss) var dismiss
@@ -34,6 +35,8 @@ struct CASRequestView: View {
 
     @State private var showPreview = false
     @State private var showCopiedAlert = false
+    @State private var showSentAlert = false
+    @State private var showSendErrorAlert = false
     @State private var currentLocation: CLLocationCoordinate2D?
 
     var body: some View {
@@ -306,6 +309,20 @@ struct CASRequestView: View {
             } message: {
                 Text("CAS request copied to clipboard")
             }
+            .alert("CAS Request Sent", isPresented: $showSentAlert) {
+                Button("OK", role: .cancel) { dismiss() }
+            } message: {
+                Text("9-Line CAS delivered to TAK server.")
+            }
+            .alert("Send Failed", isPresented: $showSendErrorAlert) {
+                Button("Copy CoT") {
+                    UIPasteboard.general.string = generateCASCoT(request: createRequest())
+                    showCopiedAlert = true
+                }
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Could not deliver CAS request to TAK server. Check connection and retry.")
+            }
         }
     }
 
@@ -346,18 +363,19 @@ struct CASRequestView: View {
 
     private func sendRequest() {
         let request = createRequest()
-
-        // Copy to clipboard
-        UIPasteboard.general.string = request.nineLineText
-        showCopiedAlert = true
-
-        // Generate CoT and send
         let cotXML = generateCASCoT(request: request)
-        print("Generated CAS CoT: \(cotXML)")
 
-        // Haptic feedback
+        let success = TAKService.shared.sendCoT(xml: cotXML)
+        Logger.military.info("CAS send success=\(success, privacy: .public)")
+
         let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(.success)
+        if success {
+            generator.notificationOccurred(.success)
+            showSentAlert = true
+        } else {
+            generator.notificationOccurred(.error)
+            showSendErrorAlert = true
+        }
     }
 
     private func generateCASCoT(request: CASRequest) -> String {

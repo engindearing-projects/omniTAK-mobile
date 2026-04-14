@@ -8,6 +8,7 @@
 
 import Foundation
 import Security
+import os
 
 // MARK: - TAK API Configuration
 
@@ -299,12 +300,13 @@ class TAKRestAPIClient: ObservableObject {
 
     /// Get detailed mission info
     func getMission(name: String, password: String? = nil) async throws -> TAKMissionInfo {
-        var endpoint = "/Marti/api/missions/\(name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? name)"
+        let endpoint = "/Marti/api/missions/\(name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? name)"
+        var headers: [String: String]? = nil
         if let password = password {
-            endpoint += "?password=\(password.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? password)"
+            headers = ["MissionPassword": password]
         }
 
-        let data = try await get(endpoint: endpoint)
+        let data = try await get(endpoint: endpoint, headers: headers)
 
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
@@ -327,11 +329,12 @@ class TAKRestAPIClient: ObservableObject {
     func subscribeMission(name: String, uid: String, password: String? = nil) async throws {
         var endpoint = "/Marti/api/missions/\(name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? name)/subscription"
         endpoint += "?uid=\(uid)"
+        var headers: [String: String]? = nil
         if let password = password {
-            endpoint += "&password=\(password.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? password)"
+            headers = ["MissionPassword": password]
         }
 
-        _ = try await put(endpoint: endpoint, body: nil)
+        _ = try await put(endpoint: endpoint, body: nil, headers: headers)
     }
 
     /// Unsubscribe from a mission
@@ -342,12 +345,13 @@ class TAKRestAPIClient: ObservableObject {
 
     /// Get mission CoT content
     func getMissionContent(name: String, password: String? = nil) async throws -> String {
-        var endpoint = "/Marti/api/missions/\(name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? name)/cot"
+        let endpoint = "/Marti/api/missions/\(name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? name)/cot"
+        var headers: [String: String]? = nil
         if let password = password {
-            endpoint += "?password=\(password.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? password)"
+            headers = ["MissionPassword": password]
         }
 
-        let data = try await get(endpoint: endpoint)
+        let data = try await get(endpoint: endpoint, headers: headers)
         return String(data: data, encoding: .utf8) ?? ""
     }
 
@@ -471,7 +475,7 @@ class TAKRestAPIClient: ObservableObject {
 
     // MARK: - HTTP Methods
 
-    private func get(endpoint: String) async throws -> Data {
+    private func get(endpoint: String, headers: [String: String]? = nil) async throws -> Data {
         guard let config = configuration else {
             throw TAKAPIError.invalidConfiguration
         }
@@ -484,11 +488,16 @@ class TAKRestAPIClient: ObservableObject {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Accept")
+        if let headers = headers {
+            for (key, value) in headers {
+                request.setValue(value, forHTTPHeaderField: key)
+            }
+        }
 
         return try await performRequest(request)
     }
 
-    private func put(endpoint: String, body: Data?) async throws -> Data {
+    private func put(endpoint: String, body: Data?, headers: [String: String]? = nil) async throws -> Data {
         guard let config = configuration else {
             throw TAKAPIError.invalidConfiguration
         }
@@ -501,6 +510,11 @@ class TAKRestAPIClient: ObservableObject {
         var request = URLRequest(url: url)
         request.httpMethod = "PUT"
         request.setValue("application/json", forHTTPHeaderField: "Accept")
+        if let headers = headers {
+            for (key, value) in headers {
+                request.setValue(value, forHTTPHeaderField: key)
+            }
+        }
 
         if let body = body {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -675,7 +689,8 @@ class TAKAPIURLSessionDelegate: NSObject, URLSessionDelegate {
                     )
                     completionHandler(.useCredential, credential)
                 } catch {
-                    print("Failed to load client certificate: \(error)")
+                    let errStr = "\(error)"
+                    Logger.takNetwork.error("Failed to load client certificate: \(errStr, privacy: .public)")
                     completionHandler(.performDefaultHandling, nil)
                 }
             } else {

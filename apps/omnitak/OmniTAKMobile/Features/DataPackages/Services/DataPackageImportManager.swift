@@ -261,8 +261,8 @@ class DataPackageImportManager: ObservableObject {
         let ext = url.pathExtension.lowercased()
 
         if ext == "p12" || ext == "pfx" {
-            // P12/PFX file - build password list to try
-            var passwords = ["atakatak", ""] // Common TAK server passwords
+            // P12/PFX file - try passwords from preferences first, then common defaults
+            var passwords = [CertificateImportPipeline.bundledP12Password, ""] // Common TAK server passwords
 
             // Check if YAML config specifies a password or PROMPT for this cert
             if let yamlConfig = yamlCertConfig, fullFilename == yamlConfig.clientP12Filename {
@@ -643,8 +643,8 @@ class DataPackageImportManager: ObservableObject {
                 let description = extractPreferenceEntry(from: xmlString, key: "description0") ?? "Imported Server"
 
                 // Get certificate passwords
-                let clientPassword = extractPreferenceEntry(from: xmlString, key: "clientPassword") ?? "atakatak"
-                let caPassword = extractPreferenceEntry(from: xmlString, key: "caPassword") ?? "atakatak"
+                let clientPassword = extractPreferenceEntry(from: xmlString, key: "clientPassword") ?? CertificateImportPipeline.bundledP12Password
+                let caPassword = extractPreferenceEntry(from: xmlString, key: "caPassword") ?? CertificateImportPipeline.bundledP12Password
 
                 // Get client certificate location from preferences
                 let certificateLocation = extractPreferenceEntry(from: xmlString, key: "certificateLocation")

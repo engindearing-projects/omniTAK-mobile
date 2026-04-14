@@ -14,6 +14,8 @@ struct FirstTimeOnboarding: View {
     @State private var currentPage = 0
     @State private var showEnrollment = false
 
+    var onComplete: () -> Void = {}
+
     let pages = OnboardingPage.all
 
     var body: some View {
@@ -24,7 +26,10 @@ struct FirstTimeOnboarding: View {
                 // Skip button
                 HStack {
                     Spacer()
-                    Button(action: { dismiss() }) {
+                    Button(action: {
+                        onComplete()
+                        dismiss()
+                    }) {
                         Text("Skip")
                             .font(.system(size: 15, weight: .medium))
                             .foregroundColor(Color(hex: "#CCCCCC"))
@@ -74,6 +79,7 @@ struct FirstTimeOnboarding: View {
                         currentPage += 1
                     }
                 } else {
+                    onComplete()
                     showEnrollment = true
                 }
             }) {

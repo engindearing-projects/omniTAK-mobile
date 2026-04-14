@@ -8,6 +8,7 @@
 
 import Foundation
 import Security
+import os
 
 // MARK: - Enrollment Errors
 
@@ -119,8 +120,8 @@ class CSREnrollmentService {
     /// - Parameter config: Enrollment configuration with server and credentials
     /// - Returns: TAKServer configuration with enrolled certificates
     func enrollWithCSR(config: CSREnrollmentConfiguration) async throws -> TAKServer {
-        print("[CSREnroll] Starting CSR-based enrollment for user: \(config.username)")
-        print("[CSREnroll] Trust self-signed certs: \(config.trustSelfSignedCerts)")
+        Logger.authEnrollment.info("Starting CSR enrollment for user: \(config.username, privacy: .private)")
+        Logger.authEnrollment.debug("Trust self-signed certs: \(config.trustSelfSignedCerts, privacy: .public)")
 
         // Create URLSession with appropriate certificate trust settings
         let urlSession = createURLSession(trustSelfSigned: config.trustSelfSignedCerts)
@@ -145,9 +146,9 @@ class CSREnrollmentService {
         }
 
         // Step 1: Get CA configuration from server (provides DN components)
-        print("[CSREnroll] Fetching CA configuration from server...")
+        Logger.authEnrollment.info("Fetching CA configuration from server")
         let caConfig = try await fetchCAConfiguration(config: config, session: urlSession)
-        print("[CSREnroll] CA configuration retrieved: O=\(caConfig.organizationNames), OU=\(caConfig.organizationalUnitNames)")
+        Logger.authEnrollment.info("CA configuration retrieved")
 
         // TAKaware approach: Use consistent label for both private key and certificate
         // This allows iOS to automatically create the SecIdentity
@@ -155,22 +156,22 @@ class CSREnrollmentService {
 
         // Step 2: Generate CSR with DN from server
         // Use certificate alias as the key tag so they match
-        print("[CSREnroll] Generating CSR with key tag: \(certificateAlias)")
+        Logger.authEnrollment.info("Generating CSR")
         let csrResult = try csrGenerator.generateCSR(
             username: config.username,
             caConfig: caConfig,
             keyTag: certificateAlias  // Use same label as certificate
         )
-        print("[CSREnroll] CSR generated successfully")
+        Logger.authEnrollment.info("CSR generated successfully")
 
         // Step 3: Submit CSR to server
-        print("[CSREnroll] Submitting CSR to server...")
+        Logger.authEnrollment.info("Submitting CSR to server")
         let enrollmentResponse = try await submitCSR(
             csrBase64: csrResult.csrBase64,
             config: config,
             session: urlSession
         )
-        print("[CSREnroll] Received signed certificate from server")
+        Logger.authEnrollment.info("Received signed certificate from server")
 
         // Step 4: Store signed certificate with private key
         // Use the same certificateAlias that was used for the key tag

@@ -7,6 +7,7 @@
 
 import SwiftUI
 import CoreLocation
+import os
 
 struct MEDEVACRequestView: View {
     @Environment(\.dismiss) var dismiss
@@ -34,6 +35,8 @@ struct MEDEVACRequestView: View {
 
     @State private var showPreview = false
     @State private var showCopiedAlert = false
+    @State private var showSendErrorAlert = false
+    @State private var showSentAlert = false
     @State private var currentLocation: CLLocationCoordinate2D?
 
     var body: some View {
@@ -254,6 +257,20 @@ struct MEDEVACRequestView: View {
             } message: {
                 Text("MEDEVAC request copied to clipboard")
             }
+            .alert("MEDEVAC Sent", isPresented: $showSentAlert) {
+                Button("OK", role: .cancel) { dismiss() }
+            } message: {
+                Text("9-Line MEDEVAC delivered to TAK server.")
+            }
+            .alert("Send Failed", isPresented: $showSendErrorAlert) {
+                Button("Copy CoT") {
+                    UIPasteboard.general.string = generateMEDEVACCoT(request: createRequest())
+                    showCopiedAlert = true
+                }
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Could not deliver MEDEVAC to TAK server. Check connection and retry.")
+            }
         }
     }
 
@@ -296,18 +313,19 @@ struct MEDEVACRequestView: View {
 
     private func sendRequest() {
         let request = createRequest()
-
-        // Copy to clipboard
-        UIPasteboard.general.string = request.nineLineText
-        showCopiedAlert = true
-
-        // Generate CoT and send (would need TAKService integration)
         let cotXML = generateMEDEVACCoT(request: request)
-        print("Generated MEDEVAC CoT: \(cotXML)")
 
-        // Haptic feedback
+        let success = TAKService.shared.sendCoT(xml: cotXML)
+        Logger.military.info("MEDEVAC send success=\(success, privacy: .public)")
+
         let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(.success)
+        if success {
+            generator.notificationOccurred(.success)
+            showSentAlert = true
+        } else {
+            generator.notificationOccurred(.error)
+            showSendErrorAlert = true
+        }
     }
 
     private func generateMEDEVACCoT(request: MEDEVACRequest) -> String {

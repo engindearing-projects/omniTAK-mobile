@@ -13,8 +13,8 @@ struct NetworkPreferencesView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var serverManager = ServerManager.shared
     @State private var showServers = false
-    @State private var displayConnectionWidget = true
-    @State private var monitorServerConnections = true
+    @AppStorage("displayConnectionWidget") private var displayConnectionWidget = true
+    @AppStorage("monitorServerConnections") private var monitorServerConnections = true
 
     var body: some View {
         NavigationView {

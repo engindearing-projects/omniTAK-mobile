@@ -52,6 +52,13 @@ struct CertificateImportResult {
 
 class CertificateImportPipeline {
 
+    /// Password used for bundled .p12 certificates. Sourced from Info.plist
+    /// `BundledP12Password` (set via `BUNDLED_P12_PASSWORD` build setting).
+    /// Returns empty string if unset — callers must handle empty-password failure.
+    static var bundledP12Password: String {
+        Bundle.main.object(forInfoDictionaryKey: "BundledP12Password") as? String ?? ""
+    }
+
     private let formatConverter: CertificateFormatConverter
 
     init() {
