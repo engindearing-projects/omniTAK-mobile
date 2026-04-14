@@ -28,7 +28,6 @@ enum PluginID: String, CaseIterable {
     case spotrep = "spotrep"
     case view3d = "3dview"
     case turnByTurn = "turnbyturn"
-    case arcgis = "arcgis"
     case adsb = "adsb"
 
     var displayName: String {
@@ -51,7 +50,6 @@ enum PluginID: String, CaseIterable {
         case .spotrep: return "SPOTREP"
         case .view3d: return "3D View"
         case .turnByTurn: return "Navigation"
-        case .arcgis: return "ArcGIS"
         case .adsb: return "ADS-B"
         }
     }
@@ -76,7 +74,6 @@ enum PluginID: String, CaseIterable {
         case .spotrep: return "doc.text.fill"
         case .view3d: return "view.3d"
         case .turnByTurn: return "location.north.line.fill"
-        case .arcgis: return "globe.americas.fill"
         case .adsb: return "airplane.circle.fill"
         }
     }
@@ -101,7 +98,6 @@ enum PluginID: String, CaseIterable {
         case .spotrep: return "Quick tactical spot report"
         case .view3d: return "Real 3D terrain visualization with MapLibre"
         case .turnByTurn: return "Turn-by-turn voice navigation"
-        case .arcgis: return "ArcGIS Portal (Beta - requires account)"
         case .adsb: return "ADS-B aircraft traffic overlay"
         }
     }
@@ -121,7 +117,6 @@ class PluginSettingsManager: ObservableObject {
     /// Users can still enable them manually in the Plugins settings to try experimental features
     private static let disabledByDefault: Set<PluginID> = [
         // .view3d - Now uses MapLibre with real 3D terrain, fully functional
-        .arcgis,        // ArcGIS Portal - requires external account/API
         .video,         // Video streaming - requires TAK server video feeds
     ]
 
