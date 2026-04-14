@@ -28,8 +28,6 @@ struct ATAKMapView: View {
     @State private var showLayersPanel = false
     @State private var showDrawingPanel = false
     @State private var showDrawingList = false
-    @State private var showNavigationDrawer = false
-    @State private var currentScreen = "map"
     @State private var mapType: MKMapType = .satellite
     @State private var showToolsMenu = false
     @State private var showLoadingScreen = true
@@ -344,65 +342,6 @@ struct ATAKMapView: View {
     }
 
     @ViewBuilder
-    private var navigationDrawer: some View {
-        NavigationDrawer(
-            isOpen: $showNavigationDrawer,
-            currentScreen: $currentScreen,
-            userName: "Operator",
-            userCallsign: userCallsign,
-            connectionStatus: takService.isConnected ? "CONNECTED" : "DISCONNECTED",
-            onNavigate: { screen in
-                currentScreen = screen
-                // Handle navigation
-                switch screen {
-                case "map":
-                    // Already on map, do nothing
-                    break
-                case "tools":
-                    showToolsMenu = true
-                case "teams":
-                    showTeamManagement = true
-                case "routes":
-                    showRoutePlanning = true
-                case "geofences":
-                    showGeofences = true
-                case "tracks":
-                    showTrackRecording = true
-                case "chat":
-                    showChat = true
-                case "contacts":
-                    showContacts = true
-                case "emergency":
-                    showEmergencySOS = true
-                case "settings":
-                    showSettings = true
-                case "servers":
-                    showServerConfig = true
-                case "plugins":
-                    showPlugins = true
-                case "about":
-                    showAbout = true
-                case "selfsa":
-                    showPositionBroadcast = true
-                case "meshtastic":
-                    showMeshtastic = true
-                case "elevation":
-                    showElevationProfile = true
-                case "los":
-                    showLineOfSight = true
-                case "echelon":
-                    showEchelonHierarchy = true
-                case "missionsync":
-                    showMissionSync = true
-                default:
-                    break
-                }
-            }
-        )
-        .zIndex(1001)
-    }
-
-    @ViewBuilder
     private var statusIndicators: some View {
         Group {
             // GPS status indicator removed - GPS lock button at bottom left serves this purpose
@@ -658,7 +597,6 @@ struct ATAKMapView: View {
             gridOverlay
             topToolbars
             sidePanels
-            navigationDrawer
             statusIndicators
             mapOverlayComponents
             interactiveOverlays
