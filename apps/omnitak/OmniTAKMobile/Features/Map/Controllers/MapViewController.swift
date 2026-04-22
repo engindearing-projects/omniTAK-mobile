@@ -650,6 +650,24 @@ struct ATAKMapView: View {
             .sheet(isPresented: $showServerConfig) {
                 NetworkPreferencesView()
             }
+            // #38: prompt the user to name a shape immediately after creating
+            // it. DrawingToolsManager publishes the new shape's id; we pop
+            // the existing properties sheet (which already has a Name field).
+            .sheet(isPresented: Binding(
+                get: { drawingManager.pendingRenameID != nil },
+                set: { if !$0 { drawingManager.pendingRenameID = nil } }
+            )) {
+                if let id = drawingManager.pendingRenameID {
+                    DrawingPropertiesView(
+                        drawingStore: drawingStore,
+                        drawingID: id,
+                        isPresented: Binding(
+                            get: { drawingManager.pendingRenameID != nil },
+                            set: { if !$0 { drawingManager.pendingRenameID = nil } }
+                        )
+                    )
+                }
+            }
             .fullScreenCover(isPresented: $showToolsMenu) {
                 ATAKToolsView(isPresented: $showToolsMenu, showMeasurement: $showMeasurement)
             }
