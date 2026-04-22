@@ -186,10 +186,13 @@ struct ATAKMapView: View {
 
     @ViewBuilder
     private var gridOverlay: some View {
+        // No explicit zIndex — the ZStack child order keeps the grid above
+        // the map but below UI chrome (status bar, zoom buttons, panels,
+        // which all use zIndex 1000+). A prior zIndex(100) was lifting the
+        // grid over the top status bar / zoom controls (#43).
         GridOverlayView(region: mapRegion, isVisible: overlayCoordinator.mgrsGridEnabled)
-            .zIndex(100)
             .opacity(overlayCoordinator.mgrsGridEnabled ? 1 : 0)
-            .allowsHitTesting(overlayCoordinator.mgrsGridEnabled)
+            .allowsHitTesting(false)
     }
 
     @ViewBuilder
