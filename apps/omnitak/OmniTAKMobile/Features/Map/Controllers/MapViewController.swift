@@ -19,6 +19,7 @@ struct ATAKMapView: View {
     @StateObject private var measurementManager = MeasurementManager()
     @ObservedObject private var adsbService = ADSBTrafficService.shared
     @ObservedObject private var pointDropperService = PointDropperService.shared
+    @ObservedObject private var serverManager = ServerManager.shared
 
     @State private var mapRegion = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 38.8977, longitude: -77.0365), // Default: DC
@@ -200,7 +201,7 @@ struct ATAKMapView: View {
                 messagesReceived: takService.messagesReceived,
                 messagesSent: takService.messagesSent,
                 gpsAccuracy: locationManager.accuracy,
-                serverName: ServerManager.shared.activeServer?.name ?? "Offline",
+                serverName: serverManager.activeServer?.name ?? "Offline",
                 onServerTap: { showServerConfig = true },
                 onMenuTap: {
                     withAnimation(.easeInOut(duration: 0.3)) {
