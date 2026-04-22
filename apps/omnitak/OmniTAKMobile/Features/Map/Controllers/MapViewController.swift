@@ -1878,64 +1878,137 @@ struct TacticalMapView: UIViewRepresentable {
     }
 
     private func updateDrawingAnnotations(mapView: MKMapView, context: Context) {
-        // Remove old drawing annotations
-        let oldDrawingAnnotations = mapView.annotations.filter { context.coordinator.isDrawingAnnotation($0) }
-        mapView.removeAnnotations(oldDrawingAnnotations)
+        // Diff-based update: keep existing annotations whose model hasn't
+        // changed, add new ones, remove orphans. The previous "remove all
+        // then re-add" approach caused labels and measurement points to
+        // flicker every time updateUIView ran (#39).
 
-        // Add drawing marker annotations
+        updateDrawingMarkerAnnotations(mapView: mapView)
+        updateDrawingLabelAnnotations(mapView: mapView)
+        updateDrawingTempAnnotations(mapView: mapView)
+        updateMeasurementTempAnnotations(mapView: mapView)
+    }
+
+    private func updateDrawingTempAnnotations(mapView: MKMapView) {
+        let existing = mapView.annotations.compactMap { $0 as? DrawingTempPointAnnotation }
+        let desired: [DrawingTempPointAnnotation] = drawingManager.isDrawingActive
+            ? drawingManager.getTemporaryAnnotations().map { input in
+                let a = DrawingTempPointAnnotation()
+                a.coordinate = input.coordinate
+                a.title = input.title
+                a.subtitle = input.subtitle
+                return a
+            }
+            : []
+
+        if existing.count == desired.count {
+            let sameCoords = zip(existing, desired).allSatisfy { lhs, rhs in
+                lhs.coordinate.latitude == rhs.coordinate.latitude &&
+                lhs.coordinate.longitude == rhs.coordinate.longitude
+            }
+            if sameCoords { return }
+        }
+
+        if !existing.isEmpty { mapView.removeAnnotations(existing) }
+        if !desired.isEmpty { mapView.addAnnotations(desired) }
+    }
+
+    private func updateDrawingMarkerAnnotations(mapView: MKMapView) {
+        let existing = mapView.annotations.compactMap { $0 as? DrawingMarkerAnnotation }
+        let existingByID = Dictionary(uniqueKeysWithValues: existing.map { ($0.marker.id, $0) })
+        let desiredIDs = Set(drawingStore.markers.map { $0.id })
+
+        let stale = existing.filter { !desiredIDs.contains($0.marker.id) }
+        if !stale.isEmpty { mapView.removeAnnotations(stale) }
+
         for marker in drawingStore.markers {
-            let annotation = DrawingMarkerAnnotation(marker: marker)
-            mapView.addAnnotation(annotation)
+            if let annotation = existingByID[marker.id] {
+                // Refresh in place if the underlying marker moved or was renamed.
+                if annotation.coordinate.latitude != marker.coordinate.latitude ||
+                   annotation.coordinate.longitude != marker.coordinate.longitude ||
+                   annotation.title != marker.label {
+                    mapView.removeAnnotation(annotation)
+                    mapView.addAnnotation(DrawingMarkerAnnotation(marker: marker))
+                }
+            } else {
+                mapView.addAnnotation(DrawingMarkerAnnotation(marker: marker))
+            }
         }
+    }
 
-        // Add label annotations for circles
+    private func updateDrawingLabelAnnotations(mapView: MKMapView) {
+        let existing = mapView.annotations.compactMap { $0 as? DrawingLabelAnnotation }
+        let existingByID = Dictionary(uniqueKeysWithValues: existing.map { ($0.ownerID, $0) })
+
+        // Build the list of labels we want on-screen right now.
+        var desired: [(id: UUID, coordinate: CLLocationCoordinate2D, label: String, color: DrawingColor)] = []
+        desired.reserveCapacity(drawingStore.circles.count + drawingStore.polygons.count + drawingStore.lines.count)
+
         for circle in drawingStore.circles {
-            let annotation = DrawingLabelAnnotation(
-                coordinate: circle.center,
-                label: circle.label,
-                color: circle.color
-            )
-            mapView.addAnnotation(annotation)
+            desired.append((circle.id, circle.center, circle.label, circle.color))
         }
-
-        // Add label annotations for polygons
         for polygon in drawingStore.polygons {
-            // Calculate centroid of polygon
             if let centroid = calculateCentroid(coordinates: polygon.coordinates) {
-                let annotation = DrawingLabelAnnotation(
-                    coordinate: centroid,
-                    label: polygon.label,
-                    color: polygon.color
-                )
-                mapView.addAnnotation(annotation)
+                desired.append((polygon.id, centroid, polygon.label, polygon.color))
             }
         }
+        for line in drawingStore.lines where line.coordinates.count >= 2 {
+            let midIndex = line.coordinates.count / 2
+            desired.append((line.id, line.coordinates[midIndex], line.label, line.color))
+        }
 
-        // Add label annotations for lines
-        for line in drawingStore.lines {
-            // Use midpoint of line
-            if line.coordinates.count >= 2 {
-                let midIndex = line.coordinates.count / 2
-                let annotation = DrawingLabelAnnotation(
-                    coordinate: line.coordinates[midIndex],
-                    label: line.label,
-                    color: line.color
-                )
-                mapView.addAnnotation(annotation)
+        let desiredIDs = Set(desired.map { $0.id })
+
+        let stale = existing.filter { !desiredIDs.contains($0.ownerID) }
+        if !stale.isEmpty { mapView.removeAnnotations(stale) }
+
+        for item in desired {
+            if let annotation = existingByID[item.id] {
+                let coordChanged = annotation.coordinate.latitude != item.coordinate.latitude ||
+                                   annotation.coordinate.longitude != item.coordinate.longitude
+                if coordChanged || annotation.label != item.label || annotation.color != item.color {
+                    mapView.removeAnnotation(annotation)
+                    mapView.addAnnotation(DrawingLabelAnnotation(
+                        ownerID: item.id,
+                        coordinate: item.coordinate,
+                        label: item.label,
+                        color: item.color
+                    ))
+                }
+            } else {
+                mapView.addAnnotation(DrawingLabelAnnotation(
+                    ownerID: item.id,
+                    coordinate: item.coordinate,
+                    label: item.label,
+                    color: item.color
+                ))
             }
         }
+    }
 
-        // Add temporary drawing point annotations
-        if drawingManager.isDrawingActive {
-            let tempAnnotations = drawingManager.getTemporaryAnnotations()
-            mapView.addAnnotations(tempAnnotations)
+    private func updateMeasurementTempAnnotations(mapView: MKMapView) {
+        let existing = mapView.annotations.compactMap { $0 as? MeasurementPointAnnotation }
+        let desired: [MeasurementPointAnnotation] = measurementManager.isActive
+            ? measurementManager.getTemporaryAnnotations().map { input in
+                let a = MeasurementPointAnnotation()
+                a.coordinate = input.coordinate
+                a.title = input.title
+                a.subtitle = input.subtitle
+                return a
+            }
+            : []
+
+        // Cheap fast path: if the set of coordinates is identical, do nothing.
+        if existing.count == desired.count {
+            let sameCoords = zip(existing, desired).allSatisfy { lhs, rhs in
+                lhs.coordinate.latitude == rhs.coordinate.latitude &&
+                lhs.coordinate.longitude == rhs.coordinate.longitude
+            }
+            if sameCoords { return }
         }
 
-        // Add temporary measurement point annotations
-        if measurementManager.isActive {
-            let tempAnnotations = measurementManager.getTemporaryAnnotations()
-            mapView.addAnnotations(tempAnnotations)
-        }
+        if !existing.isEmpty { mapView.removeAnnotations(existing) }
+        if !desired.isEmpty { mapView.addAnnotations(desired) }
     }
 
     private func calculateCentroid(coordinates: [CLLocationCoordinate2D]) -> CLLocationCoordinate2D? {
@@ -2339,7 +2412,8 @@ struct TacticalMapView: UIViewRepresentable {
         func isDrawingAnnotation(_ annotation: MKAnnotation) -> Bool {
             return annotation is DrawingMarkerAnnotation ||
                    annotation is DrawingLabelAnnotation ||
-                   annotation.title == "Point"
+                   annotation is DrawingTempPointAnnotation ||
+                   annotation is MeasurementPointAnnotation
         }
 
         // Handle info button tap on marker callout
@@ -2728,17 +2802,24 @@ class DrawingMarkerAnnotation: NSObject, MKAnnotation {
 // MARK: - Drawing Label Annotation (for shapes)
 
 class DrawingLabelAnnotation: NSObject, MKAnnotation {
+    let ownerID: UUID
     var coordinate: CLLocationCoordinate2D
-    let label: String
-    let color: DrawingColor
+    var label: String
+    var color: DrawingColor
 
-    init(coordinate: CLLocationCoordinate2D, label: String, color: DrawingColor) {
+    init(ownerID: UUID, coordinate: CLLocationCoordinate2D, label: String, color: DrawingColor) {
+        self.ownerID = ownerID
         self.coordinate = coordinate
         self.label = label
         self.color = color
         super.init()
     }
 }
+
+// Tagged annotation for in-progress drawing points so the diff-based
+// update can distinguish them from other MKPointAnnotations. Measurement
+// uses MeasurementPointAnnotation from MeasurementService.swift.
+class DrawingTempPointAnnotation: MKPointAnnotation {}
 
 // MARK: - Overlay Settings Panel
 

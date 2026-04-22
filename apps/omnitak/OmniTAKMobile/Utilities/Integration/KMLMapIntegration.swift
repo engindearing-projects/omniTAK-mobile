@@ -103,6 +103,7 @@ struct KMLTacticalMapView: UIViewRepresentable {
         // Add label annotations for circles
         for circle in drawingStore.circles {
             let annotation = DrawingLabelAnnotation(
+                ownerID: circle.id,
                 coordinate: circle.center,
                 label: circle.label,
                 color: circle.color
@@ -114,6 +115,7 @@ struct KMLTacticalMapView: UIViewRepresentable {
         for polygon in drawingStore.polygons {
             if let centroid = calculateCentroid(coordinates: polygon.coordinates) {
                 let annotation = DrawingLabelAnnotation(
+                    ownerID: polygon.id,
                     coordinate: centroid,
                     label: polygon.label,
                     color: polygon.color
@@ -127,6 +129,7 @@ struct KMLTacticalMapView: UIViewRepresentable {
             if line.coordinates.count >= 2 {
                 let midIndex = line.coordinates.count / 2
                 let annotation = DrawingLabelAnnotation(
+                    ownerID: line.id,
                     coordinate: line.coordinates[midIndex],
                     label: line.label,
                     color: line.color
