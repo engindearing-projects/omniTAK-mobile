@@ -50,6 +50,15 @@ struct TAKServer: Identifiable, Codable, Equatable {
     var displayName: String {
         return "\(name) (\(host):\(port))"
     }
+
+    /// True when `self` and `other` point to the same TAK endpoint.
+    /// Credentials and display name are intentionally excluded so
+    /// re-importing the same server with updated certs is still a duplicate.
+    func matchesEndpoint(of other: TAKServer) -> Bool {
+        return host.caseInsensitiveCompare(other.host) == .orderedSame
+            && port == other.port
+            && protocolType == other.protocolType
+    }
 }
 
 // MARK: - Server Manager
@@ -200,7 +209,18 @@ class ServerManager: ObservableObject {
 
     // MARK: - Server Management
 
-    func addServer(_ server: TAKServer) {
+    /// Adds a TAK server, or returns the existing entry if one already points
+    /// at the same endpoint (host + port + protocolType). Idempotent on
+    /// re-imports of the same data package.
+    @discardableResult
+    func addServer(_ server: TAKServer) -> TAKServer {
+        if let existing = servers.first(where: { $0.matchesEndpoint(of: server) }) {
+            #if DEBUG
+            print("↩︎ Server already exists for \(server.host):\(server.port) — returning existing: \(existing.displayName)")
+            #endif
+            return existing
+        }
+
         servers.append(server)
         saveServers()
         #if DEBUG
@@ -211,6 +231,7 @@ class ServerManager: ObservableObject {
         if server.enabled {
             TAKService.shared.connectToServer(server)
         }
+        return server
     }
 
     func updateServer(_ server: TAKServer) {
