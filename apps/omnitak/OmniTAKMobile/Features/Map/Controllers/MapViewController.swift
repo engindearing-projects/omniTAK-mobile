@@ -402,11 +402,23 @@ struct ATAKMapView: View {
 
     @ViewBuilder
     private var compassOverlay: some View {
+        // CLHeading (magnetometer) is the right source — location.course is
+        // the direction of travel and freezes at the last value when the
+        // user stops moving (what was causing #44 "always 347°"). Fall back
+        // to course only if heading is unavailable (e.g., no magnetometer).
         CompassOverlayView(
-            heading: locationManager.location?.course,
+            heading: compassHeading,
             isVisible: showCompass
         )
         .zIndex(1005)
+    }
+
+    private var compassHeading: CLLocationDirection? {
+        if let heading = locationManager.heading {
+            return heading.trueHeading >= 0 ? heading.trueHeading : heading.magneticHeading
+        }
+        let course = locationManager.location?.course ?? -1
+        return course >= 0 ? course : nil
     }
 
     @ViewBuilder
