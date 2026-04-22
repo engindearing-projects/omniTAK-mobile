@@ -229,6 +229,12 @@ class ServerManager: ObservableObject {
 
         // Auto-connect if the server is enabled
         if server.enabled {
+            // If no enabled active server exists, make this one active so
+            // the UI (top-left header, etc.) reflects what we just connected to.
+            if activeServer == nil || activeServer?.enabled != true {
+                activeServer = server
+                saveActiveServer()
+            }
             TAKService.shared.connectToServer(server)
         }
         return server
@@ -276,9 +282,15 @@ class ServerManager: ObservableObject {
         if let index = servers.firstIndex(where: { $0.id == server.id }) {
             servers[index].enabled.toggle()
 
-            // Update active server reference if needed
             if activeServer?.id == server.id {
-                activeServer = servers[index]
+                if servers[index].enabled {
+                    activeServer = servers[index]
+                } else {
+                    // Active server just got disabled — hand off to the next
+                    // enabled server so the header doesn't keep showing it.
+                    activeServer = servers.first { $0.enabled }
+                    saveActiveServer()
+                }
             }
 
             saveServers()
@@ -314,6 +326,12 @@ class ServerManager: ObservableObject {
     func disableServer(_ server: TAKServer) {
         if let index = servers.firstIndex(where: { $0.id == server.id }) {
             servers[index].enabled = false
+
+            if activeServer?.id == server.id {
+                activeServer = servers.first { $0.enabled }
+                saveActiveServer()
+            }
+
             saveServers()
             #if DEBUG
             print("❌ Server \(server.name) disabled")
