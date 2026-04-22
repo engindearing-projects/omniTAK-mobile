@@ -27,6 +27,7 @@ build/
 *.xcuserstate
 *.xcodeproj/project.pbxproj.backup*
 project.pbxproj.*_backup
+*.xcodeproj.backup/
 apps/*/dSYMs/
 *.xcframework.zip
 
@@ -50,6 +51,14 @@ takserver/
 *.p12
 *.jks
 *.key
+*.pem
+*.p8
+*.cer
+*.crt
+*.pfx
+*.mobileprovision
+/certs/
+crates/*/certs/
 *-do-not-share.*
 .env.local
 
