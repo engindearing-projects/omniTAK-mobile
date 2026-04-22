@@ -39,6 +39,15 @@ class DirectTCPSender {
         return connection?.state == .ready
     }
 
+    // Connection-establishment timeout. NWConnection's `.waiting` state can
+    // persist indefinitely (unreachable host, stalled TLS handshake), which
+    // left the UI stuck on "Connecting..." until the app was restarted (#40).
+    // If no `.ready` or `.failed` arrives in this window, we fail the attempt
+    // and tear down the connection so the user can retry.
+    private let connectTimeoutSeconds: TimeInterval = 15
+    private var connectTimeoutTask: DispatchWorkItem?
+    private var connectCompleted = false
+
     func connect(host: String, port: UInt16, protocolType: String = "tcp", useTLS: Bool = false, certificateName: String? = nil, certificatePassword: String? = nil, caCertificateName: String? = nil, caCertificatePassword: String? = nil, allowLegacyTLS: Bool = false, completion: @escaping (Bool) -> Void) {
         // Create endpoint with explicit IPv4 if possible
         let nwHost: NWEndpoint.Host
@@ -273,6 +282,25 @@ class DirectTCPSender {
 
         connection = NWConnection(to: endpoint, using: parameters)
 
+        connectTimeoutTask?.cancel()
+        connectCompleted = false
+
+        // Single-shot completion guarded against races between the state
+        // handler and the timeout task.
+        let finishOnce: (Bool) -> Void = { [weak self] success in
+            guard let self = self else { return }
+            self.queue.async {
+                guard !self.connectCompleted else { return }
+                self.connectCompleted = true
+                self.connectTimeoutTask?.cancel()
+                self.connectTimeoutTask = nil
+                if !success {
+                    self.connection?.cancel()
+                }
+                completion(success)
+            }
+        }
+
         connection?.stateUpdateHandler = { [weak self] state in
             guard let self = self else { return }
             switch state {
@@ -282,22 +310,35 @@ class DirectTCPSender {
                 self.onConnectionStateChanged?(true)
                 // Start the receive loop
                 self.startReceiveLoop()
-                completion(true)
+                finishOnce(true)
             case .failed(let error):
                 let errStr = "\(error)"
                 Logger.takNetwork.error("Connection failed: \(errStr, privacy: .public)")
                 self.onConnectionStateChanged?(false)
-                completion(false)
+                finishOnce(false)
             case .waiting(let error):
                 let errStr = "\(error)"
                 Logger.takNetwork.debug("Waiting to connect: \(errStr, privacy: .public)")
+                // Don't complete here — NWConnection can sit in .waiting
+                // forever (unreachable host, stalled handshake). The timeout
+                // task below will force a failure if we never reach .ready.
             case .cancelled:
                 Logger.takNetwork.info("Connection cancelled")
                 self.onConnectionStateChanged?(false)
+                finishOnce(false)
             default:
                 break
             }
         }
+
+        let timeoutTask = DispatchWorkItem { [weak self] in
+            guard let self = self, !self.connectCompleted else { return }
+            Logger.takNetwork.error("Connect timed out after \(Int(self.connectTimeoutSeconds), privacy: .public)s")
+            self.onConnectionStateChanged?(false)
+            finishOnce(false)
+        }
+        connectTimeoutTask = timeoutTask
+        queue.asyncAfter(deadline: .now() + connectTimeoutSeconds, execute: timeoutTask)
 
         connection?.start(queue: queue)
     }
@@ -484,6 +525,8 @@ class DirectTCPSender {
     }
 
     func disconnect() {
+        connectTimeoutTask?.cancel()
+        connectTimeoutTask = nil
         connection?.cancel()
         connection = nil
         clearReceiveBuffer()
