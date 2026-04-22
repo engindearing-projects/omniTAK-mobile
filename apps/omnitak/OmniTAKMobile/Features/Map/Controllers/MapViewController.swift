@@ -2378,6 +2378,18 @@ struct TacticalMapView: UIViewRepresentable {
                         if let drawingMarker = annotation as? DrawingMarkerAnnotation {
                             drawingId = drawingMarker.marker.id
                             drawingType = .marker
+                        } else if let labelAnnotation = annotation as? DrawingLabelAnnotation {
+                            // Long-pressing the shape's name label should resolve
+                            // to the owning shape — otherwise users can only hit
+                            // the outline, which was the #37 complaint.
+                            drawingId = labelAnnotation.ownerID
+                            if parent.drawingStore.circles.contains(where: { $0.id == labelAnnotation.ownerID }) {
+                                drawingType = .circle
+                            } else if parent.drawingStore.polygons.contains(where: { $0.id == labelAnnotation.ownerID }) {
+                                drawingType = .polygon
+                            } else if parent.drawingStore.lines.contains(where: { $0.id == labelAnnotation.ownerID }) {
+                                drawingType = .line
+                            }
                         } else if annotation is PointMarkerAnnotation {
                             // This is a point marker - use the radial menu coordinator's handler
                             isPointMarker = true
