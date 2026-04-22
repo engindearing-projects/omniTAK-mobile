@@ -11,6 +11,11 @@ class DrawingToolsManager: ObservableObject {
     @Published var temporaryPoints: [CLLocationCoordinate2D] = []
     @Published var isSelectingRadius: Bool = false
 
+    // Set to the new shape's id right after creation so the map view can
+    // auto-present the rename sheet (#38). Reset to nil when the user
+    // dismisses the sheet.
+    @Published var pendingRenameID: UUID?
+
     // Circle-specific properties
     private var circleCenter: CLLocationCoordinate2D?
 
@@ -71,6 +76,7 @@ class DrawingToolsManager: ObservableObject {
             coordinate: coordinate
         )
         drawingStore.addMarker(marker)
+        pendingRenameID = marker.id
         cancelDrawing()
         print("Created marker at \(coordinate.latitude), \(coordinate.longitude)")
     }
@@ -86,6 +92,7 @@ class DrawingToolsManager: ObservableObject {
             radius: radius
         )
         drawingStore.addCircle(circle)
+        pendingRenameID = circle.id
         cancelDrawing()
         print("Created circle with radius: \(radius)m")
     }
@@ -108,6 +115,7 @@ class DrawingToolsManager: ObservableObject {
                     coordinates: temporaryPoints
                 )
                 drawingStore.addLine(line)
+                pendingRenameID = line.id
                 print("Created line with \(temporaryPoints.count) points")
             } else {
                 print("Line needs at least 2 points")
@@ -130,6 +138,7 @@ class DrawingToolsManager: ObservableObject {
                     coordinates: temporaryPoints
                 )
                 drawingStore.addPolygon(polygon)
+                pendingRenameID = polygon.id
                 print("Created polygon with \(temporaryPoints.count) points")
             } else {
                 print("Polygon needs at least 3 points")
