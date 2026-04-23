@@ -86,6 +86,25 @@ class TAKConnection(private val server: TAKServer) {
         _state.value = ConnectionState.Disconnected
     }
 
+    /**
+     * Fire-and-forget CoT XML send. Returns false if no socket is open
+     * or if the write fails. Runs on the IO dispatcher so callers can
+     * invoke from any scope.
+     */
+    fun send(xml: String): Boolean {
+        val sock = socket ?: return false
+        if (_state.value !is ConnectionState.Connected) return false
+        return try {
+            val out = sock.getOutputStream()
+            out.write(xml.toByteArray(Charsets.UTF_8))
+            out.flush()
+            true
+        } catch (t: Throwable) {
+            Log.w(TAG, "send failed: ${t.javaClass.simpleName}: ${t.message}")
+            false
+        }
+    }
+
     private fun openPlainSocket(): Socket {
         val s = Socket()
         s.tcpNoDelay = true

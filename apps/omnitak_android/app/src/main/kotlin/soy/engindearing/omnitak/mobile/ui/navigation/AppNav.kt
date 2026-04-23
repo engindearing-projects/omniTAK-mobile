@@ -3,6 +3,7 @@ package soy.engindearing.omnitak.mobile.ui.navigation
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Settings
@@ -23,18 +24,20 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import soy.engindearing.omnitak.mobile.ui.screens.AboutScreen
 import soy.engindearing.omnitak.mobile.ui.screens.AddServerScreen
+import soy.engindearing.omnitak.mobile.ui.screens.ChatScreen
 import soy.engindearing.omnitak.mobile.ui.screens.MapScreen
 import soy.engindearing.omnitak.mobile.ui.screens.ServersScreen
 import soy.engindearing.omnitak.mobile.ui.screens.SettingsScreen
 
 private sealed class Dest(val route: String, val label: String, val icon: ImageVector) {
     data object Map : Dest("map", "Map", Icons.Filled.Map)
+    data object Chat : Dest("chat", "Chat", Icons.AutoMirrored.Filled.Chat)
     data object Servers : Dest("servers", "Servers", Icons.Filled.Storage)
     data object Settings : Dest("settings", "Settings", Icons.Filled.Settings)
     data object About : Dest("about", "About", Icons.Filled.Info)
 }
 
-private val Destinations = listOf(Dest.Map, Dest.Servers, Dest.Settings, Dest.About)
+private val Destinations = listOf(Dest.Map, Dest.Chat, Dest.Servers, Dest.Settings, Dest.About)
 
 @Composable
 fun AppNav() {
@@ -74,6 +77,7 @@ fun AppNav() {
             composable("servers/add") {
                 AddServerScreen(onDone = { nav.popBackStack() })
             }
+            composable(Dest.Chat.route) { ChatScreen() }
             composable(Dest.Settings.route) { SettingsScreen() }
             composable(Dest.About.route) { AboutScreen() }
         }

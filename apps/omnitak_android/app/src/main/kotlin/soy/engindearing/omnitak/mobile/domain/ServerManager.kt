@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import soy.engindearing.omnitak.mobile.data.ChatXml
 import soy.engindearing.omnitak.mobile.data.CoTParser
 import soy.engindearing.omnitak.mobile.data.TAKConnection
 import soy.engindearing.omnitak.mobile.data.TAKServer
@@ -25,6 +26,7 @@ import soy.engindearing.omnitak.mobile.data.TAKServerStore
 class ServerManager(
     private val store: TAKServerStore,
     private val contactStore: ContactStore? = null,
+    private val chatStore: ChatStore? = null,
 ) {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -54,11 +56,22 @@ class ServerManager(
         }
         receivedCollectorJob = scope.launch {
             conn.received.collect { xml ->
-                CoTParser.parse(xml)?.let { contactStore?.ingest(it) }
+                // A frame is either a chat event or a contact/marker event,
+                // depending on the CoT type. Parsing chat first is cheap
+                // (string probe) and avoids double-ingesting as a contact.
+                val chat = ChatXml.parse(xml)
+                if (chat != null) {
+                    chatStore?.ingest(chat)
+                } else {
+                    CoTParser.parse(xml)?.let { contactStore?.ingest(it) }
+                }
             }
         }
         conn.connect()
     }
+
+    /** Send a CoT XML payload on the active connection. */
+    fun sendCoT(xml: String): Boolean = currentConnection?.send(xml) ?: false
 
     /** Disconnect the current connection if any. */
     fun disconnect() {
