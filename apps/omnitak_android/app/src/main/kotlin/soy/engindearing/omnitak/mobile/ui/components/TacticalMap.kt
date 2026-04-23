@@ -21,6 +21,7 @@ import org.maplibre.android.location.modes.CameraMode
 import org.maplibre.android.location.modes.RenderMode
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
+import soy.engindearing.omnitak.mobile.data.Aircraft
 import soy.engindearing.omnitak.mobile.data.CoTEvent
 import soy.engindearing.omnitak.mobile.data.Drawing
 
@@ -52,6 +53,7 @@ fun TacticalMap(
     measurementPoints: List<LatLng> = emptyList(),
     drawings: List<Drawing> = emptyList(),
     gridCenter: LatLng? = null,
+    aircraft: List<Aircraft> = emptyList(),
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -64,6 +66,7 @@ fun TacticalMap(
     val currentMeasurementPoints by rememberUpdatedState(measurementPoints)
     val currentDrawings by rememberUpdatedState(drawings)
     val currentGridCenter by rememberUpdatedState(gridCenter)
+    val currentAircraft by rememberUpdatedState(aircraft)
 
     val mapView = remember {
         MapLibre.getInstance(context)
@@ -79,6 +82,7 @@ fun TacticalMap(
                     MeasurementLayer.update(map, currentMeasurementPoints)
                     DrawingLayer.update(map, currentDrawings)
                     currentGridCenter?.let { GridLayer.update(map, it) }
+                    AircraftLayer.update(map, currentAircraft)
                     if (currentLocationEnabled) {
                         activateLocation(map, style, context)
                     }
@@ -186,6 +190,13 @@ fun TacticalMap(
                 val c = gridCenter
                 if (c != null) GridLayer.update(map, c) else GridLayer.clear(map)
             }
+        }
+        onDispose { }
+    }
+
+    DisposableEffect(mapView, aircraft) {
+        mapView.getMapAsync { map ->
+            if (map.style != null) AircraftLayer.update(map, aircraft)
         }
         onDispose { }
     }
@@ -307,6 +318,10 @@ const val OSM_RASTER_STYLE = """
     "grid-src": {
       "type": "geojson",
       "data": {"type": "FeatureCollection", "features": []}
+    },
+    "aircraft-src": {
+      "type": "geojson",
+      "data": {"type": "FeatureCollection", "features": []}
     }
   },
   "layers": [
@@ -411,6 +426,33 @@ const val OSM_RASTER_STYLE = """
       },
       "paint": {
         "text-color": "#FFFFFF",
+        "text-halo-color": "#0A1628",
+        "text-halo-width": 1.5
+      }
+    },
+    {
+      "id": "aircraft-circle",
+      "type": "circle",
+      "source": "aircraft-src",
+      "paint": {
+        "circle-radius": 7,
+        "circle-color": "#60A5FA",
+        "circle-stroke-width": 2,
+        "circle-stroke-color": "#0A1628"
+      }
+    },
+    {
+      "id": "aircraft-label",
+      "type": "symbol",
+      "source": "aircraft-src",
+      "layout": {
+        "text-field": ["get", "callsign"],
+        "text-size": 10,
+        "text-offset": [0, 1.4],
+        "text-allow-overlap": false
+      },
+      "paint": {
+        "text-color": "#BFDBFE",
         "text-halo-color": "#0A1628",
         "text-halo-width": 1.5
       }

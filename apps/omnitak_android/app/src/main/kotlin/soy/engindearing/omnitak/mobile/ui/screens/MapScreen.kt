@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Brush
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Explore
+import androidx.compose.material.icons.filled.Flight
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.LocationOn
@@ -31,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import soy.engindearing.omnitak.mobile.ui.theme.TacticalAccent
 import soy.engindearing.omnitak.mobile.ui.theme.TacticalBackground
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -98,6 +100,10 @@ fun MapScreen() {
     var drawingPoints by remember { mutableStateOf<List<LatLng>>(emptyList()) }
     var drawingPickerOpen by remember { mutableStateOf(false) }
     var gridEnabled by remember { mutableStateOf(false) }
+    val adsbService = remember { soy.engindearing.omnitak.mobile.data.AdsbService() }
+    val aircraft by adsbService.aircraft.collectAsState()
+    val adsbActive by adsbService.active.collectAsState()
+    DisposableEffect(adsbService) { onDispose { adsbService.stop() } }
     val drawings by app.drawingStore.drawings.collectAsState()
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -142,6 +148,7 @@ fun MapScreen() {
             measurementPoints = measurementPoints,
             drawings = drawings + buildInProgressDrawing(drawingKind, drawingPoints),
             gridCenter = if (gridEnabled) LatLng(37.42, -122.08) else null,
+            aircraft = aircraft,
         )
 
         Column(
@@ -166,6 +173,7 @@ fun MapScreen() {
                 ToolEntry("draw", Icons.Filled.Brush, "Drawing"),
                 ToolEntry("measure", Icons.Filled.Straighten, "Measure"),
                 ToolEntry("layers", Icons.Filled.Layers, "Layers"),
+                ToolEntry("adsb", Icons.Filled.Flight, if (adsbActive) "ADSB on" else "ADSB"),
                 ToolEntry("chat", Icons.Filled.Chat, "Chat"),
                 ToolEntry("teams", Icons.Filled.Groups, "Teams"),
                 ToolEntry("nav", Icons.Filled.Navigation, "Navigate"),
@@ -181,6 +189,23 @@ fun MapScreen() {
                     "layers" -> {
                         gridEnabled = !gridEnabled
                         toast(if (gridEnabled) "Grid on" else "Grid off")
+                    }
+                    "adsb" -> {
+                        if (adsbActive) {
+                            adsbService.stop()
+                            toast("ADSB off")
+                        } else {
+                            // Bay Area box until we plumb the live camera
+                            // center through — matches the emulator's
+                            // default Mountain View GPS so aircraft stay
+                            // on-screen during dev.
+                            adsbService.start(
+                                centerLat = 37.42,
+                                centerLon = -122.08,
+                                halfWidthDegrees = 2.5,
+                            )
+                            toast("ADSB on — polling OpenSky every 15s")
+                        }
                     }
                     else -> toast("${tool.label} — coming soon")
                 }
