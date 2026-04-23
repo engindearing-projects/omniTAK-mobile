@@ -55,6 +55,8 @@ import soy.engindearing.omnitak.mobile.data.DrawingKind
 import soy.engindearing.omnitak.mobile.data.GeoMath
 import soy.engindearing.omnitak.mobile.domain.ConnectionState
 import soy.engindearing.omnitak.mobile.ui.components.ATAKStatusBar
+import soy.engindearing.omnitak.mobile.ui.components.ContactsPanel
+import soy.engindearing.omnitak.mobile.ui.components.LayersDialog
 import soy.engindearing.omnitak.mobile.ui.components.MarkerEditSheet
 import soy.engindearing.omnitak.mobile.ui.components.RadialAction
 import soy.engindearing.omnitak.mobile.ui.components.RadialMenu
@@ -67,7 +69,7 @@ import java.util.Date
 import java.util.Locale
 
 @Composable
-fun MapScreen() {
+fun MapScreen(onOpenTab: (String) -> Unit = {}) {
     val app = LocalContext.current.applicationContext as OmniTAKApp
     val active by app.serverManager.activeServer.collectAsState()
     val connState by app.serverManager.connectionState.collectAsState()
@@ -100,6 +102,14 @@ fun MapScreen() {
     var drawingPoints by remember { mutableStateOf<List<LatLng>>(emptyList()) }
     var drawingPickerOpen by remember { mutableStateOf(false) }
     var gridEnabled by remember { mutableStateOf(false) }
+    var drawingsVisible by remember { mutableStateOf(true) }
+    var aircraftVisible by remember { mutableStateOf(true) }
+    var contactsVisible by remember { mutableStateOf(true) }
+    var layersSheetOpen by remember { mutableStateOf(false) }
+    var teamsPanelOpen by remember { mutableStateOf(false) }
+    var followMeActive by remember { mutableStateOf(false) }
+    var panTarget by remember { mutableStateOf<LatLng?>(null) }
+    var panTargetTick by remember { mutableStateOf(0) }
     val adsbService = remember { soy.engindearing.omnitak.mobile.data.AdsbService() }
     val aircraft by adsbService.aircraft.collectAsState()
     val adsbActive by adsbService.active.collectAsState()
@@ -144,11 +154,18 @@ fun MapScreen() {
             },
             locationEnabled = locationGranted,
             recenterTrigger = recenterTick,
-            contacts = contacts.values,
+            contacts = if (contactsVisible) contacts.values else emptyList(),
             measurementPoints = measurementPoints,
-            drawings = drawings + buildInProgressDrawing(drawingKind, drawingPoints),
+            drawings = if (drawingsVisible) {
+                drawings + buildInProgressDrawing(drawingKind, drawingPoints)
+            } else {
+                emptyList()
+            },
             gridCenter = if (gridEnabled) LatLng(37.42, -122.08) else null,
-            aircraft = aircraft,
+            aircraft = if (aircraftVisible) aircraft else emptyList(),
+            panTarget = panTarget,
+            panTargetTick = panTargetTick,
+            followMeActive = followMeActive,
         )
 
         Column(
@@ -176,7 +193,11 @@ fun MapScreen() {
                 ToolEntry("adsb", Icons.Filled.Flight, if (adsbActive) "ADSB on" else "ADSB"),
                 ToolEntry("chat", Icons.Filled.Chat, "Chat"),
                 ToolEntry("teams", Icons.Filled.Groups, "Teams"),
-                ToolEntry("nav", Icons.Filled.Navigation, "Navigate"),
+                ToolEntry(
+                    "nav",
+                    Icons.Filled.Navigation,
+                    if (followMeActive) "Follow on" else "Follow",
+                ),
             ),
             onSelect = { tool ->
                 when (tool.id) {
@@ -186,10 +207,7 @@ fun MapScreen() {
                         toast("Measure mode — tap map to add points")
                     }
                     "draw" -> drawingPickerOpen = true
-                    "layers" -> {
-                        gridEnabled = !gridEnabled
-                        toast(if (gridEnabled) "Grid on" else "Grid off")
-                    }
+                    "layers" -> layersSheetOpen = true
                     "adsb" -> {
                         if (adsbActive) {
                             adsbService.stop()
@@ -207,7 +225,16 @@ fun MapScreen() {
                             toast("ADSB on — polling OpenSky every 15s")
                         }
                     }
-                    else -> toast("${tool.label} — coming soon")
+                    "chat" -> onOpenTab("chat")
+                    "teams" -> teamsPanelOpen = true
+                    "nav" -> {
+                        if (!locationGranted) {
+                            toast("Follow-me needs location permission")
+                        } else {
+                            followMeActive = !followMeActive
+                            toast(if (followMeActive) "Follow me ON" else "Follow me OFF")
+                        }
+                    }
                 }
             },
             modifier = Modifier.align(Alignment.BottomEnd),
@@ -368,6 +395,34 @@ fun MapScreen() {
                     measurementPoints = emptyList()
                 },
                 modifier = Modifier.align(Alignment.TopStart),
+            )
+        }
+
+        if (layersSheetOpen) {
+            LayersDialog(
+                gridEnabled = gridEnabled,
+                drawingsVisible = drawingsVisible,
+                aircraftVisible = aircraftVisible,
+                contactsVisible = contactsVisible,
+                onToggleGrid = { gridEnabled = it },
+                onToggleDrawings = { drawingsVisible = it },
+                onToggleAircraft = { aircraftVisible = it },
+                onToggleContacts = { contactsVisible = it },
+                onDismiss = { layersSheetOpen = false },
+            )
+        }
+
+        if (teamsPanelOpen) {
+            ContactsPanel(
+                contacts = contacts.values.toList(),
+                onSelect = { c ->
+                    panTarget = LatLng(c.lat, c.lon)
+                    panTargetTick += 1
+                    if (followMeActive) followMeActive = false
+                    teamsPanelOpen = false
+                    toast("Panning to ${c.callsign ?: c.uid}")
+                },
+                onDismiss = { teamsPanelOpen = false },
             )
         }
 
