@@ -48,6 +48,7 @@ import soy.engindearing.omnitak.mobile.data.CoTAffiliation
 import soy.engindearing.omnitak.mobile.data.CoTEvent
 import soy.engindearing.omnitak.mobile.domain.ConnectionState
 import soy.engindearing.omnitak.mobile.ui.components.ATAKStatusBar
+import soy.engindearing.omnitak.mobile.ui.components.MarkerEditSheet
 import soy.engindearing.omnitak.mobile.ui.components.RadialAction
 import soy.engindearing.omnitak.mobile.ui.components.RadialMenu
 import soy.engindearing.omnitak.mobile.ui.components.TacticalMap
@@ -83,6 +84,7 @@ fun MapScreen() {
     val locationGranted by rememberLocationPermission()
     var radialAnchor by remember { mutableStateOf<Offset?>(null) }
     var radialLatLng by remember { mutableStateOf<LatLng?>(null) }
+    var markerSheetLatLng by remember { mutableStateOf<LatLng?>(null) }
     var recenterTick by remember { mutableStateOf(0) }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -173,25 +175,7 @@ fun MapScreen() {
                 radialAnchor = null
                 radialLatLng = null
                 when (action.id) {
-                    "drop" -> if (ll != null) {
-                        val i = contacts.size + 1
-                        val aff = arrayOf(
-                            CoTAffiliation.FRIEND,
-                            CoTAffiliation.HOSTILE,
-                            CoTAffiliation.NEUTRAL,
-                            CoTAffiliation.UNKNOWN,
-                        )[(i - 1) % 4]
-                        app.contactStore.ingest(
-                            CoTEvent(
-                                uid = "self-test-$i",
-                                type = "a-${aff.code}-G-U-C",
-                                lat = ll.latitude,
-                                lon = ll.longitude,
-                                callsign = "MARK-$i",
-                            )
-                        )
-                        toast("Dropped ${aff.name} marker #$i")
-                    }
+                    "drop" -> if (ll != null) markerSheetLatLng = ll
                     else -> {
                         val coord = ll?.let { "%.5f, %.5f".format(it.latitude, it.longitude) } ?: ""
                         toast("${action.label}${if (coord.isNotEmpty()) " @ $coord" else ""}")
@@ -202,6 +186,30 @@ fun MapScreen() {
                 radialAnchor = null
                 radialLatLng = null
             },
+        )
+
+        MarkerEditSheet(
+            visible = markerSheetLatLng != null,
+            latLng = markerSheetLatLng,
+            initialCallsign = "Marker ${contacts.size + 1}",
+            onSave = { result ->
+                val ll = markerSheetLatLng
+                if (ll != null) {
+                    val uid = "local-${System.currentTimeMillis()}"
+                    app.contactStore.ingest(
+                        CoTEvent(
+                            uid = uid,
+                            type = "a-${result.affiliation.code}-G-U-C",
+                            lat = ll.latitude,
+                            lon = ll.longitude,
+                            callsign = result.callsign,
+                        )
+                    )
+                    toast("Saved ${result.affiliation.name.lowercase()} marker “${result.callsign}”")
+                }
+                markerSheetLatLng = null
+            },
+            onDismiss = { markerSheetLatLng = null },
         )
 
         SnackbarHost(
