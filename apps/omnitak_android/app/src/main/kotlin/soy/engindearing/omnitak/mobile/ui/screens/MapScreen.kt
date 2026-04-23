@@ -1,62 +1,67 @@
 package soy.engindearing.omnitak.mobile.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import soy.engindearing.omnitak.mobile.ui.theme.TacticalAccent
-import soy.engindearing.omnitak.mobile.ui.theme.TacticalSurface
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.delay
+import soy.engindearing.omnitak.mobile.OmniTAKApp
+import soy.engindearing.omnitak.mobile.ui.components.ATAKStatusBar
+import soy.engindearing.omnitak.mobile.ui.components.TacticalMap
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun MapScreen() {
+    val app = LocalContext.current.applicationContext as OmniTAKApp
+    val active by app.serverManager.activeServer.collectAsState()
+
+    var nowLabel by remember { mutableStateOf(timeLabel()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            nowLabel = timeLabel()
+            delay(15_000L)
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
-        contentAlignment = Alignment.Center,
     ) {
+        TacticalMap(modifier = Modifier.fillMaxSize())
+
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .fillMaxSize()
+                .align(Alignment.TopCenter),
         ) {
-            Text(
-                "OmniTAK",
-                style = MaterialTheme.typography.displaySmall,
-                color = TacticalAccent,
-                fontWeight = FontWeight.Bold,
+            ATAKStatusBar(
+                serverName = active?.name ?: "Offline",
+                isConnected = false,  // wired up in Slice 4 when JNI lands
+                messagesReceived = 0,
+                messagesSent = 0,
+                gpsAccuracyMeters = null,
+                timeLabel = nowLabel,
+                onServerTap = { /* Slice 6: open server picker */ },
+                onMenuTap = { /* Slice 6: open tools drawer */ },
             )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                "Tactical map coming online in the next slice.",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
-            )
-            Spacer(Modifier.height(24.dp))
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(TacticalSurface)
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-            ) {
-                Text(
-                    "v0.1.0 — scaffold",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = TacticalAccent,
-                )
-            }
         }
     }
 }
+
+private fun timeLabel(): String =
+    SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
