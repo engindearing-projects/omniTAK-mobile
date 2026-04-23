@@ -1,18 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- OmniTAK Launch Theme -->
-    <style name="Theme.OmniTAK.Launch" parent="Theme.AppCompat.Light.NoActionBar">
-        <item name="android:windowBackground">@drawable/splash</item>
-        <item name="android:windowFullscreen">true</item>
-        <item name="android:windowDrawsSystemBarBackgrounds">false</item>
-    </style>
-
-    <!-- OmniTAK Main Theme -->
-    <style name="Theme.OmniTAK" parent="Theme.AppCompat.Light.NoActionBar">
-        <item name="colorPrimary">@color/omnitak_primary</item>
-        <item name="colorPrimaryDark">@color/omnitak_primary_dark</item>
-        <item name="colorAccent">@color/omnitak_accent</item>
+    <!-- Base app theme — Compose drives the real UI; this just makes the
+         system decor (status bar, nav bar, splash background) match the
+         dark tactical palette from launch. -->
+    <style name="Theme.OmniTAK" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/omnitak_primary_dark</item>
         <item name="android:statusBarColor">@color/omnitak_primary_dark</item>
         <item name="android:navigationBarColor">@color/omnitak_primary_dark</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <!-- Launch theme — shows the splash drawable while the process starts. -->
+    <style name="Theme.OmniTAK.Launch" parent="Theme.OmniTAK">
+        <item name="android:windowBackground">@drawable/splash</item>
     </style>
 </resources>
