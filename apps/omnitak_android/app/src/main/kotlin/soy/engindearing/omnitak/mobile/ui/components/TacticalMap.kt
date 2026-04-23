@@ -21,6 +21,7 @@ import org.maplibre.android.location.modes.CameraMode
 import org.maplibre.android.location.modes.RenderMode
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
+import soy.engindearing.omnitak.mobile.data.CoTEvent
 
 /**
  * MapLibre-backed map surface. Forwards Android lifecycle events to the
@@ -44,12 +45,14 @@ fun TacticalMap(
     onMapLongPress: ((LatLng, Offset) -> Unit)? = null,
     locationEnabled: Boolean = false,
     recenterTrigger: Any? = null,
+    contacts: Collection<CoTEvent> = emptyList(),
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val currentLongPress by rememberUpdatedState(onMapLongPress)
     val currentLocationEnabled by rememberUpdatedState(locationEnabled)
+    val currentContacts by rememberUpdatedState(contacts)
 
     val mapView = remember {
         MapLibre.getInstance(context)
@@ -61,6 +64,7 @@ fun TacticalMap(
                     .zoom(initialZoom)
                     .build()
                 map.setStyle(Style.Builder().fromJson(styleJson)) { style ->
+                    ContactLayer.update(map, currentContacts)
                     if (currentLocationEnabled) {
                         activateLocation(map, style, context)
                     }
@@ -111,6 +115,15 @@ fun TacticalMap(
         onDispose { }
     }
 
+    // Push contact updates through to the GeoJson source whenever the
+    // caller's collection reference changes.
+    DisposableEffect(mapView, contacts) {
+        mapView.getMapAsync { map ->
+            if (map.style != null) ContactLayer.update(map, contacts)
+        }
+        onDispose { }
+    }
+
     DisposableEffect(lifecycleOwner, mapView) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
@@ -157,6 +170,16 @@ private fun safeEnableLocation(map: org.maplibre.android.maps.MapLibreMap) {
  * vector-tile style had GL issues. Same raster-layer shape swaps in
  * any XYZ tile URL (satellite, topo, custom TAK tile server) later.
  */
+/**
+ * Contact source + layers are declared inline in the style JSON. On
+ * the API 36 emulator, `style.addSource` / `style.addLayer` called from
+ * the `setStyle(builder, onStyleLoaded)` callback occasionally renders
+ * nothing despite the calls reporting success and the source/layer
+ * appearing in the style — a MapLibre-Android GL quirk we haven't
+ * root-caused. Declaring everything in the style JSON avoids that
+ * path entirely; `ContactLayer.update` pushes fresh feature data to
+ * the existing source via `setGeoJson`.
+ */
 const val OSM_RASTER_STYLE = """
 {
   "version": 8,
@@ -164,19 +187,52 @@ const val OSM_RASTER_STYLE = """
   "sources": {
     "osm": {
       "type": "raster",
-      "tiles": [
-        "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-      ],
+      "tiles": ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
       "tileSize": 256,
       "maxzoom": 19,
       "attribution": "© OpenStreetMap contributors"
+    },
+    "contacts-src": {
+      "type": "geojson",
+      "data": {"type": "FeatureCollection", "features": []}
     }
   },
   "layers": [
+    {"id": "osm-tiles", "type": "raster", "source": "osm"},
     {
-      "id": "osm-tiles",
-      "type": "raster",
-      "source": "osm"
+      "id": "contacts-circles",
+      "type": "circle",
+      "source": "contacts-src",
+      "paint": {
+        "circle-radius": 10,
+        "circle-stroke-width": 2,
+        "circle-stroke-color": "#0A1628",
+        "circle-color": [
+          "match",
+          ["get", "affiliation"],
+          "f", "#4ADE80",
+          "h", "#F44336",
+          "n", "#FFC107",
+          "u", "#B39DDB",
+          "#B39DDB"
+        ]
+      }
+    },
+    {
+      "id": "contacts-labels",
+      "type": "symbol",
+      "source": "contacts-src",
+      "layout": {
+        "text-field": ["get", "callsign"],
+        "text-size": 11,
+        "text-offset": [0, 1.4],
+        "text-allow-overlap": false
+      },
+      "paint": {
+        "text-color": "#FFFFFF",
+        "text-halo-color": "#0A1628",
+        "text-halo-width": 1.5
+      }
     }
   ]
 }

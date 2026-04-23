@@ -44,6 +44,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.maplibre.android.geometry.LatLng
 import soy.engindearing.omnitak.mobile.OmniTAKApp
+import soy.engindearing.omnitak.mobile.data.CoTAffiliation
+import soy.engindearing.omnitak.mobile.data.CoTEvent
 import soy.engindearing.omnitak.mobile.domain.ConnectionState
 import soy.engindearing.omnitak.mobile.ui.components.ATAKStatusBar
 import soy.engindearing.omnitak.mobile.ui.components.RadialAction
@@ -61,6 +63,7 @@ fun MapScreen() {
     val app = LocalContext.current.applicationContext as OmniTAKApp
     val active by app.serverManager.activeServer.collectAsState()
     val connState by app.serverManager.connectionState.collectAsState()
+    val contacts by app.contactStore.contacts.collectAsState()
 
     val headerLabel = when (val s = connState) {
         is ConnectionState.Connected -> s.serverName
@@ -101,6 +104,7 @@ fun MapScreen() {
             },
             locationEnabled = locationGranted,
             recenterTrigger = recenterTick,
+            contacts = contacts.values,
         )
 
         Column(
@@ -168,8 +172,31 @@ fun MapScreen() {
                 val ll = radialLatLng
                 radialAnchor = null
                 radialLatLng = null
-                val coord = ll?.let { "%.5f, %.5f".format(it.latitude, it.longitude) } ?: ""
-                toast("${action.label}${if (coord.isNotEmpty()) " @ $coord" else ""}")
+                when (action.id) {
+                    "drop" -> if (ll != null) {
+                        val i = contacts.size + 1
+                        val aff = arrayOf(
+                            CoTAffiliation.FRIEND,
+                            CoTAffiliation.HOSTILE,
+                            CoTAffiliation.NEUTRAL,
+                            CoTAffiliation.UNKNOWN,
+                        )[(i - 1) % 4]
+                        app.contactStore.ingest(
+                            CoTEvent(
+                                uid = "self-test-$i",
+                                type = "a-${aff.code}-G-U-C",
+                                lat = ll.latitude,
+                                lon = ll.longitude,
+                                callsign = "MARK-$i",
+                            )
+                        )
+                        toast("Dropped ${aff.name} marker #$i")
+                    }
+                    else -> {
+                        val coord = ll?.let { "%.5f, %.5f".format(it.latitude, it.longitude) } ?: ""
+                        toast("${action.label}${if (coord.isNotEmpty()) " @ $coord" else ""}")
+                    }
+                }
             },
             onDismiss = {
                 radialAnchor = null

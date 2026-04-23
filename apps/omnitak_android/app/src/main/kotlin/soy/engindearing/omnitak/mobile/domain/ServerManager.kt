@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import soy.engindearing.omnitak.mobile.data.CoTParser
 import soy.engindearing.omnitak.mobile.data.TAKConnection
 import soy.engindearing.omnitak.mobile.data.TAKServer
 import soy.engindearing.omnitak.mobile.data.TAKServerStore
@@ -21,7 +22,10 @@ import soy.engindearing.omnitak.mobile.data.TAKServerStore
  *    server so the UI doesn't keep pointing at a disabled one (iOS #41)
  *  - newly added enabled server becomes active when no enabled active exists
  */
-class ServerManager(private val store: TAKServerStore) {
+class ServerManager(
+    private val store: TAKServerStore,
+    private val contactStore: ContactStore? = null,
+) {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -36,6 +40,7 @@ class ServerManager(private val store: TAKServerStore) {
 
     private var currentConnection: TAKConnection? = null
     private var connectionCollectorJob: kotlinx.coroutines.Job? = null
+    private var receivedCollectorJob: kotlinx.coroutines.Job? = null
 
     init { scope.launch { hydrate() } }
 
@@ -47,6 +52,11 @@ class ServerManager(private val store: TAKServerStore) {
         connectionCollectorJob = scope.launch {
             conn.state.collect { _connectionState.value = it }
         }
+        receivedCollectorJob = scope.launch {
+            conn.received.collect { xml ->
+                CoTParser.parse(xml)?.let { contactStore?.ingest(it) }
+            }
+        }
         conn.connect()
     }
 
@@ -56,6 +66,8 @@ class ServerManager(private val store: TAKServerStore) {
         currentConnection = null
         connectionCollectorJob?.cancel()
         connectionCollectorJob = null
+        receivedCollectorJob?.cancel()
+        receivedCollectorJob = null
         _connectionState.value = ConnectionState.Disconnected
     }
 
