@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Straighten
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -47,6 +48,8 @@ import org.maplibre.android.geometry.LatLng
 import soy.engindearing.omnitak.mobile.OmniTAKApp
 import soy.engindearing.omnitak.mobile.data.CoTAffiliation
 import soy.engindearing.omnitak.mobile.data.CoTEvent
+import soy.engindearing.omnitak.mobile.data.Drawing
+import soy.engindearing.omnitak.mobile.data.DrawingKind
 import soy.engindearing.omnitak.mobile.data.GeoMath
 import soy.engindearing.omnitak.mobile.domain.ConnectionState
 import soy.engindearing.omnitak.mobile.ui.components.ATAKStatusBar
@@ -91,6 +94,10 @@ fun MapScreen() {
     var recenterTick by remember { mutableStateOf(0) }
     var measurementActive by remember { mutableStateOf(false) }
     var measurementPoints by remember { mutableStateOf<List<LatLng>>(emptyList()) }
+    var drawingKind by remember { mutableStateOf<DrawingKind?>(null) }
+    var drawingPoints by remember { mutableStateOf<List<LatLng>>(emptyList()) }
+    var drawingPickerOpen by remember { mutableStateOf(false) }
+    val drawings by app.drawingStore.drawings.collectAsState()
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -116,15 +123,23 @@ fun MapScreen() {
                 markerSheetLatLng = LatLng(event.lat, event.lon)
             },
             onMapSingleTap = { latLng ->
-                if (measurementActive) {
-                    measurementPoints = measurementPoints + latLng
-                    true
-                } else false
+                when {
+                    measurementActive -> {
+                        measurementPoints = measurementPoints + latLng
+                        true
+                    }
+                    drawingKind != null -> {
+                        drawingPoints = drawingPoints + latLng
+                        true
+                    }
+                    else -> false
+                }
             },
             locationEnabled = locationGranted,
             recenterTrigger = recenterTick,
             contacts = contacts.values,
             measurementPoints = measurementPoints,
+            drawings = drawings + buildInProgressDrawing(drawingKind, drawingPoints),
         )
 
         Column(
@@ -160,6 +175,7 @@ fun MapScreen() {
                         measurementPoints = emptyList()
                         toast("Measure mode — tap map to add points")
                     }
+                    "draw" -> drawingPickerOpen = true
                     else -> toast("${tool.label} — coming soon")
                 }
             },
@@ -258,6 +274,56 @@ fun MapScreen() {
             },
         )
 
+        if (drawingKind != null) {
+            DrawingOverlay(
+                kind = drawingKind!!,
+                pointCount = drawingPoints.size,
+                onUndo = {
+                    if (drawingPoints.isNotEmpty()) {
+                        drawingPoints = drawingPoints.dropLast(1)
+                    }
+                },
+                onCancel = {
+                    drawingKind = null
+                    drawingPoints = emptyList()
+                },
+                onFinish = {
+                    val minPts = when (drawingKind!!) {
+                        DrawingKind.LINE -> 2
+                        DrawingKind.POLYGON -> 3
+                        DrawingKind.CIRCLE -> 2
+                    }
+                    if (drawingPoints.size >= minPts) {
+                        app.drawingStore.add(
+                            Drawing(
+                                id = "draw-${System.currentTimeMillis()}",
+                                kind = drawingKind!!,
+                                points = drawingPoints.map { it.latitude to it.longitude },
+                            )
+                        )
+                        toast("Saved ${drawingKind!!.name.lowercase()}")
+                    } else {
+                        toast("Need at least $minPts points")
+                    }
+                    drawingKind = null
+                    drawingPoints = emptyList()
+                },
+                modifier = Modifier.align(Alignment.TopStart),
+            )
+        }
+
+        if (drawingPickerOpen) {
+            DrawingKindPicker(
+                onPick = { kind ->
+                    drawingPickerOpen = false
+                    drawingKind = kind
+                    drawingPoints = emptyList()
+                    toast("Drawing ${kind.name.lowercase()} — tap to add points")
+                },
+                onDismiss = { drawingPickerOpen = false },
+            )
+        }
+
         if (measurementActive) {
             MeasurementOverlay(
                 points = measurementPoints,
@@ -278,6 +344,92 @@ fun MapScreen() {
             hostState = snackbar,
             modifier = Modifier.align(Alignment.BottomCenter),
         )
+    }
+}
+
+private fun buildInProgressDrawing(kind: DrawingKind?, points: List<LatLng>): List<Drawing> {
+    if (kind == null || points.isEmpty()) return emptyList()
+    return listOf(
+        Drawing(
+            id = "__in_progress__",
+            kind = kind,
+            points = points.map { it.latitude to it.longitude },
+            colorHex = "#FFC107",  // amber while drafting
+        )
+    )
+}
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun DrawingKindPicker(
+    onPick: (DrawingKind) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = soy.engindearing.omnitak.mobile.ui.theme.TacticalSurface,
+        title = { androidx.compose.material3.Text("Drawing tool", color = MaterialTheme.colorScheme.onBackground) },
+        text = {
+            androidx.compose.foundation.layout.Column {
+                listOf(
+                    DrawingKind.LINE to "Line — connected segments",
+                    DrawingKind.POLYGON to "Polygon — closed shape",
+                    DrawingKind.CIRCLE to "Circle — center + edge",
+                ).forEach { (kind, label) ->
+                    androidx.compose.material3.TextButton(
+                        onClick = { onPick(kind) },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        androidx.compose.material3.Text(
+                            label,
+                            color = TacticalAccent,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            androidx.compose.material3.TextButton(onClick = onDismiss) {
+                androidx.compose.material3.Text("Cancel", color = TacticalAccent)
+            }
+        },
+    )
+}
+
+@Composable
+private fun DrawingOverlay(
+    kind: DrawingKind,
+    pointCount: Int,
+    onUndo: () -> Unit,
+    onCancel: () -> Unit,
+    onFinish: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    androidx.compose.foundation.layout.Row(
+        modifier = modifier
+            .padding(top = 76.dp, start = 12.dp, end = 12.dp)
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
+            .background(TacticalBackground.copy(alpha = 0.9f))
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        androidx.compose.material3.Text(
+            "${kind.name.lowercase().replaceFirstChar { it.uppercase() }} · $pointCount pt",
+            color = TacticalAccent,
+            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        androidx.compose.foundation.layout.Spacer(Modifier.width(12.dp))
+        androidx.compose.material3.TextButton(onClick = onUndo, enabled = pointCount > 0) {
+            androidx.compose.material3.Text("Undo", color = TacticalAccent)
+        }
+        androidx.compose.material3.TextButton(onClick = onCancel) {
+            androidx.compose.material3.Text("Cancel", color = TacticalAccent)
+        }
+        androidx.compose.material3.TextButton(onClick = onFinish) {
+            androidx.compose.material3.Text("Save", color = TacticalAccent)
+        }
     }
 }
 
