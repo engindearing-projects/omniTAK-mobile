@@ -22,6 +22,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import soy.engindearing.omnitak.mobile.ui.screens.AboutScreen
+import soy.engindearing.omnitak.mobile.ui.screens.AddServerScreen
 import soy.engindearing.omnitak.mobile.ui.screens.MapScreen
 import soy.engindearing.omnitak.mobile.ui.screens.ServersScreen
 import soy.engindearing.omnitak.mobile.ui.screens.SettingsScreen
@@ -67,7 +68,12 @@ fun AppNav() {
             modifier = Modifier.padding(inner),
         ) {
             composable(Dest.Map.route) { MapScreen() }
-            composable(Dest.Servers.route) { ServersScreen() }
+            composable(Dest.Servers.route) {
+                ServersScreen(onAdd = { nav.navigate("servers/add") })
+            }
+            composable("servers/add") {
+                AddServerScreen(onDone = { nav.popBackStack() })
+            }
             composable(Dest.Settings.route) { SettingsScreen() }
             composable(Dest.About.route) { AboutScreen() }
         }
