@@ -151,6 +151,7 @@
 		9B53B95D7EDEE6FC5CB09995 /* TurnByTurnNavigationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DF4CA147B5220C0A776A48B /* TurnByTurnNavigationService.swift */; };
 		9C5FA3DD0174828A73ABAEAA /* LineOfSightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F269621B47884814AA5FC323 /* LineOfSightView.swift */; };
 		9D1E97C264F38CD9B0017F5A /* DrawingPropertiesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA8A6851F2CB32B82BEA2817 /* DrawingPropertiesView.swift */; };
+		E1F2A3B4C5D6E7F809182930 /* PointMarkerEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1F2A3B4C5D6E7F809182931 /* PointMarkerEditView.swift */; };
 		9D41D2F2BD209FCD028D5785 /* ImprovedErrorDialog.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBD37DB92FC41317D68DAAF0 /* ImprovedErrorDialog.swift */; };
 		9D4DD979FA07D0D920CA576A /* MEDEVACRequestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C046FF14CC38A998A3C9C57A /* MEDEVACRequestView.swift */; };
 		9F360AA41C05B15FC6B71F75 /* EchelonModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53D5A42ABFBE8EF268B187D8 /* EchelonModels.swift */; };
@@ -463,6 +464,7 @@
 		C7522ED76D659E2CAEA384D5 /* EnhancedCoTMarker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = EnhancedCoTMarker.swift; path = OmniTAKMobile/Features/Map/Markers/EnhancedCoTMarker.swift; sourceTree = "<group>"; };
 		C7E7E03CF8CE1ECA81C1AA86 /* MeshtasticManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MeshtasticManager.swift; path = OmniTAKMobile/Features/Meshtastic/Managers/MeshtasticManager.swift; sourceTree = "<group>"; };
 		CA8A6851F2CB32B82BEA2817 /* DrawingPropertiesView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DrawingPropertiesView.swift; path = OmniTAKMobile/Features/Drawing/Views/DrawingPropertiesView.swift; sourceTree = "<group>"; };
+		E1F2A3B4C5D6E7F809182931 /* PointMarkerEditView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PointMarkerEditView.swift; path = OmniTAKMobile/Features/Drawing/Views/PointMarkerEditView.swift; sourceTree = "<group>"; };
 		CAC01FCB3F359AE0399C8DCC /* SFSP-------.svg */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = "SFSP-------.svg"; sourceTree = "<group>"; };
 		CBD37DB92FC41317D68DAAF0 /* ImprovedErrorDialog.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ImprovedErrorDialog.swift; path = OmniTAKMobile/Features/Networking/Views/ImprovedErrorDialog.swift; sourceTree = "<group>"; };
 		CD8106AADD977406BA4F0F47 /* MeshtasticConnectionView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MeshtasticConnectionView.swift; path = OmniTAKMobile/Features/Meshtastic/Views/MeshtasticConnectionView.swift; sourceTree = "<group>"; };
@@ -713,6 +715,7 @@
 			children = (
 				CA8A6851F2CB32B82BEA2817 /* DrawingPropertiesView.swift */,
 				3FCF30C181516B0451F11577 /* DrawingToolsPanel.swift */,
+				E1F2A3B4C5D6E7F809182931 /* PointMarkerEditView.swift */,
 				A06A59DC9C712878830E5D23 /* PointDropperView.swift */,
 			);
 			name = Views;
@@ -1995,6 +1998,7 @@
 				409D7589A76E63D323F8F8FC /* PointMarkerModels.swift in Sources */,
 				AB23139DA76395747F6E4C71 /* PointDropperService.swift in Sources */,
 				9D1E97C264F38CD9B0017F5A /* DrawingPropertiesView.swift in Sources */,
+				E1F2A3B4C5D6E7F809182930 /* PointMarkerEditView.swift in Sources */,
 				2F28591B9FC564C3E5B232CC /* DrawingToolsPanel.swift in Sources */,
 				2748B5AB1E5A1703D8ECA259 /* PointDropperView.swift in Sources */,
 				39E5BA9BBA5EDD186729E499 /* GeofenceManager.swift in Sources */,

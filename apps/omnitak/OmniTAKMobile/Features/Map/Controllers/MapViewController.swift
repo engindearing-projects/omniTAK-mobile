@@ -29,6 +29,9 @@ struct ATAKMapView: View {
     @State private var showLayersPanel = false
     @State private var showDrawingPanel = false
     @State private var showDrawingList = false
+    // Radial menu → Edit on a PointMarker posts .radialMenuEditMarker;
+    // we hold the marker id here so a sheet can open the edit form.
+    @State private var editingPointMarkerID: UUID?
     @State private var mapType: MKMapType = .satellite
     @State private var showToolsMenu = false
     @State private var showLoadingScreen = true
@@ -643,6 +646,11 @@ struct ATAKMapView: View {
         .background(modalSheets)
         .background(errorOverlays)
         .background(lifecycleHandlers)
+        .onReceive(NotificationCenter.default.publisher(for: .radialMenuEditMarker)) { notification in
+            if let marker = notification.userInfo?["marker"] as? PointMarker {
+                editingPointMarkerID = marker.id
+            }
+        }
     }
 
     private var modalSheets: some View {
@@ -664,6 +672,24 @@ struct ATAKMapView: View {
                         isPresented: Binding(
                             get: { drawingManager.pendingRenameID != nil },
                             set: { if !$0 { drawingManager.pendingRenameID = nil } }
+                        )
+                    )
+                }
+            }
+            // Radial menu Edit → open PointMarker edit form. The radial
+            // posts .radialMenuEditMarker (see RadialMenuActionExecutor);
+            // without this observer the menu just dismissed silently.
+            .sheet(isPresented: Binding(
+                get: { editingPointMarkerID != nil },
+                set: { if !$0 { editingPointMarkerID = nil } }
+            )) {
+                if let id = editingPointMarkerID {
+                    PointMarkerEditView(
+                        pointDropperService: pointDropperService,
+                        markerID: id,
+                        isPresented: Binding(
+                            get: { editingPointMarkerID != nil },
+                            set: { if !$0 { editingPointMarkerID = nil } }
                         )
                     )
                 }
