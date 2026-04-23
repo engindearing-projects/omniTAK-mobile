@@ -22,6 +22,7 @@ import org.maplibre.android.location.modes.RenderMode
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 import soy.engindearing.omnitak.mobile.data.CoTEvent
+import soy.engindearing.omnitak.mobile.data.Drawing
 
 /**
  * MapLibre-backed map surface. Forwards Android lifecycle events to the
@@ -49,6 +50,7 @@ fun TacticalMap(
     recenterTrigger: Any? = null,
     contacts: Collection<CoTEvent> = emptyList(),
     measurementPoints: List<LatLng> = emptyList(),
+    drawings: List<Drawing> = emptyList(),
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -59,6 +61,7 @@ fun TacticalMap(
     val currentLocationEnabled by rememberUpdatedState(locationEnabled)
     val currentContacts by rememberUpdatedState(contacts)
     val currentMeasurementPoints by rememberUpdatedState(measurementPoints)
+    val currentDrawings by rememberUpdatedState(drawings)
 
     val mapView = remember {
         MapLibre.getInstance(context)
@@ -72,6 +75,7 @@ fun TacticalMap(
                 map.setStyle(Style.Builder().fromJson(styleJson)) { style ->
                     ContactLayer.update(map, currentContacts)
                     MeasurementLayer.update(map, currentMeasurementPoints)
+                    DrawingLayer.update(map, currentDrawings)
                     if (currentLocationEnabled) {
                         activateLocation(map, style, context)
                     }
@@ -166,6 +170,13 @@ fun TacticalMap(
         onDispose { }
     }
 
+    DisposableEffect(mapView, drawings) {
+        mapView.getMapAsync { map ->
+            if (map.style != null) DrawingLayer.update(map, drawings)
+        }
+        onDispose { }
+    }
+
     DisposableEffect(lifecycleOwner, mapView) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
@@ -249,10 +260,33 @@ const val OSM_RASTER_STYLE = """
     "measurement-src": {
       "type": "geojson",
       "data": {"type": "FeatureCollection", "features": []}
+    },
+    "drawings-src": {
+      "type": "geojson",
+      "data": {"type": "FeatureCollection", "features": []}
     }
   },
   "layers": [
     {"id": "osm-tiles", "type": "raster", "source": "osm"},
+    {
+      "id": "drawings-fill",
+      "type": "fill",
+      "source": "drawings-src",
+      "filter": ["==", ["get", "kind"], "polygon"],
+      "paint": {
+        "fill-color": ["coalesce", ["get", "color"], "#4ADE80"],
+        "fill-opacity": 0.2
+      }
+    },
+    {
+      "id": "drawings-outline",
+      "type": "line",
+      "source": "drawings-src",
+      "paint": {
+        "line-color": ["coalesce", ["get", "color"], "#4ADE80"],
+        "line-width": 3
+      }
+    },
     {
       "id": "measurement-line",
       "type": "line",
