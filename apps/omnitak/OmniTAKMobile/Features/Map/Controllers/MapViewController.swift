@@ -2641,6 +2641,11 @@ struct TacticalMapView: UIViewRepresentable {
                 annotationView?.image = image
                 annotationView?.centerOffset = CGPoint(x: 0, y: -size.height / 2)
 
+                // Info (i) button routes through calloutAccessoryControlTapped
+                // below, which opens the radial menu for the drawing. Without
+                // this the callout had no entry point to edit the marker.
+                annotationView?.rightCalloutAccessoryView = UIButton(type: .detailDisclosure)
+
                 return annotationView
             }
 
