@@ -116,15 +116,31 @@ class RadialMenuActionExecutor {
     // MARK: - Marker Management Implementation
 
     private static func executeEditMarker(context: RadialMenuContext, services: RadialMenuServices) -> Bool {
-        guard let marker = context.pressedMarker else { return false }
+        // The shared markerContext radial menu is shown both for PointMarkers
+        // (radial/point-dropper markers) AND for drawing shapes (marker, line,
+        // circle, polygon) — so the Edit action has to dispatch to whichever
+        // one was actually long-pressed. Matches the fallthrough already in
+        // executeDeleteMarker.
+        if let marker = context.pressedMarker {
+            NotificationCenter.default.post(
+                name: .radialMenuEditMarker,
+                object: nil,
+                userInfo: ["marker": marker]
+            )
+            return true
+        }
 
-        NotificationCenter.default.post(
-            name: .radialMenuEditMarker,
-            object: nil,
-            userInfo: ["marker": marker]
-        )
+        if let drawingId = context.pressedDrawingId,
+           let drawingType = context.pressedDrawingType {
+            NotificationCenter.default.post(
+                name: .radialMenuEditDrawing,
+                object: nil,
+                userInfo: ["drawingId": drawingId, "drawingType": drawingType]
+            )
+            return true
+        }
 
-        return true
+        return false
     }
 
     private static func executeDeleteMarker(context: RadialMenuContext, services: RadialMenuServices) -> Bool {
