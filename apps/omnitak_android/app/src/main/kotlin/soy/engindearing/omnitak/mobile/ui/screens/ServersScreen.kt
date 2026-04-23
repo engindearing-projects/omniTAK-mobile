@@ -22,6 +22,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -47,6 +49,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import soy.engindearing.omnitak.mobile.OmniTAKApp
 import soy.engindearing.omnitak.mobile.data.TAKServer
+import soy.engindearing.omnitak.mobile.domain.ConnectionState
+import soy.engindearing.omnitak.mobile.ui.theme.HostileRed
+import soy.engindearing.omnitak.mobile.ui.theme.NeutralYellow
 import soy.engindearing.omnitak.mobile.ui.theme.TacticalAccent
 import soy.engindearing.omnitak.mobile.ui.theme.TacticalBackground
 import soy.engindearing.omnitak.mobile.ui.theme.TacticalSurface
@@ -58,6 +63,7 @@ fun ServersScreen(onAdd: () -> Unit) {
     val manager = app.serverManager
     val servers by manager.servers.collectAsState()
     val active by manager.activeServer.collectAsState()
+    val connState by manager.connectionState.collectAsState()
 
     Scaffold(
         containerColor = TacticalBackground,
@@ -93,12 +99,22 @@ fun ServersScreen(onAdd: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 items(items = servers, key = { it.id }) { server ->
+                    val connectedToThis = active?.id == server.id && (
+                        connState is ConnectionState.Connected || connState is ConnectionState.Connecting
+                    )
                     ServerCard(
                         server = server,
                         isActive = active?.id == server.id,
+                        connState = if (active?.id == server.id) connState else ConnectionState.Disconnected,
                         onTap = { manager.setActive(server.id) },
                         onToggle = { manager.toggleEnabled(server.id) },
                         onDelete = { manager.deleteServer(server.id) },
+                        onConnectToggle = {
+                            if (connectedToThis) manager.disconnect() else {
+                                manager.setActive(server.id)
+                                manager.connect(server)
+                            }
+                        },
                     )
                 }
             }
@@ -140,9 +156,11 @@ private fun EmptyServers(modifier: Modifier = Modifier) {
 private fun ServerCard(
     server: TAKServer,
     isActive: Boolean,
+    connState: ConnectionState,
     onTap: () -> Unit,
     onToggle: () -> Unit,
     onDelete: () -> Unit,
+    onConnectToggle: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -162,7 +180,7 @@ private fun ServerCard(
         )
         Spacer(Modifier.width(12.dp))
 
-        // Connection dot
+        // Connection dot — reflects live connection state when this card is active
         Box(
             modifier = Modifier
                 .size(10.dp)
@@ -170,7 +188,10 @@ private fun ServerCard(
                 .background(
                     when {
                         !server.enabled -> Color.Gray.copy(alpha = 0.5f)
-                        isActive -> TacticalAccent
+                        connState is ConnectionState.Connected -> TacticalAccent
+                        connState is ConnectionState.Connecting -> NeutralYellow
+                        connState is ConnectionState.Failed -> HostileRed
+                        isActive -> TacticalAccent.copy(alpha = 0.5f)
                         else -> Color.Gray
                     }
                 ),
@@ -199,6 +220,18 @@ private fun ServerCard(
                 "${server.host}:${server.port}  ·  ${server.protocol.uppercase()}",
                 style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.65f),
+            )
+        }
+
+        val isLive = connState is ConnectionState.Connected || connState is ConnectionState.Connecting
+        IconButton(
+            onClick = onConnectToggle,
+            enabled = server.enabled,
+        ) {
+            Icon(
+                if (isLive) Icons.Filled.Stop else Icons.Filled.PlayArrow,
+                contentDescription = if (isLive) "Disconnect" else "Connect",
+                tint = if (isLive) HostileRed else TacticalAccent,
             )
         }
 

@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.delay
 import soy.engindearing.omnitak.mobile.OmniTAKApp
+import soy.engindearing.omnitak.mobile.domain.ConnectionState
 import soy.engindearing.omnitak.mobile.ui.components.ATAKStatusBar
 import soy.engindearing.omnitak.mobile.ui.components.TacticalMap
 import java.text.SimpleDateFormat
@@ -28,6 +29,14 @@ import java.util.Locale
 fun MapScreen() {
     val app = LocalContext.current.applicationContext as OmniTAKApp
     val active by app.serverManager.activeServer.collectAsState()
+    val connState by app.serverManager.connectionState.collectAsState()
+
+    val headerLabel = when (val s = connState) {
+        is ConnectionState.Connected -> s.serverName
+        is ConnectionState.Connecting -> "Connecting…"
+        is ConnectionState.Failed -> "Failed"
+        ConnectionState.Disconnected -> active?.name ?: "Offline"
+    }
 
     var nowLabel by remember { mutableStateOf(timeLabel()) }
     LaunchedEffect(Unit) {
@@ -50,8 +59,8 @@ fun MapScreen() {
                 .align(Alignment.TopCenter),
         ) {
             ATAKStatusBar(
-                serverName = active?.name ?: "Offline",
-                isConnected = false,  // wired up in Slice 4 when JNI lands
+                serverName = headerLabel,
+                isConnected = connState is ConnectionState.Connected,
                 messagesReceived = 0,
                 messagesSent = 0,
                 gpsAccuracyMeters = null,

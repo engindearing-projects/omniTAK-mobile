@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import soy.engindearing.omnitak.mobile.data.TAKConnection
 import soy.engindearing.omnitak.mobile.data.TAKServer
 import soy.engindearing.omnitak.mobile.data.TAKServerStore
 
@@ -30,7 +31,33 @@ class ServerManager(private val store: TAKServerStore) {
     private val _activeServer = MutableStateFlow<TAKServer?>(null)
     val activeServer: StateFlow<TAKServer?> = _activeServer.asStateFlow()
 
+    private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected)
+    val connectionState: StateFlow<ConnectionState> = _connectionState.asStateFlow()
+
+    private var currentConnection: TAKConnection? = null
+    private var connectionCollectorJob: kotlinx.coroutines.Job? = null
+
     init { scope.launch { hydrate() } }
+
+    /** Tear down any existing connection and open a new one to [server]. */
+    fun connect(server: TAKServer) {
+        disconnect()
+        val conn = TAKConnection(server)
+        currentConnection = conn
+        connectionCollectorJob = scope.launch {
+            conn.state.collect { _connectionState.value = it }
+        }
+        conn.connect()
+    }
+
+    /** Disconnect the current connection if any. */
+    fun disconnect() {
+        currentConnection?.disconnect()
+        currentConnection = null
+        connectionCollectorJob?.cancel()
+        connectionCollectorJob = null
+        _connectionState.value = ConnectionState.Disconnected
+    }
 
     private suspend fun hydrate() {
         var initial: List<TAKServer> = emptyList()
