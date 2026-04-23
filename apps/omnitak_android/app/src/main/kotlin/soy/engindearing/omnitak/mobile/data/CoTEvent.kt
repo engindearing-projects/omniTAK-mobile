@@ -36,6 +36,7 @@ data class CoTEvent(
     val timeIso: String? = null,
     val staleIso: String? = null,
     val callsign: String? = null,
+    val remarks: String = "",
     val rawXml: String? = null,
 ) {
     val affiliation: CoTAffiliation

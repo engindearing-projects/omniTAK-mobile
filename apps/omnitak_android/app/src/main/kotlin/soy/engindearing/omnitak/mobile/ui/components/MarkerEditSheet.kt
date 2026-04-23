@@ -45,6 +45,8 @@ import soy.engindearing.omnitak.mobile.ui.theme.TacticalSurface
 data class MarkerEditResult(
     val callsign: String,
     val affiliation: CoTAffiliation,
+    val altitudeMeters: Double?,
+    val remarks: String,
 )
 
 /**
@@ -62,14 +64,22 @@ fun MarkerEditSheet(
     latLng: LatLng?,
     initialCallsign: String = "",
     initialAffiliation: CoTAffiliation = CoTAffiliation.FRIEND,
+    initialAltitude: Double? = null,
+    initialRemarks: String = "",
+    editing: Boolean = false,
     onSave: (MarkerEditResult) -> Unit,
+    onDelete: (() -> Unit)? = null,
     onDismiss: () -> Unit,
 ) {
     if (!visible) return
     val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    var callsign by remember { mutableStateOf(initialCallsign) }
-    var affiliation by remember { mutableStateOf(initialAffiliation) }
+    var callsign by remember(initialCallsign) { mutableStateOf(initialCallsign) }
+    var affiliation by remember(initialAffiliation) { mutableStateOf(initialAffiliation) }
+    var altitudeText by remember(initialAltitude) {
+        mutableStateOf(initialAltitude?.let { "%.0f".format(it) } ?: "")
+    }
+    var remarks by remember(initialRemarks) { mutableStateOf(initialRemarks) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -82,7 +92,7 @@ fun MarkerEditSheet(
                 .padding(horizontal = 20.dp, vertical = 8.dp),
         ) {
             Text(
-                "Drop Marker",
+                if (editing) "Edit Marker" else "Drop Marker",
                 color = MaterialTheme.colorScheme.onBackground,
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleLarge,
@@ -140,25 +150,78 @@ fun MarkerEditSheet(
                 }
             }
 
+            Spacer(Modifier.height(16.dp))
+            OutlinedTextField(
+                value = altitudeText,
+                onValueChange = { altitudeText = it.filter { ch -> ch.isDigit() || ch == '.' || ch == '-' } },
+                label = { Text("Altitude (m HAE)") },
+                singleLine = true,
+                colors = tacticalFieldColors(),
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            Spacer(Modifier.height(12.dp))
+            OutlinedTextField(
+                value = remarks,
+                onValueChange = { remarks = it },
+                label = { Text("Remarks") },
+                colors = tacticalFieldColors(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(96.dp),
+            )
+
             Spacer(Modifier.height(24.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
+                if (editing && onDelete != null) {
+                    TextButton(
+                        onClick = onDelete,
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = soy.engindearing.omnitak.mobile.ui.theme.HostileRed,
+                        ),
+                    ) { Text("Delete") }
+                }
+                Spacer(Modifier.weight(1f))
                 TextButton(onClick = onDismiss) { Text("Cancel") }
                 Spacer(Modifier.width(8.dp))
                 Button(
-                    onClick = { onSave(MarkerEditResult(callsign.trim().ifEmpty { "Marker" }, affiliation)) },
+                    onClick = {
+                        onSave(
+                            MarkerEditResult(
+                                callsign = callsign.trim().ifEmpty { "Marker" },
+                                affiliation = affiliation,
+                                altitudeMeters = altitudeText.toDoubleOrNull(),
+                                remarks = remarks.trim(),
+                            )
+                        )
+                    },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = TacticalAccent,
                         contentColor = TacticalBackground,
                     ),
-                ) { Text("Save") }
+                ) { Text(if (editing) "Save" else "Drop") }
             }
             Spacer(Modifier.height(16.dp))
         }
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun tacticalFieldColors() = TextFieldDefaults.colors(
+    focusedTextColor = MaterialTheme.colorScheme.onBackground,
+    unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
+    focusedContainerColor = TacticalBackground,
+    unfocusedContainerColor = TacticalBackground,
+    focusedIndicatorColor = TacticalAccent,
+    unfocusedIndicatorColor = TacticalAccent.copy(alpha = 0.4f),
+    focusedLabelColor = TacticalAccent,
+    unfocusedLabelColor = TacticalAccent.copy(alpha = 0.6f),
+    cursorColor = TacticalAccent,
+)
 
 @Composable
 private fun AffiliationChip(
