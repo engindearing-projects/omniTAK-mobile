@@ -651,6 +651,15 @@ struct ATAKMapView: View {
                 editingPointMarkerID = marker.id
             }
         }
+        // Radial Edit on a drawing shape (marker/line/circle/polygon) posts
+        // .radialMenuEditDrawing with the drawingId. DrawingPropertiesView
+        // already handles every shape type by id — reuse the #38 sheet by
+        // pushing the id through drawingManager.pendingRenameID.
+        .onReceive(NotificationCenter.default.publisher(for: .radialMenuEditDrawing)) { notification in
+            if let drawingId = notification.userInfo?["drawingId"] as? UUID {
+                drawingManager.pendingRenameID = drawingId
+            }
+        }
     }
 
     private var modalSheets: some View {
