@@ -15,6 +15,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import org.maplibre.android.MapLibre
 import org.maplibre.android.camera.CameraPosition
+import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.location.LocationComponentActivationOptions
 import org.maplibre.android.location.modes.CameraMode
@@ -54,6 +55,9 @@ fun TacticalMap(
     drawings: List<Drawing> = emptyList(),
     gridCenter: LatLng? = null,
     aircraft: List<Aircraft> = emptyList(),
+    panTarget: LatLng? = null,
+    panTargetTick: Int = 0,
+    followMeActive: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -197,6 +201,42 @@ fun TacticalMap(
     DisposableEffect(mapView, aircraft) {
         mapView.getMapAsync { map ->
             if (map.style != null) AircraftLayer.update(map, aircraft)
+        }
+        onDispose { }
+    }
+
+    // Pan camera to an arbitrary LatLng — used by the Teams panel to
+    // jump the map onto a tapped contact. The tick parameter lets the
+    // caller re-fire a pan to the same point (tapping the same row twice).
+    DisposableEffect(mapView, panTargetTick) {
+        val target = panTarget
+        if (panTargetTick > 0 && target != null) {
+            mapView.getMapAsync { map ->
+                if (map.locationComponent.isLocationComponentActivated) {
+                    map.locationComponent.cameraMode = CameraMode.NONE
+                }
+                map.animateCamera(
+                    CameraUpdateFactory.newLatLngZoom(target, 14.0),
+                    600,
+                )
+            }
+        }
+        onDispose { }
+    }
+
+    // "Follow me" toggle — pins the camera to the user's location and
+    // rotates with compass heading. Flipping off returns to free-pan.
+    DisposableEffect(mapView, followMeActive, locationEnabled) {
+        if (locationEnabled) {
+            mapView.getMapAsync { map ->
+                if (map.locationComponent.isLocationComponentActivated) {
+                    map.locationComponent.cameraMode = if (followMeActive) {
+                        CameraMode.TRACKING_COMPASS
+                    } else {
+                        CameraMode.NONE
+                    }
+                }
+            }
         }
         onDispose { }
     }

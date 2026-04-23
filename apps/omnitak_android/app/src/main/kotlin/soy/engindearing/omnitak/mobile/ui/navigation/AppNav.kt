@@ -75,7 +75,17 @@ fun AppNav() {
             startDestination = Dest.Map.route,
             modifier = Modifier.padding(inner),
         ) {
-            composable(Dest.Map.route) { MapScreen() }
+            composable(Dest.Map.route) {
+                MapScreen(
+                    onOpenTab = { route ->
+                        nav.navigate(route) {
+                            popUpTo(nav.graph.startDestinationId) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                )
+            }
             composable(Dest.Servers.route) {
                 ServersScreen(onAdd = { nav.navigate("servers/add") })
             }
