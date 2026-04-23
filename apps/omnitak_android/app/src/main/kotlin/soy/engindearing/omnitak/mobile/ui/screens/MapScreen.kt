@@ -85,6 +85,7 @@ fun MapScreen() {
     var radialAnchor by remember { mutableStateOf<Offset?>(null) }
     var radialLatLng by remember { mutableStateOf<LatLng?>(null) }
     var markerSheetLatLng by remember { mutableStateOf<LatLng?>(null) }
+    var editingMarker by remember { mutableStateOf<CoTEvent?>(null) }
     var recenterTick by remember { mutableStateOf(0) }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -103,6 +104,10 @@ fun MapScreen() {
             onMapLongPress = { latLng, offset ->
                 radialLatLng = latLng
                 radialAnchor = offset
+            },
+            onContactTap = { event ->
+                editingMarker = event
+                markerSheetLatLng = LatLng(event.lat, event.lon)
             },
             locationEnabled = locationGranted,
             recenterTrigger = recenterTick,
@@ -191,25 +196,44 @@ fun MapScreen() {
         MarkerEditSheet(
             visible = markerSheetLatLng != null,
             latLng = markerSheetLatLng,
-            initialCallsign = "Marker ${contacts.size + 1}",
+            initialCallsign = editingMarker?.callsign ?: "Marker ${contacts.size + 1}",
+            initialAffiliation = editingMarker?.affiliation ?: CoTAffiliation.FRIEND,
+            initialAltitude = editingMarker?.hae?.takeIf { it != 0.0 },
+            initialRemarks = editingMarker?.remarks ?: "",
+            editing = editingMarker != null,
             onSave = { result ->
                 val ll = markerSheetLatLng
                 if (ll != null) {
-                    val uid = "local-${System.currentTimeMillis()}"
+                    val uid = editingMarker?.uid ?: "local-${System.currentTimeMillis()}"
                     app.contactStore.ingest(
                         CoTEvent(
                             uid = uid,
                             type = "a-${result.affiliation.code}-G-U-C",
                             lat = ll.latitude,
                             lon = ll.longitude,
+                            hae = result.altitudeMeters ?: 0.0,
                             callsign = result.callsign,
+                            remarks = result.remarks,
                         )
                     )
-                    toast("Saved ${result.affiliation.name.lowercase()} marker “${result.callsign}”")
+                    val verb = if (editingMarker != null) "Updated" else "Saved"
+                    toast("$verb ${result.affiliation.name.lowercase()} marker “${result.callsign}”")
                 }
                 markerSheetLatLng = null
+                editingMarker = null
             },
-            onDismiss = { markerSheetLatLng = null },
+            onDelete = editingMarker?.let {
+                {
+                    app.contactStore.remove(it.uid)
+                    toast("Deleted marker “${it.callsign ?: it.uid}”")
+                    markerSheetLatLng = null
+                    editingMarker = null
+                }
+            },
+            onDismiss = {
+                markerSheetLatLng = null
+                editingMarker = null
+            },
         )
 
         SnackbarHost(

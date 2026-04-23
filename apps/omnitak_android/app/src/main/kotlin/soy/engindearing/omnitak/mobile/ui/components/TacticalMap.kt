@@ -43,6 +43,7 @@ fun TacticalMap(
     initialZoom: Double = 11.0,
     styleJson: String = OSM_RASTER_STYLE,
     onMapLongPress: ((LatLng, Offset) -> Unit)? = null,
+    onContactTap: ((CoTEvent) -> Unit)? = null,
     locationEnabled: Boolean = false,
     recenterTrigger: Any? = null,
     contacts: Collection<CoTEvent> = emptyList(),
@@ -51,6 +52,7 @@ fun TacticalMap(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val currentLongPress by rememberUpdatedState(onMapLongPress)
+    val currentContactTap by rememberUpdatedState(onContactTap)
     val currentLocationEnabled by rememberUpdatedState(locationEnabled)
     val currentContacts by rememberUpdatedState(contacts)
 
@@ -78,6 +80,29 @@ fun TacticalMap(
                     val screen = map.projection.toScreenLocation(latLng)
                     currentLongPress?.invoke(latLng, Offset(screen.x, screen.y))
                     true
+                }
+                map.addOnMapClickListener { latLng ->
+                    val cb = currentContactTap ?: return@addOnMapClickListener false
+                    val tapPx = map.projection.toScreenLocation(latLng)
+                    var best: CoTEvent? = null
+                    var bestDist = Float.MAX_VALUE
+                    currentContacts.forEach { c ->
+                        val px = map.projection.toScreenLocation(LatLng(c.lat, c.lon))
+                        val d = kotlin.math.hypot(
+                            (px.x - tapPx.x).toDouble(),
+                            (px.y - tapPx.y).toDouble(),
+                        ).toFloat()
+                        if (d < bestDist) {
+                            bestDist = d
+                            best = c
+                        }
+                    }
+                    if (best != null && bestDist < TAP_HIT_RADIUS_PX) {
+                        cb(best!!)
+                        true
+                    } else {
+                        false
+                    }
                 }
             }
         }
@@ -170,6 +195,14 @@ private fun safeEnableLocation(map: org.maplibre.android.maps.MapLibreMap) {
  * vector-tile style had GL issues. Same raster-layer shape swaps in
  * any XYZ tile URL (satellite, topo, custom TAK tile server) later.
  */
+/**
+ * Screen-space radius (pixels) used to decide whether a map tap lands
+ * on a contact marker. ~48dp ≈ finger-tip tolerance on a mid-density
+ * device; we stay in px here because MapLibre's projection returns
+ * pixels directly.
+ */
+private const val TAP_HIT_RADIUS_PX = 72f
+
 /**
  * Contact source + layers are declared inline in the style JSON. On
  * the API 36 emulator, `style.addSource` / `style.addLayer` called from
