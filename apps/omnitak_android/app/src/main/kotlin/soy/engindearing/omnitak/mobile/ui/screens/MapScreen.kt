@@ -12,12 +12,22 @@ import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Straighten
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
+import soy.engindearing.omnitak.mobile.ui.theme.TacticalAccent
+import soy.engindearing.omnitak.mobile.ui.theme.TacticalBackground
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -41,6 +51,7 @@ import soy.engindearing.omnitak.mobile.ui.components.RadialMenu
 import soy.engindearing.omnitak.mobile.ui.components.TacticalMap
 import soy.engindearing.omnitak.mobile.ui.components.ToolEntry
 import soy.engindearing.omnitak.mobile.ui.components.ToolsDrawer
+import soy.engindearing.omnitak.mobile.ui.components.rememberLocationPermission
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -66,8 +77,10 @@ fun MapScreen() {
         }
     }
 
+    val locationGranted by rememberLocationPermission()
     var radialAnchor by remember { mutableStateOf<Offset?>(null) }
     var radialLatLng by remember { mutableStateOf<LatLng?>(null) }
+    var recenterTick by remember { mutableStateOf(0) }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -86,6 +99,8 @@ fun MapScreen() {
                 radialLatLng = latLng
                 radialAnchor = offset
             },
+            locationEnabled = locationGranted,
+            recenterTrigger = recenterTick,
         )
 
         Column(
@@ -117,6 +132,26 @@ fun MapScreen() {
             onSelect = { tool -> toast("${tool.label} — coming soon") },
             modifier = Modifier.align(Alignment.BottomEnd),
         )
+
+        // Center-on-me FAB — tracks the location component's last fix
+        // and recenters the camera. Separate from the tools drawer so
+        // it stays reachable without opening the drawer.
+        androidx.compose.foundation.layout.Box(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(16.dp)
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(TacticalBackground.copy(alpha = 0.9f))
+                .clickable(enabled = locationGranted) { recenterTick++ },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                Icons.Filled.MyLocation,
+                contentDescription = "Center on me",
+                tint = if (locationGranted) TacticalAccent else androidx.compose.ui.graphics.Color.Gray,
+            )
+        }
 
         RadialMenu(
             visible = radialAnchor != null,
