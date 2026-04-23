@@ -6,6 +6,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Router
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.Icon
@@ -26,6 +27,7 @@ import soy.engindearing.omnitak.mobile.ui.screens.AboutScreen
 import soy.engindearing.omnitak.mobile.ui.screens.AddServerScreen
 import soy.engindearing.omnitak.mobile.ui.screens.ChatScreen
 import soy.engindearing.omnitak.mobile.ui.screens.MapScreen
+import soy.engindearing.omnitak.mobile.ui.screens.MeshtasticScreen
 import soy.engindearing.omnitak.mobile.ui.screens.ServersScreen
 import soy.engindearing.omnitak.mobile.ui.screens.SettingsScreen
 
@@ -33,11 +35,14 @@ private sealed class Dest(val route: String, val label: String, val icon: ImageV
     data object Map : Dest("map", "Map", Icons.Filled.Map)
     data object Chat : Dest("chat", "Chat", Icons.AutoMirrored.Filled.Chat)
     data object Servers : Dest("servers", "Servers", Icons.Filled.Storage)
+    data object Mesh : Dest("mesh", "Mesh", Icons.Filled.Router)
     data object Settings : Dest("settings", "Settings", Icons.Filled.Settings)
     data object About : Dest("about", "About", Icons.Filled.Info)
 }
 
-private val Destinations = listOf(Dest.Map, Dest.Chat, Dest.Servers, Dest.Settings, Dest.About)
+private val Destinations = listOf(
+    Dest.Map, Dest.Chat, Dest.Servers, Dest.Mesh, Dest.Settings, Dest.About,
+)
 
 @Composable
 fun AppNav() {
@@ -78,6 +83,7 @@ fun AppNav() {
                 AddServerScreen(onDone = { nav.popBackStack() })
             }
             composable(Dest.Chat.route) { ChatScreen() }
+            composable(Dest.Mesh.route) { MeshtasticScreen() }
             composable(Dest.Settings.route) { SettingsScreen() }
             composable(Dest.About.route) { AboutScreen() }
         }
