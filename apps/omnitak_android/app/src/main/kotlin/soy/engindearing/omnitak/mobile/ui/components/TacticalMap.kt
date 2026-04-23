@@ -2,8 +2,11 @@ package soy.engindearing.omnitak.mobile.ui.components
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
@@ -19,16 +22,22 @@ import org.maplibre.android.maps.Style
  * MapLibre-backed map surface. Forwards Android lifecycle events to the
  * native MapView — skipping those leaks native GL resources or crashes
  * on rotation.
+ *
+ * [onMapLongPress] emits the geographic LatLng of the long-press, along
+ * with the on-screen pixel offset so overlays (e.g. radial menu) can
+ * anchor to the touch point.
  */
 @Composable
 fun TacticalMap(
     initialCenter: LatLng = LatLng(47.6588, -117.4260),  // Spokane, WA
     initialZoom: Double = 11.0,
     styleJson: String = OSM_RASTER_STYLE,
+    onMapLongPress: ((LatLng, Offset) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val currentLongPress by rememberUpdatedState(onMapLongPress)
 
     val mapView = remember {
         MapLibre.getInstance(context)
@@ -44,6 +53,11 @@ fun TacticalMap(
                     isCompassEnabled = true
                     isLogoEnabled = false
                     isAttributionEnabled = true
+                }
+                map.addOnMapLongClickListener { latLng ->
+                    val screen = map.projection.toScreenLocation(latLng)
+                    currentLongPress?.invoke(latLng, Offset(screen.x, screen.y))
+                    true
                 }
             }
         }
