@@ -195,7 +195,20 @@ fun TacticalMap(
             when (event) {
                 Lifecycle.Event.ON_START -> mapView.onStart()
                 Lifecycle.Event.ON_RESUME -> mapView.onResume()
-                Lifecycle.Event.ON_PAUSE -> mapView.onPause()
+                Lifecycle.Event.ON_PAUSE -> {
+                    // Silence the LocationComponent on pause — its compass
+                    // animator keeps firing across lifecycle transitions
+                    // and crashes when it touches a detached style
+                    // (seen navigating away via bottom nav on Android 16).
+                    runCatching {
+                        mapView.getMapAsync { map ->
+                            if (map.locationComponent.isLocationComponentActivated) {
+                                map.locationComponent.isLocationComponentEnabled = false
+                            }
+                        }
+                    }
+                    mapView.onPause()
+                }
                 Lifecycle.Event.ON_STOP -> mapView.onStop()
                 Lifecycle.Event.ON_DESTROY -> mapView.onDestroy()
                 else -> Unit
@@ -204,7 +217,20 @@ fun TacticalMap(
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
-            mapView.onDestroy()
+            // Nav-away via bottom tabs doesn't fire ON_PAUSE (the hosting
+            // Activity stays RESUMED), so we have to silence the
+            // LocationComponent here too to kill the compass animator
+            // before tearing the MapView down.
+            runCatching {
+                mapView.getMapAsync { map ->
+                    if (map.locationComponent.isLocationComponentActivated) {
+                        map.locationComponent.isLocationComponentEnabled = false
+                    }
+                }
+            }
+            runCatching { mapView.onPause() }
+            runCatching { mapView.onStop() }
+            runCatching { mapView.onDestroy() }
         }
     }
 
