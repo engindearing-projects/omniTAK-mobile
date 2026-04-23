@@ -97,6 +97,7 @@ fun MapScreen() {
     var drawingKind by remember { mutableStateOf<DrawingKind?>(null) }
     var drawingPoints by remember { mutableStateOf<List<LatLng>>(emptyList()) }
     var drawingPickerOpen by remember { mutableStateOf(false) }
+    var gridEnabled by remember { mutableStateOf(false) }
     val drawings by app.drawingStore.drawings.collectAsState()
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -140,6 +141,7 @@ fun MapScreen() {
             contacts = contacts.values,
             measurementPoints = measurementPoints,
             drawings = drawings + buildInProgressDrawing(drawingKind, drawingPoints),
+            gridCenter = if (gridEnabled) LatLng(37.42, -122.08) else null,
         )
 
         Column(
@@ -176,6 +178,10 @@ fun MapScreen() {
                         toast("Measure mode — tap map to add points")
                     }
                     "draw" -> drawingPickerOpen = true
+                    "layers" -> {
+                        gridEnabled = !gridEnabled
+                        toast(if (gridEnabled) "Grid on" else "Grid off")
+                    }
                     else -> toast("${tool.label} — coming soon")
                 }
             },

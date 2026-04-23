@@ -51,6 +51,7 @@ fun TacticalMap(
     contacts: Collection<CoTEvent> = emptyList(),
     measurementPoints: List<LatLng> = emptyList(),
     drawings: List<Drawing> = emptyList(),
+    gridCenter: LatLng? = null,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -62,6 +63,7 @@ fun TacticalMap(
     val currentContacts by rememberUpdatedState(contacts)
     val currentMeasurementPoints by rememberUpdatedState(measurementPoints)
     val currentDrawings by rememberUpdatedState(drawings)
+    val currentGridCenter by rememberUpdatedState(gridCenter)
 
     val mapView = remember {
         MapLibre.getInstance(context)
@@ -76,6 +78,7 @@ fun TacticalMap(
                     ContactLayer.update(map, currentContacts)
                     MeasurementLayer.update(map, currentMeasurementPoints)
                     DrawingLayer.update(map, currentDrawings)
+                    currentGridCenter?.let { GridLayer.update(map, it) }
                     if (currentLocationEnabled) {
                         activateLocation(map, style, context)
                     }
@@ -177,6 +180,16 @@ fun TacticalMap(
         onDispose { }
     }
 
+    DisposableEffect(mapView, gridCenter) {
+        mapView.getMapAsync { map ->
+            if (map.style != null) {
+                val c = gridCenter
+                if (c != null) GridLayer.update(map, c) else GridLayer.clear(map)
+            }
+        }
+        onDispose { }
+    }
+
     DisposableEffect(lifecycleOwner, mapView) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
@@ -264,10 +277,24 @@ const val OSM_RASTER_STYLE = """
     "drawings-src": {
       "type": "geojson",
       "data": {"type": "FeatureCollection", "features": []}
+    },
+    "grid-src": {
+      "type": "geojson",
+      "data": {"type": "FeatureCollection", "features": []}
     }
   },
   "layers": [
     {"id": "osm-tiles", "type": "raster", "source": "osm"},
+    {
+      "id": "grid-line",
+      "type": "line",
+      "source": "grid-src",
+      "paint": {
+        "line-color": "#FFC107",
+        "line-width": 2,
+        "line-opacity": 0.85
+      }
+    },
     {
       "id": "drawings-fill",
       "type": "fill",
