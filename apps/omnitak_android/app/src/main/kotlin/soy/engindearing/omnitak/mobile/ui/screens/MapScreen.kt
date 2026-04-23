@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Straighten
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -46,6 +47,7 @@ import org.maplibre.android.geometry.LatLng
 import soy.engindearing.omnitak.mobile.OmniTAKApp
 import soy.engindearing.omnitak.mobile.data.CoTAffiliation
 import soy.engindearing.omnitak.mobile.data.CoTEvent
+import soy.engindearing.omnitak.mobile.data.GeoMath
 import soy.engindearing.omnitak.mobile.domain.ConnectionState
 import soy.engindearing.omnitak.mobile.ui.components.ATAKStatusBar
 import soy.engindearing.omnitak.mobile.ui.components.MarkerEditSheet
@@ -87,6 +89,8 @@ fun MapScreen() {
     var markerSheetLatLng by remember { mutableStateOf<LatLng?>(null) }
     var editingMarker by remember { mutableStateOf<CoTEvent?>(null) }
     var recenterTick by remember { mutableStateOf(0) }
+    var measurementActive by remember { mutableStateOf(false) }
+    var measurementPoints by remember { mutableStateOf<List<LatLng>>(emptyList()) }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -102,16 +106,25 @@ fun MapScreen() {
         TacticalMap(
             modifier = Modifier.fillMaxSize(),
             onMapLongPress = { latLng, offset ->
+                if (measurementActive) return@TacticalMap
                 radialLatLng = latLng
                 radialAnchor = offset
             },
             onContactTap = { event ->
+                if (measurementActive) return@TacticalMap
                 editingMarker = event
                 markerSheetLatLng = LatLng(event.lat, event.lon)
+            },
+            onMapSingleTap = { latLng ->
+                if (measurementActive) {
+                    measurementPoints = measurementPoints + latLng
+                    true
+                } else false
             },
             locationEnabled = locationGranted,
             recenterTrigger = recenterTick,
             contacts = contacts.values,
+            measurementPoints = measurementPoints,
         )
 
         Column(
@@ -140,7 +153,16 @@ fun MapScreen() {
                 ToolEntry("teams", Icons.Filled.Groups, "Teams"),
                 ToolEntry("nav", Icons.Filled.Navigation, "Navigate"),
             ),
-            onSelect = { tool -> toast("${tool.label} — coming soon") },
+            onSelect = { tool ->
+                when (tool.id) {
+                    "measure" -> {
+                        measurementActive = true
+                        measurementPoints = emptyList()
+                        toast("Measure mode — tap map to add points")
+                    }
+                    else -> toast("${tool.label} — coming soon")
+                }
+            },
             modifier = Modifier.align(Alignment.BottomEnd),
         )
 
@@ -236,10 +258,74 @@ fun MapScreen() {
             },
         )
 
+        if (measurementActive) {
+            MeasurementOverlay(
+                points = measurementPoints,
+                onUndo = {
+                    if (measurementPoints.isNotEmpty()) {
+                        measurementPoints = measurementPoints.dropLast(1)
+                    }
+                },
+                onClose = {
+                    measurementActive = false
+                    measurementPoints = emptyList()
+                },
+                modifier = Modifier.align(Alignment.TopStart),
+            )
+        }
+
         SnackbarHost(
             hostState = snackbar,
             modifier = Modifier.align(Alignment.BottomCenter),
         )
+    }
+}
+
+@Composable
+private fun MeasurementOverlay(
+    points: List<LatLng>,
+    onUndo: () -> Unit,
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var totalMeters = 0.0
+    for (i in 1 until points.size) {
+        totalMeters += GeoMath.haversineMeters(
+            points[i - 1].latitude, points[i - 1].longitude,
+            points[i].latitude, points[i].longitude,
+        )
+    }
+    val bearing = if (points.size >= 2) {
+        val a = points[points.size - 2]
+        val b = points[points.size - 1]
+        GeoMath.bearingDegrees(a.latitude, a.longitude, b.latitude, b.longitude)
+    } else null
+
+    androidx.compose.foundation.layout.Row(
+        modifier = modifier
+            .padding(top = 76.dp, start = 12.dp, end = 12.dp)
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
+            .background(TacticalBackground.copy(alpha = 0.9f))
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        androidx.compose.material3.Text(
+            buildString {
+                append("${points.size} pt · ")
+                append(GeoMath.formatDistance(totalMeters))
+                if (bearing != null) append(" · ${GeoMath.formatBearing(bearing)}")
+            },
+            color = TacticalAccent,
+            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        androidx.compose.foundation.layout.Spacer(Modifier.width(12.dp))
+        androidx.compose.material3.TextButton(onClick = onUndo, enabled = points.isNotEmpty()) {
+            androidx.compose.material3.Text("Undo", color = TacticalAccent)
+        }
+        androidx.compose.material3.TextButton(onClick = onClose) {
+            androidx.compose.material3.Text("Done", color = TacticalAccent)
+        }
     }
 }
 

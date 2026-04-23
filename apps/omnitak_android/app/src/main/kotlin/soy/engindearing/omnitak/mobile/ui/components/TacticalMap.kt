@@ -44,17 +44,21 @@ fun TacticalMap(
     styleJson: String = OSM_RASTER_STYLE,
     onMapLongPress: ((LatLng, Offset) -> Unit)? = null,
     onContactTap: ((CoTEvent) -> Unit)? = null,
+    onMapSingleTap: ((LatLng) -> Boolean)? = null,
     locationEnabled: Boolean = false,
     recenterTrigger: Any? = null,
     contacts: Collection<CoTEvent> = emptyList(),
+    measurementPoints: List<LatLng> = emptyList(),
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val currentLongPress by rememberUpdatedState(onMapLongPress)
     val currentContactTap by rememberUpdatedState(onContactTap)
+    val currentMapSingleTap by rememberUpdatedState(onMapSingleTap)
     val currentLocationEnabled by rememberUpdatedState(locationEnabled)
     val currentContacts by rememberUpdatedState(contacts)
+    val currentMeasurementPoints by rememberUpdatedState(measurementPoints)
 
     val mapView = remember {
         MapLibre.getInstance(context)
@@ -67,6 +71,7 @@ fun TacticalMap(
                     .build()
                 map.setStyle(Style.Builder().fromJson(styleJson)) { style ->
                     ContactLayer.update(map, currentContacts)
+                    MeasurementLayer.update(map, currentMeasurementPoints)
                     if (currentLocationEnabled) {
                         activateLocation(map, style, context)
                     }
@@ -82,6 +87,11 @@ fun TacticalMap(
                     true
                 }
                 map.addOnMapClickListener { latLng ->
+                    // Mode-specific tap handler wins when provided
+                    // (e.g. measurement mode eats taps to add points).
+                    currentMapSingleTap?.let { handler ->
+                        if (handler(latLng)) return@addOnMapClickListener true
+                    }
                     val cb = currentContactTap ?: return@addOnMapClickListener false
                     val tapPx = map.projection.toScreenLocation(latLng)
                     var best: CoTEvent? = null
@@ -145,6 +155,13 @@ fun TacticalMap(
     DisposableEffect(mapView, contacts) {
         mapView.getMapAsync { map ->
             if (map.style != null) ContactLayer.update(map, contacts)
+        }
+        onDispose { }
+    }
+
+    DisposableEffect(mapView, measurementPoints) {
+        mapView.getMapAsync { map ->
+            if (map.style != null) MeasurementLayer.update(map, measurementPoints)
         }
         onDispose { }
     }
@@ -228,10 +245,54 @@ const val OSM_RASTER_STYLE = """
     "contacts-src": {
       "type": "geojson",
       "data": {"type": "FeatureCollection", "features": []}
+    },
+    "measurement-src": {
+      "type": "geojson",
+      "data": {"type": "FeatureCollection", "features": []}
     }
   },
   "layers": [
     {"id": "osm-tiles", "type": "raster", "source": "osm"},
+    {
+      "id": "measurement-line",
+      "type": "line",
+      "source": "measurement-src",
+      "filter": ["==", ["get", "kind"], "line"],
+      "paint": {
+        "line-color": "#4ADE80",
+        "line-width": 3,
+        "line-dasharray": [2, 1]
+      }
+    },
+    {
+      "id": "measurement-points",
+      "type": "circle",
+      "source": "measurement-src",
+      "filter": ["==", ["get", "kind"], "vertex"],
+      "paint": {
+        "circle-radius": 6,
+        "circle-color": "#4ADE80",
+        "circle-stroke-width": 2,
+        "circle-stroke-color": "#0A1628"
+      }
+    },
+    {
+      "id": "measurement-labels",
+      "type": "symbol",
+      "source": "measurement-src",
+      "filter": ["==", ["get", "kind"], "vertex"],
+      "layout": {
+        "text-field": ["get", "label"],
+        "text-size": 12,
+        "text-offset": [0, -1.4],
+        "text-allow-overlap": true
+      },
+      "paint": {
+        "text-color": "#FFFFFF",
+        "text-halo-color": "#0A1628",
+        "text-halo-width": 1.5
+      }
+    },
     {
       "id": "contacts-circles",
       "type": "circle",
