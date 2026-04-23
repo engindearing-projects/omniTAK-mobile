@@ -3,6 +3,7 @@ package soy.engindearing.omnitak.mobile.ui.components
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -92,6 +93,7 @@ fun RadialMenu(
             val cx = (anchor.x + dx - itemPx / 2f).roundToInt()
             val cy = (anchor.y + dy - itemPx / 2f).roundToInt()
 
+            val ringTint = if (action.enabled) action.color else Color.Gray
             Box(
                 modifier = Modifier
                     .offset { IntOffset(cx, cy) }
@@ -101,10 +103,8 @@ fun RadialMenu(
                         scaleY = scale
                     }
                     .clip(CircleShape)
-                    .background(
-                        if (action.enabled) action.color.copy(alpha = 0.18f)
-                        else Color.Gray.copy(alpha = 0.18f)
-                    )
+                    .background(TacticalBackground)
+                    .border(2.dp, ringTint, CircleShape)
                     .clickable(enabled = action.enabled) {
                         onSelect(action)
                     },
@@ -113,7 +113,7 @@ fun RadialMenu(
                 Icon(
                     action.icon,
                     contentDescription = action.label,
-                    tint = if (action.enabled) action.color else Color.Gray,
+                    tint = ringTint,
                 )
             }
         }
