@@ -126,7 +126,7 @@ class VideoStreamService: ObservableObject {
         }
 
         guard let scheme = url.scheme?.lowercased() else {
-            return (false, nil, "URL missing scheme (http://, https://, rtsp://)")
+            return (false, nil, "URL missing scheme (http://, https://, rtsp://, srt://)")
         }
 
         var detectedProtocol: VideoProtocol?
@@ -134,6 +134,8 @@ class VideoStreamService: ObservableObject {
         switch scheme {
         case "rtsp", "rtsps":
             detectedProtocol = .rtsp
+        case "srt":
+            detectedProtocol = .srt
         case "http", "https":
             if url.pathExtension.lowercased() == "m3u8" || urlString.contains(".m3u8") {
                 detectedProtocol = .hls

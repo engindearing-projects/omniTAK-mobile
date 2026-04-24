@@ -14,6 +14,7 @@ enum VideoProtocol: String, Codable, CaseIterable {
     case http = "HTTP"
     case rtsp = "RTSP"
     case hls = "HLS"
+    case srt = "SRT"
 
     var displayName: String {
         return self.rawValue
@@ -24,21 +25,32 @@ enum VideoProtocol: String, Codable, CaseIterable {
         case .http: return "globe"
         case .rtsp: return "video.badge.waveform"
         case .hls: return "play.rectangle.on.rectangle"
+        case .srt: return "antenna.radiowaves.left.and.right"
         }
     }
 
+    /// True when the stream plays through Apple's built-in AVPlayer.
     var isNativelySupported: Bool {
         switch self {
         case .http, .hls: return true
-        case .rtsp: return false
+        case .rtsp, .srt: return false
+        }
+    }
+
+    /// True when the stream plays through the bundled VLCKit engine.
+    var requiresVLCKit: Bool {
+        switch self {
+        case .rtsp, .srt: return true
+        case .http, .hls: return false
         }
     }
 
     var description: String {
         switch self {
         case .http: return "Standard HTTP video stream"
-        case .rtsp: return "Real Time Streaming Protocol (limited support)"
+        case .rtsp: return "Real Time Streaming Protocol (via VLCKit)"
         case .hls: return "HTTP Live Streaming (Apple native)"
+        case .srt: return "Secure Reliable Transport (via VLCKit)"
         }
     }
 }
@@ -119,6 +131,8 @@ struct VideoFeed: Codable, Identifiable, Equatable {
             let isHTTP = url.scheme == "http" || url.scheme == "https"
             let isM3U8 = url.pathExtension.lowercased() == "m3u8" || url.absoluteString.contains(".m3u8")
             return isHTTP && isM3U8
+        case .srt:
+            return url.scheme == "srt"
         }
     }
 
@@ -171,7 +185,7 @@ enum VideoStreamError: Error, LocalizedError {
         case .invalidURL:
             return "Invalid stream URL"
         case .unsupportedProtocol:
-            return "RTSP streams require external player support. Native iOS only supports HTTP/HLS streams."
+            return "Playback engine for this protocol is not available in this build."
         case .networkUnavailable:
             return "Network connection unavailable"
         case .streamNotFound:

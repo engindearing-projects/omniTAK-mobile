@@ -27,9 +27,10 @@ struct VideoPlayerView: View {
                 // Background
                 Color.black.ignoresSafeArea()
 
-                // Video Content
-                if feed.streamProtocol == .rtsp && !feed.streamProtocol.isNativelySupported {
-                    rtspUnsupportedView
+                // Video Content — route by protocol capability.
+                // AVPlayer handles HTTP and HLS; VLCKit handles RTSP and SRT.
+                if feed.streamProtocol.requiresVLCKit {
+                    VLCPlayerView(feed: feed)
                 } else {
                     videoPlayerContent(geometry: geometry)
                 }
@@ -71,54 +72,6 @@ struct VideoPlayerView: View {
                 loadingView
             }
         }
-    }
-
-    // MARK: - RTSP Unsupported View
-
-    private var rtspUnsupportedView: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 60))
-                .foregroundColor(.yellow)
-
-            Text("RTSP Not Supported")
-                .font(.title2)
-                .font(.system(size: 17, weight: .bold))
-                .foregroundColor(.white)
-
-            Text("Native iOS does not support RTSP streams.\nRTSP playback requires third-party libraries (FFmpeg, VLCKit, etc.).")
-                .font(.subheadline)
-                .foregroundColor(.gray)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
-
-            Text("Stream URL:")
-                .font(.caption)
-                .foregroundColor(.gray)
-
-            Text(feed.url)
-                .font(.caption)
-                .foregroundColor(.white)
-                .padding(.horizontal)
-                .lineLimit(3)
-                .multilineTextAlignment(.center)
-
-            Button(action: {
-                UIPasteboard.general.string = feed.url
-            }) {
-                Label("Copy URL", systemImage: "doc.on.clipboard")
-                    .foregroundColor(Color(red: 1, green: 252/255, blue: 0))
-            }
-            .padding(.top, 10)
-
-            Button("Close") {
-                dismiss()
-            }
-            .buttonStyle(.bordered)
-            .tint(.gray)
-            .padding(.top, 20)
-        }
-        .padding()
     }
 
     // MARK: - Loading View
@@ -544,6 +497,14 @@ struct FeedInfoSheet: View {
                     Section("Location") {
                         HStack { Text("Latitude"); Spacer(); Text(String(format: "%.6f", coord.latitude)).foregroundColor(.gray) }
                         HStack { Text("Longitude"); Spacer(); Text(String(format: "%.6f", coord.longitude)).foregroundColor(.gray) }
+                    }
+                }
+
+                if feed.streamProtocol.requiresVLCKit {
+                    Section("Playback Engine") {
+                        Text("RTSP and SRT playback uses VLCKit, licensed under LGPL v2.1+. Source and license text: https://code.videolan.org/videolan/VLCKit")
+                            .font(.caption)
+                            .foregroundColor(.gray)
                     }
                 }
             }

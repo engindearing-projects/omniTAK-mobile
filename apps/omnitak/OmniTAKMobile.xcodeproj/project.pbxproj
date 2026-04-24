@@ -72,6 +72,7 @@
 		49A5B6C1F772F2FF591D3D1B /* CoTMessageParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDFCAFC6CCE91DC4AA9FBF6 /* CoTMessageParser.swift */; };
 		4C8370B68A37749E00F29B13 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D159CF2A7D23BFC860F0010 /* Foundation.framework */; };
 		4D79A80257F61BFC0854BEAE /* VideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 676590F7AFD402DEBBC6868D /* VideoPlayerView.swift */; };
+		A1C234567890ABCDEF123456 /* VLCPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C234567890ABCDEF123457 /* VLCPlayerView.swift */; };
 		4F4436F51EB0EACF530DFC9B /* CoTFilterPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1576B508B4020A81E6FE9608 /* CoTFilterPanel.swift */; };
 		4FBD96472BF89CBF77EB0BD4 /* RegionSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7740DF1463CF041207C4772B /* RegionSelectionView.swift */; };
 		4FE6923653C5A63C8E2561EF /* DataPackageImportManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C59B5CC158652783B302B11 /* DataPackageImportManager.swift */; };
@@ -370,6 +371,7 @@
 		64977A5E2ADECCCF61D023F2 /* OmniTAKMobile-Bridging-Header.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = "OmniTAKMobile-Bridging-Header.h"; path = "OmniTAKMobile/Core/OmniTAKMobile-Bridging-Header.h"; sourceTree = "<group>"; };
 		674ABDF90EAA0EFA702FBFF1 /* MeasurementOverlay.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MeasurementOverlay.swift; path = OmniTAKMobile/Features/Map/Overlays/MeasurementOverlay.swift; sourceTree = "<group>"; };
 		676590F7AFD402DEBBC6868D /* VideoPlayerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = VideoPlayerView.swift; path = OmniTAKMobile/Features/Video/Views/VideoPlayerView.swift; sourceTree = "<group>"; };
+		A1C234567890ABCDEF123457 /* VLCPlayerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = VLCPlayerView.swift; path = OmniTAKMobile/Features/Video/Views/VLCPlayerView.swift; sourceTree = "<group>"; };
 		697D89D57F2BFE738817AF87 /* Map3DSettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Map3DSettingsView.swift; path = OmniTAKMobile/Features/Map/Views/Map3DSettingsView.swift; sourceTree = "<group>"; };
 		6A0A793E185CC30595DAB79B /* CoordinateDisplayView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CoordinateDisplayView.swift; path = OmniTAKMobile/Features/Map/Views/CoordinateDisplayView.swift; sourceTree = "<group>"; };
 		6A299080EB48E2B8246EE899 /* SettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SettingsView.swift; path = OmniTAKMobile/Features/Settings/Views/SettingsView.swift; sourceTree = "<group>"; };
@@ -1633,6 +1635,7 @@
 			children = (
 				4EDF33D868687EC0C282728B /* VideoFeedListView.swift */,
 				676590F7AFD402DEBBC6868D /* VideoPlayerView.swift */,
+				A1C234567890ABCDEF123457 /* VLCPlayerView.swift */,
 			);
 			name = Views;
 			sourceTree = "<group>";
@@ -2112,6 +2115,7 @@
 				D1864940136BE6CC3360C386 /* VideoStreamService.swift in Sources */,
 				89D7920E5028900C9BFE620C /* VideoFeedListView.swift in Sources */,
 				4D79A80257F61BFC0854BEAE /* VideoPlayerView.swift in Sources */,
+				A1C234567890ABCDEF123456 /* VLCPlayerView.swift in Sources */,
 				0F9BEFBD1BA9F7430DD763EB /* ATAKLoadingScreen.swift in Sources */,
 				D02BC3BA0724FA0003771440 /* ATAKToolsView.swift in Sources */,
 				0F62F18FF7E01A4873C55CD2 /* ConnectionStatusWidget.swift in Sources */,
