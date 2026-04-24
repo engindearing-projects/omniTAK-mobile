@@ -62,8 +62,25 @@
 		<string>fetch</string>
 		<string>remote-notification</string>
 		<string>processing</string>
-		<string>voip</string>
 	</array>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>OmniTAK connects to Meshtastic LoRa radios over Bluetooth so you can share position and messages with your team when there is no cellular or Wi-Fi coverage.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>OmniTAK connects to Meshtastic LoRa radios over Bluetooth so you can share position and messages with your team when there is no cellular or Wi-Fi coverage.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>OmniTAK uses the camera to scan enrollment QR codes for TAK server certificates and to attach photos to map markers.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>OmniTAK lets you attach photos from your library to map markers and share them with your team.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>OmniTAK saves map exports, screenshots, and captured imagery to your photo library on request.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>OmniTAK discovers TAK servers advertised on your local network so you can connect to them without typing an IP address.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_tak._tcp</string>
+	</array>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>UILaunchScreen</key>
 	<dict/>
 </dict>
