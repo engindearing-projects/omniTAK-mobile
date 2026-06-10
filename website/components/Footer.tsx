@@ -59,7 +59,7 @@ export default function Footer() {
             <ul className="space-y-3 text-sm">
               <li><a href={GITHUB_IOS} target="_blank" rel="noopener noreferrer" className="text-omni-grey hover:text-omni-accent-light transition-colors">OmniTAK-iOS</a></li>
               <li><a href={GITHUB_ANDROID} target="_blank" rel="noopener noreferrer" className="text-omni-grey hover:text-omni-accent-light transition-colors">OmniTAK-Android</a></li>
-              <li><a href="https://github.com/jfuginay/gyb_detect" target="_blank" rel="noopener noreferrer" className="text-omni-grey hover:text-omni-accent-light transition-colors">gyb_detect</a></li>
+              <li><a href="https://www.engindearing.soy/hire" target="_blank" rel="noopener noreferrer" className="text-omni-grey hover:text-omni-accent-light transition-colors">gyb detector</a></li>
               <li><a href={`${GITHUB_IOS}/blob/main/LICENSE`} target="_blank" rel="noopener noreferrer" className="text-omni-grey hover:text-omni-accent-light transition-colors">Apache 2.0 license</a></li>
             </ul>
           </div>

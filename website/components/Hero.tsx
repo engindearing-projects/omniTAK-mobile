@@ -10,7 +10,7 @@ const proof = [
   'Live on the App Store',
   'Android in Play testing',
   'Apache 2.0 on GitHub',
-  '7 languages',
+  '7 languages on iOS',
   'Works with ATAK, WinTAK, iTAK',
 ];
 
@@ -124,7 +124,7 @@ export default function Hero() {
           transition={{ duration: 0.6, delay: 0.5 }}
           className="mt-10 text-sm text-omni-grey-dark font-mono"
         >
-          Field-tested by volunteer fire brigades and airsoft teams in Asia and Europe.
+          Field-tested by a volunteer fire brigade in Asia and an airsoft team in Europe.
         </motion.p>
       </div>
     </section>
