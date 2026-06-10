@@ -10,25 +10,21 @@ const config: Config = {
     extend: {
       colors: {
         omni: {
-          // Neon Green Theme - matches logo
-          navy: "#0A1628",           // Deep navy primary
-          'navy-light': "#162033",   // Lighter navy
-          slate: "#1E293B",          // Slate background
-          'slate-light': "#334155",  // Lighter slate
-          steel: "#475569",          // Steel grey
-          accent: "#4ADE80",         // Neon green accent (matches logo)
-          'accent-light': "#86EFAC", // Lighter green
-          'accent-dark': "#22C55E",  // Darker green
-          green: "#4ADE80",          // Primary neon green
-          'green-light': "#86EFAC",  // Light green
-          'green-dark': "#16A34A",   // Deep green
-          'green-glow': "#4ADE80",   // Glow effect green
-          white: "#F8FAFC",          // Clean white
-          grey: "#94A3B8",           // Neutral grey
-          'grey-light': "#CBD5E1",   // Light grey
-          'grey-dark': "#64748B",    // Dark grey
-          border: "#1E293B",         // Border color
-          glow: "#4ADE80",           // Glow color (green)
+          // Engindearing brand, locked 2026-05-25.
+          // Emerald #3E9E66 primary, Indigo #1A1267 secondary, #1A1A1A base.
+          base: "#1A1A1A",            // page background
+          surface: "#212121",         // raised surfaces
+          "surface-light": "#2A2A2A", // cards, inputs
+          border: "#2E2E2E",          // hairlines
+          accent: "#3E9E66",          // emerald primary
+          "accent-light": "#6BBE93",  // emerald, one step lighter
+          "accent-dark": "#2E7A4F",   // emerald, one step darker
+          indigo: "#1A1267",          // indigo secondary (glows, gradients)
+          "indigo-light": "#2B1FA8",  // indigo gradient stop
+          white: "#F8FAFC",           // headings
+          grey: "#94A3B8",            // body text (slate-400)
+          "grey-light": "#CBD5E1",    // emphasized body (slate-300)
+          "grey-dark": "#64748B",     // muted (slate-500)
         },
       },
       fontFamily: {
@@ -36,18 +32,10 @@ const config: Config = {
         mono: ["var(--font-geist-mono)"],
       },
       animation: {
-        "float": "float 6s ease-in-out infinite",
-        "pulse-slow": "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-        "slide-up": "slide-up 0.5s ease-out",
         "fade-in": "fade-in 0.5s ease-out",
-        "gradient-x": "gradient-x 15s ease infinite",
-        "border-glow": "border-glow 3s ease-in-out infinite",
+        "slide-up": "slide-up 0.5s ease-out",
       },
       keyframes: {
-        float: {
-          "0%, 100%": { transform: "translateY(0px)" },
-          "50%": { transform: "translateY(-10px)" },
-        },
         "slide-up": {
           "0%": { transform: "translateY(20px)", opacity: "0" },
           "100%": { transform: "translateY(0)", opacity: "1" },
@@ -56,19 +44,6 @@ const config: Config = {
           "0%": { opacity: "0" },
           "100%": { opacity: "1" },
         },
-        "gradient-x": {
-          "0%, 100%": { backgroundPosition: "0% 50%" },
-          "50%": { backgroundPosition: "100% 50%" },
-        },
-        "border-glow": {
-          "0%, 100%": { opacity: "0.5" },
-          "50%": { opacity: "1" },
-        },
-      },
-      backgroundImage: {
-        "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
-        "gradient-conic": "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
-        "hero-pattern": "linear-gradient(to bottom, rgba(10, 22, 40, 0.8), rgba(10, 22, 40, 0.95))",
       },
     },
   },
