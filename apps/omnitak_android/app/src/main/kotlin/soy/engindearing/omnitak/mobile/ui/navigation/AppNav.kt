@@ -41,7 +41,7 @@ private sealed class Dest(val route: String, val label: String, val icon: ImageV
 }
 
 private val Destinations = listOf(
-    Dest.Map, Dest.Chat, Dest.Servers, Dest.Mesh, Dest.Settings, Dest.About,
+    Dest.Map, Dest.Chat, Dest.Servers, Dest.Mesh, Dest.Settings,
 )
 
 @Composable
